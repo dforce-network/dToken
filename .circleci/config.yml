@@ -1,0 +1,19 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/node:10.16
+    steps:
+      - checkout
+      - run:
+          name: Install Builder and dependencies
+          command: |
+            npm install
+      - run:
+          name: Compile contracts
+          command: |
+            npx buidler compile
+      - run:
+          name: Run tests
+          command: |
+            npx buidler test
