@@ -65,6 +65,19 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         uint256 totalSupply,
         uint256 exchangeRate
     );
+    event Rebalance(
+        address admin,
+        address[] withdraw,
+        uint256[] withdrawAmount,
+        address[] supply,
+        uint256[] supplyAmount
+    );
+    event TransferFee(
+        address admin,
+        address token,
+        address feeRecipient,
+        uint256 amount
+    );
 
     event FeeRecipientSet(
         address indexed oldFeeRecipient,
@@ -108,6 +121,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         dispatcher = _dispatcher;
         decimals = IERC20(_token).decimals();
         data.exchangeRate = BASE;
+        notEntered = true;
         initialized = true;
 
         emit NewDispatcher(_dispatcher, address(0));
@@ -179,6 +193,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             doTransferOut(_token, feeRecipient, _amount),
             "transferFee: Token transfer out of contract failed."
         );
+        emit TransferFee(msg.sender, _token, feeRecipient, _amount);
     }
 
     /**
@@ -240,6 +255,13 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 "rebalance: "
             );
         }
+        emit Rebalance(
+            msg.sender,
+            _withdraw,
+            _withdrawAmount,
+            _supply,
+            _supplyAmount
+        );
     }
 
     function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
@@ -333,7 +355,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _mintLocal.token
         );
 
-        _mintLocal.originationFee = originationFee[msg.sig];
         for (uint256 i = 0; i < _mintLocal.handlers.length; i++) {
             // If deposit amount is 0 by this handler, then pass.
             if (_mintLocal.amounts[i] == 0) continue;
@@ -590,8 +611,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 _redeemLocal.redeemAmount,
                 _redeemLocal.originationFee
             );
-            if (_redeemLocal.fee > 0) {
-                // Transfer the token trade fee from the `handler` to the `dToken`.
+            // Transfer the token trade fee from the `handler` to the `dToken`.
+            if (_redeemLocal.fee > 0)
                 require(
                     doTransferFrom(
                         _redeemLocal.token,
@@ -601,14 +622,13 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                     ),
                     "redeem: transfer fee failed"
                 );
-            }
 
             // After subtracting the fee, the user finally can get quantity.
             _redeemLocal.userAmount = _redeemLocal.redeemAmount.sub(
                 _redeemLocal.fee
             );
             // Transfer the calculated token amount from the `handler` to the receiver `_src`
-            if (_redeemLocal.userAmount > 0) {
+            if (_redeemLocal.userAmount > 0)
                 require(
                     doTransferFrom(
                         _redeemLocal.token,
@@ -618,7 +638,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                     ),
                     "redeem: transfer to user failed"
                 );
-            }
             _redeemLocal.redeemTotalAmount = _redeemLocal.redeemTotalAmount.add(
                 _redeemLocal.redeemAmount
             );
