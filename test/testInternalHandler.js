@@ -61,13 +61,21 @@ describe("InternalHandler contract", function () {
 
   describe("setdTokens", function () {
     it("Should only allow auth to set dTokens", async function () {
-      await handler.setdTokens(dtoken_addresses.address);
+      let new_dtoken_addresses = await dTokenAddresses.new();
+      await handler.setdTokens(new_dtoken_addresses.address);
 
       await truffleAssert.reverts(
-        handler.setdTokens(dtoken_addresses.address, {
+        handler.setdTokens(new_dtoken_addresses.address, {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not allow set dTokens with the same address", async function () {
+      await truffleAssert.reverts(
+        handler.setdTokens(await handler.dTokens()),
+        "setdTokens: The same dToken address!"
       );
     });
   });
@@ -89,6 +97,13 @@ describe("InternalHandler contract", function () {
       );
     });
 
+    it("Should not allow to disable token already disabled", async function () {
+      await truffleAssert.reverts(
+        handler.disableToken(USDC.address),
+        "disableToken: Has been disabled!"
+      );
+    });
+
     it("Should only allow auth to enable token", async function () {
       await handler.enableToken(USDC.address);
       assert.equal(await handler.tokensEnable(USDC.address), true);
@@ -98,6 +113,13 @@ describe("InternalHandler contract", function () {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not allow to enable token already enabled", async function () {
+      await truffleAssert.reverts(
+        handler.enableToken(USDC.address),
+        "enableToken: Has been enabled!"
       );
     });
   });
@@ -184,38 +206,6 @@ describe("InternalHandler contract", function () {
       await handler.pause();
       await truffleAssert.reverts(
         handler.withdraw(USDC.address, 1000e6),
-        "whenNotPaused: paused"
-      );
-    });
-
-    it("!! TODO: Should not be able to reenter", async function () {});
-  });
-
-  describe("redeem", function () {
-    beforeEach(async function () {
-      await resetContracts();
-      await handler.deposit(USDC.address, 1000e6);
-    });
-
-    it("Should only allow auth to redeem", async function () {
-      let amount = await handler.redeem(USDC.address, 100e6);
-
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(amount));
-      //assert.equal(amount.eq(new BN(1000e6)), true);
-
-      await truffleAssert.reverts(
-        handler.redeem(USDC.address, 1000e6, {
-          from: account1,
-        }),
-        "ds-auth-unauthorized"
-      );
-    });
-
-    it("Should not redeem when paused", async function () {
-      await handler.pause();
-      await truffleAssert.reverts(
-        handler.redeem(USDC.address, 1000e6),
         "whenNotPaused: paused"
       );
     });

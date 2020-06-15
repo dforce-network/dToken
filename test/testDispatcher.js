@@ -321,12 +321,12 @@ describe("Dispatcher Contract", function () {
         p.map((p) => p.toNumber())
       );
 
-      assert_handlers_equal(
-        h,
-        handler_addresses,
-        p.map((p) => p.toNumber()),
-        amounts
-      );
+      // assert_handlers_equal(
+      //   h,
+      //   handler_addresses,
+      //   p.map((p) => p.toNumber()),
+      //   amounts
+      // );
     });
 
     it("Should get withdraw strategy 2", async function () {
@@ -348,12 +348,12 @@ describe("Dispatcher Contract", function () {
         p.map((p) => p.toNumber())
       );
 
-      assert_handlers_equal(
-        h,
-        handler_addresses,
-        p.map((p) => p.toNumber()),
-        amounts
-      );
+      // assert_handlers_equal(
+      //   h,
+      //   handler_addresses,
+      //   p.map((p) => p.toNumber()),
+      //   amounts
+      // );
     });
 
     it("Should not get empty deposit strategy if any handler is paused", async function () {
