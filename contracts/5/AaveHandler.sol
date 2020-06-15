@@ -285,7 +285,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      *      and excludes fee, if has.
      * @param _token Token to get actual balance.
      */
-    function getRealBalance(address _token) external view returns (uint256) {
+    function getRealBalance(address _token) external returns (uint256) {
         return getLiquidity(_token);
     }
 

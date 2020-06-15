@@ -156,31 +156,9 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      */
     function getRealBalance(address _underlyingToken)
         external
-        view
         returns (uint256)
     {
         return getLiquidity(_underlyingToken);
     }
 
-    /**
-     * @dev Calculate the actual amount of token that has excluded exchange fee
-     *      between token and wrapped token, if has.
-     * @param _pie Token amount to get.
-     */
-    function getRealAmount(uint256 _pie) external view returns (uint256) {
-        return _pie;
-    }
-
-    /**
-     * @dev Get token `_underlyingToken` APR of the market.
-     * @param _underlyingToken Token to get APR.
-     */
-    function getInterestRate(address _underlyingToken)
-        external
-        view
-        returns (uint256)
-    {
-        _underlyingToken;
-        return 0;
-    }
 }
