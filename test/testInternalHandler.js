@@ -1,12 +1,16 @@
 const InternalHandler = artifacts.require("InternalHandler");
 const FiatToken = artifacts.require("FiatTokenV1");
+const dTokenAddresses = artifacts.require("dTokenAddresses");
 const truffleAssert = require("truffle-assertions");
-const BN = web3.utils.BN;
+const BN = require("bn.js");
+const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 
 describe("InternalHandler contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC;
   let handler;
+  let dtoken_addresses;
+  let mock_dtoken = "0x0000000000000000000000000000000000000001";
 
   before(async function () {
     [
@@ -19,7 +23,8 @@ describe("InternalHandler contract", function () {
   });
 
   async function resetContracts() {
-    handler = await InternalHandler.new();
+    dtoken_addresses = await dTokenAddresses.new();
+    handler = await InternalHandler.new(dtoken_addresses.address);
     USDC = await FiatToken.new(
       "USDC",
       "USDC",
@@ -36,16 +41,17 @@ describe("InternalHandler contract", function () {
     await USDC.allocateTo(handler.address, 1000e6, {
       from: owner,
     });
+
+    await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);
+    await handler.enableToken(USDC.address);
   }
 
   describe("Deployment", function () {
-    it("Should deployed", async function () {
+    it("Should deployed and only initialized once", async function () {
       await resetContracts();
-    });
 
-    it("Should not be initialized again", async function () {
       await truffleAssert.reverts(
-        handler.initialize({
+        handler.initialize(dtoken_addresses.address, {
           from: owner,
         }),
         "initialize: Already initialized!"
@@ -53,20 +59,12 @@ describe("InternalHandler contract", function () {
     });
   });
 
-  describe("Supply", function () {
-    beforeEach(async function () {
-      await resetContracts();
-    });
+  describe("setdTokens", function () {
+    it("Should only allow auth to set dTokens", async function () {
+      await handler.setdTokens(dtoken_addresses.address);
 
-    it("Should supply", async function () {
-      await handler.supply(USDC.address, {
-        from: owner,
-      });
-    });
-
-    it("Should not supply with non-auth", async function () {
       await truffleAssert.reverts(
-        handler.supply(USDC.address, {
+        handler.setdTokens(dtoken_addresses.address, {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -74,109 +72,201 @@ describe("InternalHandler contract", function () {
     });
   });
 
-  describe("withdrawTo", function () {
-    beforeEach(async function () {
+  describe("disableToken/enableToken", function () {
+    before(async function () {
       await resetContracts();
     });
 
-    it("Should withdraw", async function () {
-      await handler.withdrawTo(USDC.address, account1, 100e6, {
-        from: owner,
-      });
-      assert.equal(await USDC.balanceOf(account1), 100e6);
+    it("Should only allow auth to disable token", async function () {
+      await handler.disableToken(USDC.address);
+      assert.equal(await handler.tokensEnable(USDC.address), false);
+
+      await truffleAssert.reverts(
+        handler.disableToken(USDC.address, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
     });
 
-    it("Should withdraw all ", async function () {
-      await handler.withdrawTo(USDC.address, account1, -1, {from: owner});
-      assert.equal(
-        (await USDC.balanceOf(account1)).toString(),
-        new BN(1000e6).toString()
+    it("Should only allow auth to enable token", async function () {
+      await handler.enableToken(USDC.address);
+      assert.equal(await handler.tokensEnable(USDC.address), true);
+
+      await truffleAssert.reverts(
+        handler.enableToken(USDC.address, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
       );
     });
   });
 
-  describe("removeReserve", function () {
-    beforeEach(async function () {
-      await resetContracts();
-    });
-
-    it("Should remove reserve", async function () {
-      await handler.removeReserve(USDC.address, account1, 1000e6, {
-        from: owner,
-      });
-      assert.equal(await USDC.balanceOf(account1), 1000e6);
-    });
-  });
-
-  // approve() needs interact with dToken contract
   describe("approve", function () {
-    beforeEach(async function () {
+    before(async function () {
       await resetContracts();
     });
 
-    it("Should approve", async function () {
-      await handler.approve(USDC.address, account1, {
-        from: owner,
-      });
+    it("Should only allow auth to approve", async function () {
+      await handler.approve(USDC.address);
+      let allowance = await USDC.allowance(handler.address, mock_dtoken);
+      assert.equal(allowance.eq(UINT256_MAX), true);
+
+      await truffleAssert.reverts(
+        handler.approve(USDC.address, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
     });
   });
 
   describe("deposit", function () {
-    beforeEach(async function () {
+    before(async function () {
       await resetContracts();
     });
 
-    it("Should deposit", async function () {
-      await handler.enableToken(USDC.address, {
-        from: owner,
-      });
-      await handler.deposit(USDC.address, {
-        from: owner,
-      });
+    it("Should only allow auth to deposit", async function () {
+      let amount = await handler.deposit(USDC.address, 1000e6);
+
+      //TODO: Check returen value from transaction
+      //console.log(JSON.stringify(amount));
+      //assert.equal(amount.eq(new BN(1000e6)), true);
+
+      await truffleAssert.reverts(
+        handler.deposit(USDC.address, 1000e6, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not deposit with disabled token", async function () {
+      await truffleAssert.reverts(
+        handler.deposit(mock_dtoken, 1000e6),
+        "deposit: token is disabled!"
+      );
     });
 
     it("Should not deposit when paused", async function () {
-      await handler.enableToken(USDC.address, {from: owner});
-      await handler.pause({from: owner});
+      await handler.pause();
       await truffleAssert.reverts(
-        handler.deposit(USDC.address, {from: owner}),
+        handler.deposit(USDC.address, 1000e6),
         "whenNotPaused: paused"
       );
     });
+
+    it("!! TODO: Should not be able to reenter", async function () {});
   });
 
   describe("withdraw", function () {
     beforeEach(async function () {
       await resetContracts();
+      await handler.deposit(USDC.address, 1000e6);
     });
 
-    it("Should withdraw", async function () {
-      await handler.withdraw(USDC.address, 1000e6, {
-        from: owner,
-      });
+    it("Should only allow auth to withdraw", async function () {
+      let amount = await handler.withdraw(USDC.address, 100e6);
+
+      //TODO: Check returen value from transaction
+      //console.log(JSON.stringify(amount));
+      //assert.equal(amount.eq(new BN(1000e6)), true);
+
+      await truffleAssert.reverts(
+        handler.withdraw(USDC.address, 1000e6, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
     });
+
+    it("Should not withdraw when paused", async function () {
+      await handler.pause();
+      await truffleAssert.reverts(
+        handler.withdraw(USDC.address, 1000e6),
+        "whenNotPaused: paused"
+      );
+    });
+
+    it("!! TODO: Should not be able to reenter", async function () {});
   });
 
   describe("redeem", function () {
     beforeEach(async function () {
       await resetContracts();
+      await handler.deposit(USDC.address, 1000e6);
     });
 
-    it("Should redeem", async function () {
-      await handler.redeem(USDC.address, 1000e6, {
-        from: owner,
-      });
+    it("Should only allow auth to redeem", async function () {
+      let amount = await handler.redeem(USDC.address, 100e6);
+
+      //TODO: Check returen value from transaction
+      //console.log(JSON.stringify(amount));
+      //assert.equal(amount.eq(new BN(1000e6)), true);
+
+      await truffleAssert.reverts(
+        handler.redeem(USDC.address, 1000e6, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
     });
+
+    it("Should not redeem when paused", async function () {
+      await handler.pause();
+      await truffleAssert.reverts(
+        handler.redeem(USDC.address, 1000e6),
+        "whenNotPaused: paused"
+      );
+    });
+
+    it("!! TODO: Should not be able to reenter", async function () {});
   });
 
   describe("getBalance", function () {
     beforeEach(async function () {
       await resetContracts();
+      await handler.deposit(USDC.address, 1000e6);
     });
 
-    it("Should have some balance by default", async function () {
+    it("Should get some balance", async function () {
       let balance = await handler.getBalance(USDC.address);
-      assert.equal(balance.toString(), new BN(1000e6).toString());
+      assert.equal(balance.eq(new BN(1000e6)), true);
+    });
+  });
+
+  describe("getLiquidity", function () {
+    beforeEach(async function () {
+      await resetContracts();
+      await handler.deposit(USDC.address, 1000e6);
+    });
+
+    it("Should get some liquidity", async function () {
+      let balance = await handler.getLiquidity(USDC.address);
+      assert.equal(balance.eq(new BN(1000e6)), true);
+    });
+  });
+
+  describe("getRealBalance", function () {
+    beforeEach(async function () {
+      await resetContracts();
+      await handler.deposit(USDC.address, 1000e6);
+    });
+
+    it("Should get some real balance", async function () {
+      let balance = await handler.getRealBalance(USDC.address);
+      assert.equal(balance.eq(new BN(1000e6)), true);
+    });
+  });
+
+  describe("getRealAmount", function () {
+    beforeEach(async function () {
+      await resetContracts();
+    });
+
+    it("Should get real amount", async function () {
+      let balance = await handler.getRealAmount(1000e6);
+      assert.equal(balance.eq(new BN(1000e6)), true);
     });
   });
 
@@ -186,10 +276,8 @@ describe("InternalHandler contract", function () {
     });
 
     it("Should have default InterestRate as 0", async function () {
-      let ir = await handler.getInterestRate(USDC.address, {
-        from: owner,
-      });
-      assert.equal(ir, 0);
+      let interest_rate = await handler.getInterestRate(USDC.address);
+      assert.equal(interest_rate.eq(new BN(0)), true);
     });
   });
 });
