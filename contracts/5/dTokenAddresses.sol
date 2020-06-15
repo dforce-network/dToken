@@ -1,8 +1,8 @@
 pragma solidity 0.5.12;
 
-import "./library/Pausable.sol";
+import "./library/DSAuth.sol";
 
-contract dTokenAddresses is Pausable {
+contract dTokenAddresses is DSAuth {
     bool private initialized; // Flags for initializing data
 
     mapping(address => address) internal dTokens;
