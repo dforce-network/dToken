@@ -18,13 +18,11 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     address public aaveLendingPoolCore;
 
     mapping(address => bool) public tokensEnable;
-
-    // struct InterestsDetails {
-    //     uint256 underlyingBalance;
-    //     uint256 interests;
-    // }
-
     mapping(address => uint256) public interestsDetails;
+
+    event NewdTokenAddresses(address indexed originaldToken, address indexed newdToken);
+    event DisableToken(address indexed underlyingToken);
+    event EnableToken(address indexed underlyingToken);
 
     constructor(
         address _dTokens,
@@ -55,8 +53,11 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Update dToken mapping contract.
      * @param _newdTokens The new dToken mapping contact.
      */
-    function setdTokens(address _newdTokens) public auth {
+    function setdTokens(address _newdTokens) external auth {
+        require(_newdTokens != dTokens, "setdTokens: The same dToken address!");
+        address _originaldTokens = dTokens;
         dTokens = _newdTokens;
+        emit NewdTokenAddresses(_originaldTokens, _newdTokens);
     }
 
     /**
@@ -64,7 +65,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to disable.
      */
     function disableToken(address _underlyingToken) external auth {
+        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
         tokensEnable[_underlyingToken] = false;
+        emit DisableToken(_underlyingToken);
     }
 
     /**
@@ -72,7 +75,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to enable.
      */
     function enableToken(address _underlyingToken) external auth {
+        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
         tokensEnable[_underlyingToken] = true;
+        emit EnableToken(_underlyingToken);
     }
 
     function setLendingPoolCore(address _newLendingPoolCore) external auth {
@@ -198,48 +203,6 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Redeem token from market, but only for dToken contract.
-     * @param _underlyingToken Token to redeem.
-     * @param _amount Token amount to redeem.
-     * @return Actually redeem token amount.
-     */
-    function redeem(address _underlyingToken, uint256 _amount)
-        external
-        whenNotPaused
-        auth
-        nonReentrant
-        returns (uint256, uint256)
-    {
-        address _aToken = getaToken(_underlyingToken);
-        require(_aToken != address(0x0), "redeem: Do not support token!");
-
-        require(_amount > 0, "redeem: Redeem amount should be greater than 0!");
-
-        uint256 _lastPrincipalBalance = getBalance(_underlyingToken);
-        uint256 _principalBalance = getUnderlyingBalance(_underlyingToken);
-        if (_lastPrincipalBalance > _principalBalance) {
-            uint256 _periodInterests = _lastPrincipalBalance.sub(
-                _principalBalance
-            );
-            interestsDetails[_underlyingToken] = interestsDetails[_underlyingToken]
-                .add(_periodInterests);
-        }
-
-        // aave supports redeem -1
-        uint256 _previousBalance = IERC20(_underlyingToken).balanceOf(
-            address(this)
-        );
-        AToken(_aToken).redeem(_amount);
-        uint256 _currentBalance = IERC20(_underlyingToken).balanceOf(
-            address(this)
-        );
-
-        uint256 _changedAmount = _currentBalance.sub(_previousBalance);
-
-        return (_changedAmount, _changedAmount);
-    }
-
-    /**
      * @dev Total balance with any accumulated interest for `_token` belonging to `handler`
      * @param _token Token to get balance.
      */
@@ -286,7 +249,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _token Token to get actual balance.
      */
     function getRealBalance(address _token) external returns (uint256) {
-        return getLiquidity(_token);
+        return getBalance(_token);
     }
 
     function getaToken(address _token) public view returns (address) {

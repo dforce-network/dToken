@@ -13,6 +13,10 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
     mapping(address => bool) public tokensEnable; // Supports token or not
 
+    event NewdTokenAddresses(address indexed originaldToken, address indexed newdToken);
+    event DisableToken(address indexed underlyingToken);
+    event EnableToken(address indexed underlyingToken);
+
     constructor(address _dTokens) public {
         initialize(_dTokens);
     }
@@ -28,11 +32,14 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Update dToken mapping contract.
+     * @dev Update dToken mapping contract, such as USDC => dUSDC.
      * @param _newdTokens The new dToken mapping contact.
      */
     function setdTokens(address _newdTokens) external auth {
+        require(_newdTokens != dTokens, "setdTokens: The same dToken address!");
+        address _originaldTokens = dTokens;
         dTokens = _newdTokens;
+        emit NewdTokenAddresses(_originaldTokens, _newdTokens);
     }
 
     /**
@@ -40,7 +47,9 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to disable.
      */
     function disableToken(address _underlyingToken) external auth {
+        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
         tokensEnable[_underlyingToken] = false;
+        emit DisableToken(_underlyingToken);
     }
 
     /**
@@ -48,7 +57,9 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to enable.
      */
     function enableToken(address _underlyingToken) external auth {
+        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
         tokensEnable[_underlyingToken] = true;
+        emit EnableToken(_underlyingToken);
     }
 
     /**
@@ -103,26 +114,6 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             IERC20(_underlyingToken).balanceOf(address(this)) < _amount
         ) return 0;
         return _amount;
-    }
-
-    /**
-     * @dev Redeem token from market, but only for dToken contract.
-     * @param _underlyingToken Token to redeem.
-     * @param _amount Token amount to redeem.
-     * @return Actually redeem token amount.
-     */
-    function redeem(address _underlyingToken, uint256 _amount)
-        external
-        whenNotPaused
-        auth
-        nonReentrant
-        returns (uint256, uint256)
-    {
-        if (
-            _amount == 0 ||
-            IERC20(_underlyingToken).balanceOf(address(this)) < _amount
-        ) return (0, 0);
-        return (_amount, _amount);
     }
 
     /**

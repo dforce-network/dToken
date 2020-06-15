@@ -15,16 +15,11 @@ contract Handler is ERC20SafeTransfer, Pausable {
     address public dTokens; // dToken address
 
     mapping(address => bool) public tokensEnable;
-
     mapping(address => uint256) public interestsDetails;
 
-    function disableToken(address _token) external auth {
-        tokensEnable[_token] = false;
-    }
-
-    function enableToken(address _token) external auth {
-        tokensEnable[_token] = true;
-    }
+    event NewdTargetAddr(address indexed originalTargetAddr, address indexed newTargetAddr);
+    event DisableToken(address indexed underlyingToken);
+    event EnableToken(address indexed underlyingToken);
 
     constructor(address _targetAddr, address _dTokens) public {
         initialize(_targetAddr, _dTokens);
@@ -38,6 +33,37 @@ contract Handler is ERC20SafeTransfer, Pausable {
         targetAddr = _targetAddr;
         dTokens = _dTokens;
         initialized = true;
+    }
+
+    /**
+     * @dev Authorized function to disable an underlying token.
+     * @param _underlyingToken Token to disable.
+     */
+    function disableToken(address _underlyingToken) external auth {
+        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
+        tokensEnable[_underlyingToken] = false;
+        emit DisableToken(_underlyingToken);
+    }
+
+    /**
+     * @dev Authorized function to enable an underlying token.
+     * @param _underlyingToken Token to enable.
+     */
+    function enableToken(address _underlyingToken) external auth {
+        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
+        tokensEnable[_underlyingToken] = true;
+        emit EnableToken(_underlyingToken);
+    }
+
+    /**
+     * @dev Update market contract address.
+     * @param _newTargetAddr The new market contract address.
+     */
+    function setTargetAddr(address _newTargetAddr) external auth {
+        require(_newTargetAddr != targetAddr, "setTargetAddr: The same market address!");
+        address _originalTargetAddr = targetAddr;
+        targetAddr = _newTargetAddr;
+        emit NewdTargetAddr(_originalTargetAddr, _newTargetAddr);
     }
 
     /**
@@ -127,40 +153,6 @@ contract Handler is ERC20SafeTransfer, Pausable {
     }
 
     /**
-     * @dev Redeem token from market, but only for dToken contract.
-     * @param _underlyingToken Token to redeem.
-     * @param _amount Token amount to redeem.
-     * @return Actually redeem token amount.
-     */
-    function redeem(address _underlyingToken, uint256 _amount)
-        external
-        auth
-        whenNotPaused
-        returns (uint256, uint256)
-    {
-        uint256 _previousBalance = getBalance(_underlyingToken);
-        (uint256 _principalBalance, ) = ILendFMe(targetAddr).supplyBalances(
-            address(this),
-            _underlyingToken
-        );
-
-        uint256 _periodInterests = _previousBalance.sub(_principalBalance);
-        interestsDetails[_underlyingToken] = interestsDetails[_underlyingToken]
-            .add(_periodInterests);
-
-        if (_amount == 0) {
-            return (uint256(0), uint256(0));
-        }
-        require(
-            ILendFMe(targetAddr).withdraw(address(_underlyingToken), _amount) ==
-                0,
-            "redeem: Fail to redeem from money market!"
-        );
-
-        return (_amount, _amount);
-    }
-
-    /**
      * @dev Supply balance with any accumulated interest for `_underlyingToken` belonging to `handler`
      * @param _underlyingToken Token to get balance.
      */
@@ -202,31 +194,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
         view
         returns (uint256)
     {
-        return getLiquidity(_underlyingToken);
-    }
-
-    /**
-     * @dev Calculate the actual amount of token that has excluded exchange fee
-     *      between token and wrapped token, if has.
-     * @param _pie Token amount to get.
-     */
-    function getRealAmount(uint256 _pie) external view returns (uint256) {
-        return _pie;
-    }
-
-    /**
-     * @dev Get token `_underlyingToken` APR in the market.
-     * @param _underlyingToken Token to get APR.
-     */
-    function getInterestRate(address _underlyingToken)
-        external
-        view
-        returns (uint256)
-    {
-        (, , , , uint256 _apr, , , , ) = ILendFMe(targetAddr).markets(
-            _underlyingToken
-        );
-        return _apr.mul(2102400);
+        return getBalance(_underlyingToken);
     }
 
     function getTargetAddress() external view returns (address) {
