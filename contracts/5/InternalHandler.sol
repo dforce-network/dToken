@@ -160,5 +160,4 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     {
         return getLiquidity(_underlyingToken);
     }
-
 }
