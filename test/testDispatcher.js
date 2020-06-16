@@ -122,7 +122,7 @@ describe("Dispatcher Contract", function () {
 
       await dispatcher.updatePropotion(handler_addresses, proportions);
 
-      let { 0: h, 1: p } = await dispatcher.getHandler();
+      let {0: h, 1: p} = await dispatcher.getHandler();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -175,7 +175,7 @@ describe("Dispatcher Contract", function () {
         (await InternalHandler.new(dtoken_addresses.address)).address,
       ];
       await truffleAssert.reverts(
-        dispatcher.addHandler(new_handlers, { from: account1 }),
+        dispatcher.addHandler(new_handlers, {from: account1}),
         "ds-auth-unauthorized"
       );
     });
@@ -258,7 +258,7 @@ describe("Dispatcher Contract", function () {
     });
 
     it("Should get Handler", async function () {
-      let { 0: h, 1: p } = await dispatcher.getHandler();
+      let {0: h, 1: p} = await dispatcher.getHandler();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -276,7 +276,7 @@ describe("Dispatcher Contract", function () {
 
     it("Should get deposit strategy", async function () {
       let amounts = [10000000, 0, 0, 0, 0];
-      let { 0: h, 1: p } = await dispatcher.getDepositStrategy(10000000);
+      let {0: h, 1: p} = await dispatcher.getDepositStrategy(10000000);
 
       assert_handlers_equal(
         h,
@@ -288,7 +288,7 @@ describe("Dispatcher Contract", function () {
 
     it("Should not get empty deposit strategy if any handler is paused", async function () {
       await handlers[3].pause();
-      let { 0: h, 1: p } = await dispatcher.getDepositStrategy(10000000);
+      let {0: h, 1: p} = await dispatcher.getDepositStrategy(10000000);
 
       assert.equal(h.length, 0);
       assert.equal(p.length, 0);
@@ -309,24 +309,31 @@ describe("Dispatcher Contract", function () {
       await USDC.allocateTo(handler_addresses[3], 5000e6);
       await USDC.allocateTo(handler_addresses[4], 500e6);
 
-      let amounts = [1000e6, 0, 3000e6, 5000e6, 0];
-      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
+      let sorted = [
+        handler_addresses[0],
+        handler_addresses[3],
+        handler_addresses[2],
+        handler_addresses[1],
+        handler_addresses[4],
+      ];
+      let amounts = [3000e6, 6000e6, 0, 0, 0];
+      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
 
-      console.log(
-        handler_addresses,
-        h,
-        p.map((p) => p.toNumber())
-      );
-
-      // assert_handlers_equal(
-      //   h,
+      // console.log(
       //   handler_addresses,
-      //   p.map((p) => p.toNumber()),
-      //   amounts
+      //   h,
+      //   p.map((p) => p.toNumber())
       // );
+
+      assert_handlers_equal(
+        h,
+        sorted,
+        p.map((p) => p.toNumber()),
+        amounts
+      );
     });
 
     it("Should get withdraw strategy 2", async function () {
@@ -337,35 +344,69 @@ describe("Dispatcher Contract", function () {
       await USDC.allocateTo(handler_addresses[3], 5000e6);
       await USDC.allocateTo(handler_addresses[4], 500e6);
 
+      let sorted = [
+        handler_addresses[0],
+        handler_addresses[3],
+        handler_addresses[2],
+        handler_addresses[1],
+        handler_addresses[4],
+      ];
       let amounts = [1500e6, 0, 0, 0, 0];
-      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
+      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
         USDC.address,
         1500e6
       );
 
-      console.log(
-        h,
-        p.map((p) => p.toNumber())
-      );
-
-      // assert_handlers_equal(
-      //   h,
+      // console.log(
       //   handler_addresses,
-      //   p.map((p) => p.toNumber()),
-      //   amounts
+      //   h,
+      //   p.map((p) => p.toNumber())
       // );
+
+      assert_handlers_equal(
+        h,
+        sorted,
+        p.map((p) => p.toNumber()),
+        amounts
+      );
     });
 
-    it("Should not get empty deposit strategy if any handler is paused", async function () {
+    it("Should not get empty deposit strategy if any handler is paused and restore after unpause", async function () {
       await USDC.allocateTo(handler_addresses[0], 2000e6);
+      await USDC.allocateTo(handler_addresses[1], 1000e6);
+      await USDC.allocateTo(handler_addresses[2], 3000e6);
+      await USDC.allocateTo(handler_addresses[3], 5000e6);
+      await USDC.allocateTo(handler_addresses[4], 500e6);
+
       await handlers[3].pause();
-      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
+      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
         USDC.address,
-        10000000
+        9000e6
       );
 
       assert.equal(h.length, 0);
       assert.equal(p.length, 0);
+
+      await handlers[3].unpause();
+      let {0: h1, 1: p1} = await dispatcher.getWithdrawStrategy(
+        USDC.address,
+        9000e6
+      );
+
+      let sorted = [
+        handler_addresses[0],
+        handler_addresses[3],
+        handler_addresses[2],
+        handler_addresses[1],
+        handler_addresses[4],
+      ];
+      let amounts = [3000e6, 6000e6, 0, 0, 0];
+      assert_handlers_equal(
+        h1,
+        sorted,
+        p1.map((p) => p.toNumber()),
+        amounts
+      );
     });
   });
 });
