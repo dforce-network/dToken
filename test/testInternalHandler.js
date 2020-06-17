@@ -75,7 +75,7 @@ describe("InternalHandler contract", function () {
     it("Should not allow set dTokens with the same address", async function () {
       await truffleAssert.reverts(
         handler.setdTokens(await handler.dTokens()),
-        "setdTokens: The same dToken address!"
+        "setdTokens: The same dToken mapping contract address!"
       );
     });
   });
@@ -87,7 +87,7 @@ describe("InternalHandler contract", function () {
 
     it("Should only allow auth to disable token", async function () {
       await handler.disableToken(USDC.address);
-      assert.equal(await handler.tokensEnable(USDC.address), false);
+      assert.equal(await handler.tokenIsEnabled(USDC.address), false);
 
       await truffleAssert.reverts(
         handler.disableToken(USDC.address, {
@@ -106,7 +106,7 @@ describe("InternalHandler contract", function () {
 
     it("Should only allow auth to enable token", async function () {
       await handler.enableToken(USDC.address);
-      assert.equal(await handler.tokensEnable(USDC.address), true);
+      assert.equal(await handler.tokenIsEnabled(USDC.address), true);
 
       await truffleAssert.reverts(
         handler.enableToken(USDC.address, {
@@ -166,7 +166,7 @@ describe("InternalHandler contract", function () {
     it("Should not deposit with disabled token", async function () {
       await truffleAssert.reverts(
         handler.deposit(mock_dtoken, 1000e6),
-        "deposit: token is disabled!"
+        "deposit: Token is disabled!"
       );
     });
 

@@ -144,7 +144,7 @@ describe("DToken Contract", function () {
       // Now try to mint 1 underlying token whose value is < 1 dtoken
       await truffleAssert.reverts(
         dUSDC.mint(account1, 1, { from: account1 }),
-        "mint: "
+        "mint:"
       );
     });
   });
