@@ -132,11 +132,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @param _newFeeRecipient The address allowed to collect fees.
      */
     function setFeeRecipient(address _newFeeRecipient) external auth {
-        require(
-            _newFeeRecipient != address(0),
-            "cannot set fee recipient to address zero"
-        );
         address _oldFeeRecipient = feeRecipient;
+        require(
+            _newFeeRecipient != address(0) &&
+                _newFeeRecipient != _oldFeeRecipient,
+            "setFeeRecipient: feeRecipient address is wrong."
+        );
         feeRecipient = _newFeeRecipient;
         emit FeeRecipientSet(_oldFeeRecipient, feeRecipient);
     }
@@ -149,8 +150,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     function updateDispatcher(address _newDispatcher) external auth {
         address _oldDispatcher = dispatcher;
         require(
-            _newDispatcher != _oldDispatcher,
-            "updateDispatcher: same dispatcher address."
+            _newDispatcher != address(0) && _newDispatcher != _oldDispatcher,
+            "updateDispatcher: dispatcher address is wrong."
         );
         dispatcher = _newDispatcher;
         emit NewDispatcher(_newDispatcher, _oldDispatcher);
