@@ -13,7 +13,6 @@ interface IDispatcher {
 
     function getWithdrawStrategy(address _token, uint256 _amount)
         external
-        view
         returns (address[] memory, uint256[] memory);
 
     function handlerActive(address _handler) external view returns (bool);

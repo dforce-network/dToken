@@ -209,15 +209,26 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address[] calldata _supply,
         uint256[] calldata _supplyAmount
     ) external auth {
+        require(
+            _withdraw.length == _withdrawAmount.length &&
+                _supply.length == _supplyAmount.length,
+            "rebalance: array parameters mismatch"
+        );
         address _token = token;
         address _defaultHandler = IDispatcher(dispatcher).defaultHandler();
+        uint256[] memory _withdrawAmountResult = new uint256[](
+            _withdrawAmount.length
+        );
         for (uint256 i = 0; i < _withdraw.length; i++) {
-            if (_withdrawAmount[i] == 0 || _defaultHandler == _supply[i])
+            _withdrawAmountResult[i] = _withdrawAmount[i] == uint256(-1)
+                ? IHandler(_withdraw[i]).getRealBalance(_token)
+                : _withdrawAmount[i];
+            if (_withdrawAmount[i] == 0 || _defaultHandler == _withdraw[i])
                 continue;
 
             require(
                 IHandler(_withdraw[i]).withdraw(_token, _withdrawAmount[i]) ==
-                    _withdrawAmount[i],
+                    _withdrawAmountResult[i],
                 "rebalance: "
             );
             require(
@@ -258,7 +269,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         emit Rebalance(
             msg.sender,
             _withdraw,
-            _withdrawAmount,
+            _withdrawAmountResult,
             _supply,
             _supplyAmount
         );
@@ -302,8 +313,30 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
         return
             totalSupply == 0 || _totalToken == 0
-                ? BASE
+                ? data.exchangeRate
                 : rdiv(_totalToken, totalSupply);
+    }
+
+    function updateInterest(address _account, uint256 _exchangeRate) internal {
+        Balance storage _balance = balances[_account];
+        if (
+            _balance.exchangeRate > 0 && _exchangeRate > _balance.exchangeRate
+        ) {
+            uint256 _interestIncrease = rmul(
+                _exchangeRate.sub(_balance.exchangeRate),
+                _balance.value
+            );
+            _balance.interest = _balance.interest.add(_interestIncrease);
+            data.totalInterest = data.totalInterest.add(_interestIncrease);
+            emit Interest(
+                _account,
+                _balance.interest,
+                _interestIncrease,
+                data.totalInterest
+            );
+        }
+        _balance.exchangeRate = _exchangeRate;
+        data.exchangeRate = _exchangeRate;
     }
 
     struct MintLocalVars {
@@ -378,35 +411,13 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
-        Balance storage _balance = balances[_dst];
-        if (
-            _balance.exchangeRate > 0 &&
-            _mintLocal.exchangeRate > _balance.exchangeRate
-        ) {
-            _mintLocal.interestIncrease = rmul(
-                _mintLocal.exchangeRate.sub(_balance.exchangeRate),
-                _balance.value
-            );
-            _balance.interest = _balance.interest.add(
-                _mintLocal.interestIncrease
-            );
-            data.totalInterest = data.totalInterest.add(
-                _mintLocal.interestIncrease
-            );
-            emit Interest(
-                _dst,
-                _balance.interest,
-                _mintLocal.interestIncrease,
-                data.totalInterest
-            );
-        }
-        _balance.exchangeRate = _mintLocal.exchangeRate;
-        data.exchangeRate = _mintLocal.exchangeRate;
-
         // Calculate amount of the dToken based on current exchange rate.
         _mintLocal.wad = rdiv(_mintLocal.mintAmount, _mintLocal.exchangeRate);
         require(_mintLocal.wad > 0, "mint:");
 
+        updateInterest(_dst, _mintLocal.exchangeRate);
+
+        Balance storage _balance = balances[_dst];
         _balance.value = _balance.value.add(_mintLocal.wad);
         totalSupply = totalSupply.add(_mintLocal.wad);
 
@@ -448,6 +459,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         BurnLocalVars memory _burnLocal;
 
         _burnLocal.token = token;
+        // Get current exchange rate.
+        _burnLocal.exchangeRate = getCurrentExchangeRateByHandler(
+            _burnLocal.handlers,
+            _burnLocal.token
+        );
+
         // Get `_token` best withdraw strategy base on the withdraw amount `_pie`.
         (_burnLocal.handlers, _burnLocal.amounts) = IDispatcher(dispatcher)
             .getWithdrawStrategy(
@@ -455,12 +472,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             rmul(_wad, _burnLocal.exchangeRate)
         );
         require(_burnLocal.handlers.length > 0, "burn:");
-
-        // Get current exchange rate.
-        _burnLocal.exchangeRate = getCurrentExchangeRateByHandler(
-            _burnLocal.handlers,
-            _burnLocal.token
-        );
 
         _burnLocal.originationFee = originationFee[msg.sig];
         for (uint256 i = 0; i < _burnLocal.handlers.length; i++) {
@@ -510,31 +521,9 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
-        Balance storage _balance = balances[_src];
-        if (
-            _balance.exchangeRate > 0 &&
-            _burnLocal.exchangeRate > _balance.exchangeRate
-        ) {
-            _burnLocal.interestIncrease = rmul(
-                _burnLocal.exchangeRate.sub(_balance.exchangeRate),
-                _balance.value
-            );
-            _balance.interest = _balance.interest.add(
-                _burnLocal.interestIncrease
-            );
-            data.totalInterest = data.totalInterest.add(
-                _burnLocal.interestIncrease
-            );
-            emit Interest(
-                _src,
-                _balance.interest,
-                _burnLocal.interestIncrease,
-                data.totalInterest
-            );
-        }
-        _balance.exchangeRate = _burnLocal.exchangeRate;
-        data.exchangeRate = _burnLocal.exchangeRate;
+        updateInterest(_src, _burnLocal.exchangeRate);
 
+        Balance storage _balance = balances[_src];
         require(_balance.value >= _wad, "burn: insufficient balance");
         if (_src != msg.sender && allowance[_src][msg.sender] != uint256(-1)) {
             require(
@@ -649,31 +638,9 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _redeemLocal.exchangeRate
         );
 
-        Balance storage _balance = balances[_src];
-        if (
-            _balance.exchangeRate > 0 &&
-            _redeemLocal.exchangeRate > _balance.exchangeRate
-        ) {
-            _redeemLocal.interestIncrease = rmul(
-                _redeemLocal.exchangeRate.sub(_balance.exchangeRate),
-                _balance.value
-            );
-            _balance.interest = _balance.interest.add(
-                _redeemLocal.interestIncrease
-            );
-            data.totalInterest = data.totalInterest.add(
-                _redeemLocal.interestIncrease
-            );
-            emit Interest(
-                _src,
-                _balance.interest,
-                _redeemLocal.interestIncrease,
-                data.totalInterest
-            );
-        }
-        _balance.exchangeRate = _redeemLocal.exchangeRate;
-        data.exchangeRate = _redeemLocal.exchangeRate;
+        updateInterest(_src, _redeemLocal.exchangeRate);
 
+        Balance storage _balance = balances[_src];
         require(
             _balance.value >= _redeemLocal.wad,
             "redeem: insufficient balance"
@@ -709,7 +676,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address _src,
         address _dst,
         uint256 _wad
-    ) public nonReentrant returns (bool) {
+    ) public nonReentrant whenNotPaused returns (bool) {
         Balance storage _srcBalance = balances[_src];
         require(
             _srcBalance.value >= _wad,
@@ -724,47 +691,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         }
 
         uint256 _exchangeRate = getCurrentExchangeRate();
-        uint256 _interestIncrease;
-        if (
-            _srcBalance.exchangeRate > 0 &&
-            _exchangeRate > _srcBalance.exchangeRate
-        ) {
-            _interestIncrease = rmul(
-                _exchangeRate.sub(_srcBalance.exchangeRate),
-                _srcBalance.value
-            );
-            _srcBalance.interest = _srcBalance.interest.add(_interestIncrease);
-            data.totalInterest = data.totalInterest.add(_interestIncrease);
-            emit Interest(
-                _src,
-                _srcBalance.interest,
-                _interestIncrease,
-                data.totalInterest
-            );
-        }
+        updateInterest(_src, _exchangeRate);
+        updateInterest(_dst, _exchangeRate);
 
         Balance storage _dstBalance = balances[_dst];
-        if (
-            _dstBalance.exchangeRate > 0 &&
-            _exchangeRate > _dstBalance.exchangeRate
-        ) {
-            _interestIncrease = rmul(
-                _exchangeRate.sub(_dstBalance.exchangeRate),
-                _srcBalance.value
-            );
-            _dstBalance.interest = _dstBalance.interest.add(_interestIncrease);
-            data.totalInterest = data.totalInterest.add(_interestIncrease);
-            emit Interest(
-                _dst,
-                _dstBalance.interest,
-                _interestIncrease,
-                data.totalInterest
-            );
-        }
-        _srcBalance.exchangeRate = _exchangeRate;
-        _dstBalance.exchangeRate = _exchangeRate;
-        data.exchangeRate = _exchangeRate;
-
         _srcBalance.value = _srcBalance.value.sub(_wad);
         _dstBalance.value = _dstBalance.value.add(_wad);
 
@@ -772,10 +702,28 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         return true;
     }
 
-    function approve(address _spender, uint256 _wad) external returns (bool) {
+    function approve(address _spender, uint256 _wad) public returns (bool) {
         allowance[msg.sender][_spender] = _wad;
         emit Approval(msg.sender, _spender, _wad);
         return true;
+    }
+
+    function increaseAllowance(address spender, uint256 addedValue)
+        external
+        returns (bool)
+    {
+        return approve(spender, allowance[msg.sender][spender].add(addedValue));
+    }
+
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        external
+        returns (bool)
+    {
+        return
+            approve(
+                spender,
+                allowance[msg.sender][spender].sub(subtractedValue)
+            );
     }
 
     function balanceOf(address account) external view returns (uint256) {
@@ -808,13 +756,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                     getExchangeRate().sub(balances[_account].exchangeRate),
                     balances[_account].value
                 )
-            );
-    }
-
-    function getCurrentTotalInterest() external view returns (uint256) {
-        return
-            data.totalInterest.add(
-                rmul(getExchangeRate().sub(data.exchangeRate), totalSupply)
             );
     }
 
@@ -857,19 +798,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      */
     function getExchangeRate() public view returns (uint256) {
         address[] memory _handlers = getHandler();
-        return getExchangeRateByHandler(_handlers, token);
-    }
-
-    /**
-     * @dev According to `_handlers` and token amount `_token` to calculate the exchange rate.
-     * @param _handlers The list of `_handlers`.
-     * @param _token Token address.
-     * @return Current exchange rate between token and dToken.
-     */
-    function getExchangeRateByHandler(
-        address[] memory _handlers,
-        address _token
-    ) public view returns (uint256) {
+        address _token = token;
         uint256 _totalToken = 0;
         for (uint256 i = 0; i < _handlers.length; i++)
             _totalToken = _totalToken.add(
@@ -878,7 +807,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
         return
             totalSupply == 0 || _totalToken == 0
-                ? BASE
+                ? data.exchangeRate
                 : rdiv(_totalToken, totalSupply);
     }
 }

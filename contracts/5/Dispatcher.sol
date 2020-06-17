@@ -88,9 +88,10 @@ contract Dispatcher is DSAuth {
     ) private {
         // The length of `_handlers` must be equal to the length of `_propotions`.
         require(
-            _handlers.length == _propotions.length,
+            _handlers.length == _propotions.length && _handlers.length > 0,
             "setHandler: array parameters mismatch"
         );
+        defaultHandler = _handlers[0];
         uint256 _sum = 0;
         for (uint256 i = 0; i < _handlers.length; i++) {
             require(
@@ -102,7 +103,6 @@ contract Dispatcher is DSAuth {
                 "setHandler: handler contract address already exists"
             );
             _sum = _sum.add(_propotions[i]);
-            if (_propotions[i] == totalPropotion) defaultHandler = _handlers[i];
 
             handlers.push(_handlers[i]);
             propotions[_handlers[i]] = _propotions[i];
@@ -290,7 +290,6 @@ contract Dispatcher is DSAuth {
      */
     function getWithdrawStrategy(address _token, uint256 _amount)
         external
-        view
         returns (address[] memory, uint256[] memory)
     {
         address[] memory _handlers = handlers;
@@ -308,7 +307,7 @@ contract Dispatcher is DSAuth {
         uint256 _balance;
 
         _withdrawHandlers[0] = _defaultHandler;
-        _balance = IHandler(_defaultHandler).getLiquidity(_token);
+        _balance = IHandler(_defaultHandler).getRealLiquidity(_token);
         _amounts[0] = _balance > _amount ? _amount : _balance;
         _amount = _amount.sub(_amounts[0]);
 
@@ -332,7 +331,7 @@ contract Dispatcher is DSAuth {
                 break;
             }
             // The minimum amount can be withdrew from corresponding market.
-            _balance = IHandler(_handlers[i]).getLiquidity(_token);
+            _balance = IHandler(_handlers[i]).getRealLiquidity(_token);
             _amounts[i + _index] = _balance > _amount ? _amount : _balance;
             _amount = _amount.sub(_amounts[i + _index]);
         }

@@ -11,6 +11,8 @@ interface IHandler {
 
     function getRealBalance(address _token) external returns (uint256);
 
+    function getRealLiquidity(address _token) external returns (uint256);
+
     function getBalance(address _token) external view returns (uint256);
 
     function getLiquidity(address _token) external view returns (uint256);
