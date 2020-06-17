@@ -18,9 +18,12 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     address public aaveLendingPoolCore;
 
     mapping(address => bool) public tokensEnable;
-    mapping(address => uint256) public interestsDetails;
+    mapping(address => uint256) public interestDetails;
 
-    event NewdTokenAddresses(address indexed originaldToken, address indexed newdToken);
+    event NewdTokenAddresses(
+        address indexed originaldToken,
+        address indexed newdToken
+    );
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
@@ -65,7 +68,10 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to disable.
      */
     function disableToken(address _underlyingToken) external auth {
-        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
+        require(
+            tokensEnable[_underlyingToken],
+            "disableToken: Has been disabled!"
+        );
         tokensEnable[_underlyingToken] = false;
         emit DisableToken(_underlyingToken);
     }
@@ -75,7 +81,10 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to enable.
      */
     function enableToken(address _underlyingToken) external auth {
-        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
+        require(
+            !tokensEnable[_underlyingToken],
+            "enableToken: Has been enabled!"
+        );
         tokensEnable[_underlyingToken] = true;
         emit EnableToken(_underlyingToken);
     }
@@ -130,34 +139,26 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         nonReentrant
         returns (uint256)
     {
-        require(tokensEnable[_underlyingToken], "deposit: token is disabled!");
+        require(tokensEnable[_underlyingToken], "deposit: Token is disabled!");
 
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
         );
         address _aToken = getaToken(_underlyingToken);
-        require(_aToken != address(0x0), "supply: Do not support token!");
+        require(_aToken != address(0x0), "deposit: Do not support token!");
 
-        uint256 _previousBalance = getBalance(_underlyingToken);
+        uint256 _lastTotalBalance = _updateInterest(_underlyingToken);
 
-        uint256 _principalBalance = getUnderlyingBalance(_underlyingToken);
-        if (_previousBalance > _principalBalance) {
-            uint256 _periodInterests = _previousBalance.sub(_principalBalance);
-            interestsDetails[_underlyingToken] = interestsDetails[_underlyingToken]
-                .add(_periodInterests);
-        }
-        // TODO: 0(uint16)?
         LendingPool(aaveLendingPool).deposit(
             _underlyingToken,
             _amount,
             uint16(0)
         );
-        uint256 _currentBalance = getBalance(_underlyingToken);
+        uint256 _currentTotalBalance = getBalance(_underlyingToken);
 
-        uint256 _changedAmount = _currentBalance.sub(_previousBalance);
-
-        return _changedAmount;
+        // return change amount.
+        return _currentTotalBalance.sub(_lastTotalBalance);
     }
 
     /**
@@ -174,40 +175,67 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         returns (uint256)
     {
         address _aToken = getaToken(_underlyingToken);
-        require(_aToken != address(0x0), "redeem: Do not support token!");
+        require(_aToken != address(0x0), "withdraw: Do not support token!");
 
-        require(_amount > 0, "redeem: Redeem amount should be greater than 0!");
+        require(
+            _amount > 0,
+            "withdraw: Withdraw amount should be greater than 0!"
+        );
 
-        uint256 _lastPrincipalBalance = getBalance(_underlyingToken);
-        uint256 _principalBalance = getUnderlyingBalance(_underlyingToken);
-        if (_lastPrincipalBalance > _principalBalance) {
-            uint256 _periodInterests = _lastPrincipalBalance.sub(
-                _principalBalance
-            );
-            interestsDetails[_underlyingToken] = interestsDetails[_underlyingToken]
-                .add(_periodInterests);
-        }
+        _updateInterest(_underlyingToken);
 
         // aave supports redeem -1
-        uint256 _previousBalance = IERC20(_underlyingToken).balanceOf(
+        uint256 _previousHandlerBalance = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
         AToken(_aToken).redeem(_amount);
-        uint256 _currentBalance = IERC20(_underlyingToken).balanceOf(
+        uint256 _currentHandlerBalance = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
 
-        uint256 _changedAmount = _currentBalance.sub(_previousBalance);
-
-        return _changedAmount;
+        // return change amount
+        return _currentHandlerBalance.sub(_previousHandlerBalance);
     }
 
     /**
-     * @dev Total balance with any accumulated interest for `_token` belonging to `handler`
-     * @param _token Token to get balance.
+     * @dev Update the handler deposit interest based on the underlying token.
      */
-    function getBalance(address _token) public view returns (uint256) {
-        address _aToken = getaToken(_token);
+    function _updateInterest(address _underlyingToken)
+        internal
+        returns (uint256)
+    {
+        uint256 _lastTotalBalance = getBalance(_underlyingToken);
+
+        uint256 _periodInterests = _lastTotalBalance.sub(
+            getUnderlyingBalance(_underlyingToken)
+        );
+        interestDetails[_underlyingToken] = interestDetails[_underlyingToken]
+            .add(_periodInterests);
+
+        return _lastTotalBalance;
+    }
+
+    /**
+     * @dev Support token or not.
+     */
+    function tokenIsEnabled(address _underlyingToken)
+        public
+        view
+        returns (bool)
+    {
+        return tokensEnable[_underlyingToken];
+    }
+
+    /**
+     * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`
+     * @param _underlyingToken Token to get balance.
+     */
+    function getBalance(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        address _aToken = getaToken(_underlyingToken);
 
         return AToken(_aToken).balanceOf(address(this));
     }
@@ -215,26 +243,30 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     /**
      * @dev The principal balance.
      */
-    function getUnderlyingBalance(address _token)
+    function getUnderlyingBalance(address _underlyingToken)
         public
         view
         returns (uint256)
     {
-        address _aToken = getaToken(_token);
+        address _aToken = getaToken(_underlyingToken);
         return AToken(_aToken).principalBalanceOf(address(this));
     }
 
     /**
-     * @dev The maximum withdrawable amount of token `_token` in the market.
-     * @param _token Token to get balance.
+     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get balance.
      */
-    function getLiquidity(address _token) public view returns (uint256) {
-        uint256 _underlyingBalance = getBalance(_token);
+    function getLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 _underlyingBalance = getBalance(_underlyingToken);
         if (_underlyingBalance == 0) {
             return 0;
         }
 
-        uint256 _cash = IERC20(_token).balanceOf(aaveLendingPoolCore);
+        uint256 _cash = IERC20(_underlyingToken).balanceOf(aaveLendingPoolCore);
 
         if (_underlyingBalance > _cash) {
             return _cash;
@@ -244,18 +276,33 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev The maximum withdrawable amount of asset `_token` in the market,
+     * @dev The maximum withdrawable amount of asset `_underlyingToken` in the market,
      *      and excludes fee, if has.
-     * @param _token Token to get actual balance.
+     * @param _underlyingToken Token to get actual balance.
      */
-    function getRealBalance(address _token) external returns (uint256) {
-        return getBalance(_token);
+    function getRealBalance(address _underlyingToken)
+        external
+        returns (uint256)
+    {
+        return getBalance(_underlyingToken);
     }
 
-    function getaToken(address _token) public view returns (address) {
+    /**
+     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get balance.
+     */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        return getLiquidity(_underlyingToken);
+    }
+
+    function getaToken(address _underlyingToken) public view returns (address) {
         return
             LendingPoolCore(aaveLendingPoolCore).getReserveATokenAddress(
-                _token
+                _underlyingToken
             );
     }
 }

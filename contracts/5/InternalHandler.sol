@@ -11,9 +11,12 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     bool private initialized; // Flags for initializing data
     address public dTokens; // dToken mapping contract
 
-    mapping(address => bool) public tokensEnable; // Supports token or not
+    mapping(address => bool) private tokensEnable; // Supports token or not
 
-    event NewdTokenAddresses(address indexed originaldToken, address indexed newdToken);
+    event NewdTokenAddresses(
+        address indexed originaldToken,
+        address indexed newdToken
+    );
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
@@ -32,11 +35,14 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Update dToken mapping contract, such as USDC => dUSDC.
+     * @dev Update dToken mapping contract.
      * @param _newdTokens The new dToken mapping contact.
      */
     function setdTokens(address _newdTokens) external auth {
-        require(_newdTokens != dTokens, "setdTokens: The same dToken address!");
+        require(
+            _newdTokens != dTokens,
+            "setdTokens: The same dToken mapping contract address!"
+        );
         address _originaldTokens = dTokens;
         dTokens = _newdTokens;
         emit NewdTokenAddresses(_originaldTokens, _newdTokens);
@@ -47,7 +53,10 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to disable.
      */
     function disableToken(address _underlyingToken) external auth {
-        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
+        require(
+            tokensEnable[_underlyingToken],
+            "disableToken: Has been disabled!"
+        );
         tokensEnable[_underlyingToken] = false;
         emit DisableToken(_underlyingToken);
     }
@@ -57,7 +66,10 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to enable.
      */
     function enableToken(address _underlyingToken) external auth {
-        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
+        require(
+            !tokensEnable[_underlyingToken],
+            "enableToken: Has been enabled!"
+        );
         tokensEnable[_underlyingToken] = true;
         emit EnableToken(_underlyingToken);
     }
@@ -91,7 +103,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         nonReentrant
         returns (uint256)
     {
-        require(tokensEnable[_underlyingToken], "deposit: token is disabled!");
+        require(tokensEnable[_underlyingToken], "deposit: Token is disabled!");
         return _amount;
     }
 
@@ -108,16 +120,25 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         nonReentrant
         returns (uint256)
     {
-        // TODO: fail or not?
-        if (
-            _amount == 0 ||
-            IERC20(_underlyingToken).balanceOf(address(this)) < _amount
-        ) return 0;
-        return _amount;
+        return
+            _amount == uint256(-1)
+                ? IERC20(_underlyingToken).balanceOf(address(this))
+                : _amount;
     }
 
     /**
-     * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`
+     * @dev Support token or not.
+     */
+    function tokenIsEnabled(address _underlyingToken)
+        public
+        view
+        returns (bool)
+    {
+        return tokensEnable[_underlyingToken];
+    }
+
+    /**
+     * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
      * @param _underlyingToken Token to get balance.
      */
     function getBalance(address _underlyingToken)
@@ -130,7 +151,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
     /**
      * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
-     * @param _underlyingToken Token to get balance.
+     * @param _underlyingToken Token to get liquidity.
      */
     function getLiquidity(address _underlyingToken)
         public
@@ -141,14 +162,26 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev The maximum withdrawable amount of asset `_underlyingToken` in the market,
-     *      and excludes fee, if has.
+     * @dev The latest total balance with any accumulated interest for `_underlyingToken` belonging
+     *       to `handler`.
      * @param _underlyingToken Token to get actual balance.
      */
     function getRealBalance(address _underlyingToken)
         external
         returns (uint256)
     {
-        return getLiquidity(_underlyingToken);
+        return getBalance(_underlyingToken);
+    }
+
+    /**
+     * @dev The latest maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get liquidity.
+     */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        return getBalance(_underlyingToken);
     }
 }

@@ -19,5 +19,8 @@ interface IHandler {
 
     function paused() external view returns (bool);
 
-    function tokensEnable(address _token) external view returns (bool);
+    function tokenIsEnabled(address _underlyingToken)
+        external
+        view
+        returns (bool);
 }

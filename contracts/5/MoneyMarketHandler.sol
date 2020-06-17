@@ -14,10 +14,13 @@ contract Handler is ERC20SafeTransfer, Pausable {
     address public targetAddr; // market address
     address public dTokens; // dToken address
 
-    mapping(address => bool) public tokensEnable;
-    mapping(address => uint256) public interestsDetails;
+    mapping(address => bool) private tokensEnable;
+    mapping(address => uint256) public interestDetails;
 
-    event NewdTargetAddr(address indexed originalTargetAddr, address indexed newTargetAddr);
+    event NewdTargetAddr(
+        address indexed originalTargetAddr,
+        address indexed newTargetAddr
+    );
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
@@ -40,7 +43,10 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @param _underlyingToken Token to disable.
      */
     function disableToken(address _underlyingToken) external auth {
-        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
+        require(
+            tokensEnable[_underlyingToken],
+            "disableToken: Has been disabled!"
+        );
         tokensEnable[_underlyingToken] = false;
         emit DisableToken(_underlyingToken);
     }
@@ -50,7 +56,10 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @param _underlyingToken Token to enable.
      */
     function enableToken(address _underlyingToken) external auth {
-        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
+        require(
+            !tokensEnable[_underlyingToken],
+            "enableToken: Has been enabled!"
+        );
         tokensEnable[_underlyingToken] = true;
         emit EnableToken(_underlyingToken);
     }
@@ -60,7 +69,10 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @param _newTargetAddr The new market contract address.
      */
     function setTargetAddr(address _newTargetAddr) external auth {
-        require(_newTargetAddr != targetAddr, "setTargetAddr: The same market address!");
+        require(
+            _newTargetAddr != targetAddr,
+            "setTargetAddr: The same market address!"
+        );
         address _originalTargetAddr = targetAddr;
         targetAddr = _newTargetAddr;
         emit NewdTargetAddr(_originalTargetAddr, _newTargetAddr);
@@ -96,20 +108,14 @@ contract Handler is ERC20SafeTransfer, Pausable {
         whenNotPaused
         returns (uint256)
     {
-        require(tokensEnable[_underlyingToken], "deposit: token is disabled!");
-        uint256 _previousBalance = getBalance(_underlyingToken);
-        (uint256 _principalBalance, ) = ILendFMe(targetAddr).supplyBalances(
-            address(this),
-            _underlyingToken
+        require(tokensEnable[_underlyingToken], "deposit: Token is disabled!");
+        require(
+            _amount > 0,
+            "deposit: Deposit amount should be greater than 0!"
         );
 
-        uint256 _periodInterests = _previousBalance.sub(_principalBalance);
-        interestsDetails[_underlyingToken] = interestsDetails[_underlyingToken]
-            .add(_periodInterests);
+        _updateInterest(_underlyingToken);
 
-        if (_amount == 0) {
-            return uint256(0);
-        }
         require(
             ILendFMe(targetAddr).supply(address(_underlyingToken), _amount) ==
                 0,
@@ -130,19 +136,13 @@ contract Handler is ERC20SafeTransfer, Pausable {
         whenNotPaused
         returns (uint256)
     {
-        uint256 _previousBalance = getBalance(_underlyingToken);
-        (uint256 _principalBalance, ) = ILendFMe(targetAddr).supplyBalances(
-            address(this),
-            _underlyingToken
+        require(
+            _amount > 0,
+            "withdraw: Withdraw amount should be greater than 0!"
         );
 
-        uint256 _periodInterests = _previousBalance.sub(_principalBalance);
-        interestsDetails[_underlyingToken] = interestsDetails[_underlyingToken]
-            .add(_periodInterests);
+        _updateInterest(_underlyingToken);
 
-        if (_amount == 0) {
-            return uint256(0);
-        }
         require(
             ILendFMe(targetAddr).withdraw(address(_underlyingToken), _amount) ==
                 0,
@@ -150,6 +150,32 @@ contract Handler is ERC20SafeTransfer, Pausable {
         );
 
         return _amount;
+    }
+
+    /**
+     * @dev Update the handler deposit interest based on the underlying token.
+     */
+    function _updateInterest(address _underlyingToken) internal {
+        uint256 _lastTotalBalance = getBalance(_underlyingToken);
+        (uint256 _lastPrincipalBalance, ) = ILendFMe(targetAddr).supplyBalances(
+            address(this),
+            _underlyingToken
+        );
+
+        uint256 _periodInterests = _lastTotalBalance.sub(_lastPrincipalBalance);
+        interestDetails[_underlyingToken] = interestDetails[_underlyingToken]
+            .add(_periodInterests);
+    }
+
+    /**
+     * @dev Support token or not.
+     */
+    function tokenIsEnabled(address _underlyingToken)
+        public
+        view
+        returns (bool)
+    {
+        return tokensEnable[_underlyingToken];
     }
 
     /**
@@ -195,6 +221,18 @@ contract Handler is ERC20SafeTransfer, Pausable {
         returns (uint256)
     {
         return getBalance(_underlyingToken);
+    }
+
+    /**
+     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get balance.
+     */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        return getLiquidity(_underlyingToken);
     }
 
     function getTargetAddress() external view returns (address) {

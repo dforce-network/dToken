@@ -245,7 +245,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         for (uint256 i = 0; i < _supply.length; i++) {
             require(
                 IDispatcher(dispatcher).handlerActive(_supply[i]) &&
-                    IHandler(_supply[i]).tokensEnable(_token),
+                    IHandler(_supply[i]).tokenIsEnabled(_token),
                 "rebalance: "
             );
             if (_supplyAmount[i] == 0 || _defaultHandler == _supply[i])

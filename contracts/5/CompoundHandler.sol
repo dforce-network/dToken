@@ -14,14 +14,14 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     uint256 internal BASE;
     address public dTokens; // dToken mapping contract
 
-    struct InterestsDetails {
-        uint256 underlyingBalance; // Total underlying balance including interests
-        uint256 interests; // Total interests
+    struct InterestDetails {
+        uint256 totalUnderlyingBalance; // Total underlying balance including interest
+        uint256 interest; // Total interest
     }
-    // Based on underlying token, get current interests
-    mapping(address => InterestsDetails) public interestsDetails;
+    // Based on underlying token, get current interest details
+    mapping(address => InterestDetails) public interestsDetails;
 
-    mapping(address => bool) public tokensEnable; // Supports token or no
+    mapping(address => bool) private tokensEnable; // Supports token or no
 
     mapping(address => address) internal cTokens; //cTokens;
 
@@ -29,7 +29,10 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         address indexed token,
         address indexed mappingcToken
     );
-    event NewdTokenAddresses(address indexed originaldToken, address indexed newdToken);
+    event NewdTokenAddresses(
+        address indexed originaldToken,
+        address indexed newdToken
+    );
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
@@ -53,7 +56,10 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _newdTokens The new dToken mapping contact.
      */
     function setdTokens(address _newdTokens) external auth {
-        require(_newdTokens != dTokens, "setdTokens: The same dToken address!");
+        require(
+            _newdTokens != dTokens,
+            "setdTokens: The same dToken mapping contract address!"
+        );
         address _originaldTokens = dTokens;
         dTokens = _newdTokens;
         emit NewdTokenAddresses(_originaldTokens, _newdTokens);
@@ -64,7 +70,10 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to disable.
      */
     function disableToken(address _underlyingToken) external auth {
-        require(tokensEnable[_underlyingToken], "disableToken: Has been disabled!");
+        require(
+            tokensEnable[_underlyingToken],
+            "disableToken: Has been disabled!"
+        );
         tokensEnable[_underlyingToken] = false;
         emit DisableToken(_underlyingToken);
     }
@@ -74,7 +83,10 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to enable.
      */
     function enableToken(address _underlyingToken) external auth {
-        require(!tokensEnable[_underlyingToken], "enableToken: Has been enabled!");
+        require(
+            !tokensEnable[_underlyingToken],
+            "enableToken: Has been enabled!"
+        );
         tokensEnable[_underlyingToken] = true;
         emit EnableToken(_underlyingToken);
     }
@@ -103,6 +115,10 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     ) internal {
         cTokens[_underlyingToken] = _mappingcToken;
         emit NewMappingcToken(_underlyingToken, _mappingcToken);
+    }
+
+    function rdivup(uint256 x, uint256 y) internal view returns (uint256 z) {
+        z = x.mul(BASE).add(y.sub(1)) / y;
     }
 
     /**
@@ -155,30 +171,29 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         address _cToken = cTokens[_underlyingToken];
         require(_cToken != address(0x0), "deposit: Do not support token!");
 
-        uint256 _previousBalance = getRealBalance(_underlyingToken);
+        uint256 _lastTotalBalance = getRealBalance(_underlyingToken);
 
 
-            InterestsDetails storage currentInterests
+            InterestDetails storage currentInterests
          = interestsDetails[_underlyingToken];
 
-        uint256 _periodInterests = _previousBalance.sub(
-            currentInterests.underlyingBalance
+        uint256 _periodInterests = _lastTotalBalance.sub(
+            currentInterests.totalUnderlyingBalance
         );
 
         require(
             ICompound(_cToken).mint(_amount) == 0,
-            "supply: Fail to supply to compound!"
+            "deposit: Fail to supply to compound!"
         );
-        uint256 _currentBalance = getRealBalance(_underlyingToken);
+        uint256 _currentTotalBalance = getRealBalance(_underlyingToken);
 
-        uint256 _changedAmount = _currentBalance.sub(_previousBalance);
-
-        currentInterests.interests = currentInterests.interests.add(
+        currentInterests.interest = currentInterests.interest.add(
             _periodInterests
         );
-        currentInterests.underlyingBalance = _currentBalance;
+        currentInterests.totalUnderlyingBalance = _currentTotalBalance;
 
-        return _changedAmount;
+        // return change amount.
+        return _currentTotalBalance.sub(_lastTotalBalance);
     }
 
     /**
@@ -195,47 +210,67 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         returns (uint256)
     {
         address _cToken = cTokens[_underlyingToken];
-        require(_cToken != address(0x0), "redeem: Do not support token!");
+        require(_cToken != address(0x0), "withdraw: Do not support token!");
 
-        require(_amount > 0, "redeem: Redeem amount should be greater than 0!");
-
-        uint256 _lastBalance = getRealBalance(_underlyingToken);
-
-
-            InterestsDetails storage currentInterests
-         = interestsDetails[_underlyingToken];
-        uint256 _periodInterests = _lastBalance.sub(
-            currentInterests.underlyingBalance
+        require(
+            _amount > 0,
+            "withdraw: Redeem amount should be greater than 0!"
         );
 
-        uint256 _previousBalance = IERC20(_underlyingToken).balanceOf(
+        uint256 _lastTotalBalance = getRealBalance(_underlyingToken);
+
+
+            InterestDetails storage currentInterests
+         = interestsDetails[_underlyingToken];
+        uint256 _periodInterests = _lastTotalBalance.sub(
+            currentInterests.totalUnderlyingBalance
+        );
+
+        uint256 _previousHandlerBalance = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
 
         if (_amount == uint256(-1)) {
-            uint256 cTokenBalance = ICompound(_cToken).balanceOf(address(this));
+            uint256 _cTokenBalance = ICompound(_cToken).balanceOf(
+                address(this)
+            );
             require(
-                ICompound(_cToken).redeem(cTokenBalance) == 0,
+                ICompound(_cToken).redeem(_cTokenBalance) == 0,
                 "withdraw: Fail to withdraw from market!"
             );
         } else {
+            uint256 _currentExchangeRate = ICompound(_cToken)
+                .exchangeRateCurrent();
+            uint256 _redeemAmount = rdivup(_amount, _currentExchangeRate);
             require(
-                ICompound(_cToken).redeemUnderlying(_amount) == 0,
+                ICompound(_cToken).redeem(_redeemAmount) == 0,
                 "withdraw: Fail to withdraw from market!"
             );
         }
-        uint256 _currentBalance = IERC20(_underlyingToken).balanceOf(
+        uint256 _currentHandlerBalance = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
 
-        uint256 _changedAmount = _currentBalance.sub(_previousBalance);
-
-        currentInterests.interests = currentInterests.interests.add(
+        currentInterests.interest = currentInterests.interest.add(
             _periodInterests
         );
-        currentInterests.underlyingBalance = getRealBalance(_underlyingToken);
+        currentInterests.totalUnderlyingBalance = getRealBalance(
+            _underlyingToken
+        );
 
-        return _changedAmount;
+        // return change amount.
+        return _currentHandlerBalance.sub(_previousHandlerBalance);
+    }
+
+    /**
+     * @dev Support token or not.
+     */
+    function tokenIsEnabled(address _underlyingToken)
+        public
+        view
+        returns (bool)
+    {
+        return tokensEnable[_underlyingToken];
     }
 
     /**
@@ -248,21 +283,21 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         returns (uint256)
     {
         address _cToken = cTokens[_underlyingToken];
-        uint256 cTokenBalance;
-        uint256 exchangeRate;
-        uint256 error;
-        (error, cTokenBalance, , exchangeRate) = ICompound(_cToken)
+        uint256 _cTokenBalance;
+        uint256 _exchangeRate;
+        uint256 _error;
+        (_error, _cTokenBalance, , _exchangeRate) = ICompound(_cToken)
             .getAccountSnapshot(address(this));
-        if (error != 0) {
+        if (_error != 0) {
             return 0;
         }
 
-        return cTokenBalance.mul(exchangeRate) / BASE;
+        return _cTokenBalance.mul(_exchangeRate) / BASE;
     }
 
     /**
      * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
-     * @param _underlyingToken Token to get balance.
+     * @param _underlyingToken Token to get liquidity.
      */
     function getLiquidity(address _underlyingToken)
         public
@@ -275,7 +310,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             return 0;
         }
 
-        uint256 _cash = IERC20(_underlyingToken).balanceOf(_cToken);
+        uint256 _cash = ICompound(_cToken).getCash();
 
         if (_underlyingBalance > _cash) {
             return _cash;
@@ -285,14 +320,37 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Update exchange rate in cToken
-     *      and excludes fee, if has.
+     * @dev Update exchange rate in cToken and get the latest total balance with any accumulated interest
+     *      for `_underlyingToken` belonging to `handler`.
      * @param _underlyingToken Token to get actual balance.
      */
     function getRealBalance(address _underlyingToken) public returns (uint256) {
         address _cToken = cTokens[_underlyingToken];
 
         return ICompound(_cToken).balanceOfUnderlying(address(this));
+    }
+
+    /**
+     * @dev The latest maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get liquidity.
+     */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        returns (uint256)
+    {
+        address _cToken = cTokens[_underlyingToken];
+        uint256 _underlyingBalance = getRealBalance(_underlyingToken);
+        if (_underlyingBalance == 0) {
+            return 0;
+        }
+
+        uint256 _cash = ICompound(_cToken).getCash();
+
+        if (_underlyingBalance > _cash) {
+            return _cash;
+        }
+
+        return _underlyingBalance;
     }
 
     function getcToken(address _underlyingToken)
