@@ -3305,6 +3305,7 @@ contract AToken is ERC20, ERC20Detailed {
         //if the interest of redirectionAddress is also being redirected, we need to update
         //the redirected balance of the redirection target by adding the balance increase
 
+
             address targetOfRedirectionAddress
          = interestRedirectionAddresses[redirectionAddress];
 
@@ -4130,6 +4131,7 @@ contract LendingPoolCore is VersionedInitializable {
     {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
 
+
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_reserve];
 
@@ -4164,6 +4166,7 @@ contract LendingPoolCore is VersionedInitializable {
         uint256 _amount
     ) external view returns (bool) {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
+
 
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_reserve];
@@ -5101,6 +5104,7 @@ contract LendingPoolCore is VersionedInitializable {
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
 
+
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_reserve];
 
@@ -5144,6 +5148,7 @@ contract LendingPoolCore is VersionedInitializable {
         uint256 _balanceIncrease
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
+
 
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_reserve][_user];
@@ -5190,6 +5195,7 @@ contract LendingPoolCore is VersionedInitializable {
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
 
+
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_reserve];
 
@@ -5229,6 +5235,7 @@ contract LendingPoolCore is VersionedInitializable {
         CoreLibrary.InterestRateMode _currentRateMode
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
+
 
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_reserve];
@@ -5319,6 +5326,7 @@ contract LendingPoolCore is VersionedInitializable {
         uint256 _balanceIncrease
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_principalReserve];
+
 
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_principalReserve];
@@ -5416,6 +5424,7 @@ contract LendingPoolCore is VersionedInitializable {
         uint256 _balanceIncrease
     ) internal {
         CoreLibrary.ReserveData storage reserve = reserves[_reserve];
+
 
             CoreLibrary.UserReserveData storage user
          = usersReserveData[_user][_reserve];
