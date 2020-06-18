@@ -278,7 +278,8 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             return 0;
         }
 
-        uint256 _cash = IERC20(_underlyingToken).balanceOf(aaveLendingPoolCore);
+        uint256 _cash = LendingPoolCore(aaveLendingPoolCore)
+            .getReserveAvailableLiquidity(_underlyingToken);
 
         if (_underlyingBalance > _cash) {
             return _cash;

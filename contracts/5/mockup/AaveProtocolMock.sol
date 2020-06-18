@@ -1,0 +1,269 @@
+pragma solidity 0.5.12;
+
+// interfaces
+import "../library/SafeMath.sol";
+
+contract AaveLendingPoolCoreMock {
+    address public reserve;
+    uint256 public liquidity;
+    uint256 public borrowsStable;
+    uint256 public borrowsVariable;
+    uint256 public stableBorrowRate;
+    uint256 public apr;
+    address public aTokenAddress;
+
+    function _setReserve(address _reserve) external {
+        reserve = _reserve;
+    }
+
+    function getReserveAvailableLiquidity(address _reserve)
+        public
+        view
+        returns (uint256)
+    {
+        return liquidity;
+    }
+
+    function setReserveAvailableLiquidity(uint256 _newVal) external {
+        liquidity = _newVal;
+    }
+
+    function getReserveATokenAddress(address _reserve)
+        public
+        view
+        returns (address)
+    {
+        return aTokenAddress;
+    }
+
+    function setReserveATokenAddress(address _newRes) public {
+        aTokenAddress = _newRes;
+    }
+}
+
+contract AaveLendPoolMock {
+    address public usdc;
+    address public aUSDC;
+    address public lendingPoolCore;
+
+    constructor(
+        address _usdc,
+        address _aUSDC,
+        address _core
+    ) public {
+        usdc = _usdc;
+        aUSDC = _aUSDC;
+        lendingPoolCore = _core;
+    }
+
+    function deposit(
+        address,
+        uint256 _amount,
+        uint16
+    ) external payable {
+        // require(IERC20(usdc).transferFrom(tx.origin, lendingPoolCore, _amount), "Error during transferFrom");
+        IERC20(aUSDC)._mint(msg.sender, _amount);
+    }
+
+    function getReserveData(address _reserve)
+        external
+        view
+        returns (
+            uint256 totalLiquidity,
+            uint256 availableLiquidity,
+            uint256 totalBorrowsStable,
+            uint256 totalBorrowsVariable,
+            uint256 liquidityRate,
+            uint256 variableBorrowRate,
+            uint256 stableBorrowRate,
+            uint256 averageStableBorrowRate,
+            uint256 utilizationRate,
+            uint256 liquidityIndex,
+            uint256 variableBorrowIndex,
+            address aTokenAddress,
+            uint40 lastUpdateTimestamp
+        )
+    {
+        aTokenAddress = aUSDC;
+    }
+}
+
+interface IERC20 {
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address recipient, uint256 amount)
+        external
+        returns (bool);
+
+    function allowance(address owner, address spender)
+        external
+        view
+        returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) external returns (bool);
+
+    function _mint(address _account, uint256 _amount) external;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+}
+
+contract ERC20 is IERC20 {
+    using SafeMath for uint256;
+
+    mapping(address => uint256) private _balances;
+
+    mapping(address => mapping(address => uint256)) private _allowances;
+
+    uint256 private _totalSupply;
+
+    function totalSupply() public view returns (uint256) {
+        return _totalSupply;
+    }
+
+    function balanceOf(address account) public view returns (uint256) {
+        return _balances[account];
+    }
+
+    function transfer(address recipient, uint256 amount) public returns (bool) {
+        _transfer(msg.sender, recipient, amount);
+        return true;
+    }
+
+    function allowance(address owner, address spender)
+        public
+        view
+        returns (uint256)
+    {
+        return _allowances[owner][spender];
+    }
+
+    function approve(address spender, uint256 value) public returns (bool) {
+        _approve(msg.sender, spender, value);
+        return true;
+    }
+
+    function transferFrom(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public returns (bool) {
+        _transfer(sender, recipient, amount);
+        _approve(
+            sender,
+            msg.sender,
+            _allowances[sender][msg.sender].sub(amount)
+        );
+        return true;
+    }
+
+    function increaseAllowance(address spender, uint256 addedValue)
+        public
+        returns (bool)
+    {
+        _approve(
+            msg.sender,
+            spender,
+            _allowances[msg.sender][spender].add(addedValue)
+        );
+        return true;
+    }
+
+    function decreaseAllowance(address spender, uint256 subtractedValue)
+        public
+        returns (bool)
+    {
+        _approve(
+            msg.sender,
+            spender,
+            _allowances[msg.sender][spender].sub(subtractedValue)
+        );
+        return true;
+    }
+
+    function _transfer(
+        address sender,
+        address recipient,
+        uint256 amount
+    ) internal {
+        require(sender != address(0), "ERC20: transfer from the zero address");
+        require(recipient != address(0), "ERC20: transfer to the zero address");
+
+        _balances[sender] = _balances[sender].sub(amount);
+        _balances[recipient] = _balances[recipient].add(amount);
+        emit Transfer(sender, recipient, amount);
+    }
+
+    function _approve(
+        address owner,
+        address spender,
+        uint256 value
+    ) internal {
+        require(owner != address(0), "ERC20: approve from the zero address");
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        _allowances[owner][spender] = value;
+        emit Approval(owner, spender, value);
+    }
+}
+
+// contract aUSDCMock is ERC20, AToken {
+contract aUSDCMock is ERC20 {
+    address public usdc;
+    uint256 public price = 10**18;
+    mapping(address => uint256) public balance;
+    mapping(address => uint256) public principalBalance;
+
+    constructor(address _usdc, address tokenOwner) public {
+        usdc = _usdc;
+        _mint(address(this), 10**21); // 1 thousand aUSDC
+        _mint(tokenOwner, 10**24); // 1 million aUSDC
+    }
+
+    function _mint(address _account, uint256 _amount) public {
+        if (principalBalance[_account] == 0) {
+            principalBalance[_account] = principalBalance[_account] + _amount;
+        } else {
+            principalBalance[_account] =
+                principalBalance[_account] +
+                _amount +
+                50000; // 50000 for interest
+        }
+        balance[_account] = principalBalance[_account];
+    }
+
+    function redeem(uint256 _amount) external {
+        require(_amount <= balance[msg.sender], "Insufficient aToken");
+        balance[msg.sender] = balance[msg.sender] - _amount;
+        IERC20(usdc).transfer(msg.sender, _amount);
+    }
+
+    function addInterest(address _account, uint256 _amount) public {
+        balance[_account] = balance[_account] - _amount;
+    }
+
+    function balanceOf(address _account) public view returns (uint256) {
+        return balance[_account];
+    }
+
+    function principalBalanceOf(address _account)
+        external
+        view
+        returns (uint256)
+    {
+        return principalBalance[_account];
+    }
+}
