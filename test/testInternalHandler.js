@@ -43,7 +43,7 @@ describe("InternalHandler contract", function () {
     });
 
     await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);
-    await handler.enableToken(USDC.address);
+    await handler.enableTokens([USDC.address]);
   }
 
   describe("Deployment", function () {
@@ -86,11 +86,11 @@ describe("InternalHandler contract", function () {
     });
 
     it("Should only allow auth to disable token", async function () {
-      await handler.disableToken(USDC.address);
+      await handler.disableTokens([USDC.address]);
       assert.equal(await handler.tokenIsEnabled(USDC.address), false);
 
       await truffleAssert.reverts(
-        handler.disableToken(USDC.address, {
+        handler.disableTokens([USDC.address], {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -99,17 +99,17 @@ describe("InternalHandler contract", function () {
 
     it("Should not allow to disable token already disabled", async function () {
       await truffleAssert.reverts(
-        handler.disableToken(USDC.address),
+        handler.disableTokens([USDC.address]),
         "disableToken: Has been disabled!"
       );
     });
 
     it("Should only allow auth to enable token", async function () {
-      await handler.enableToken(USDC.address);
+      await handler.enableTokens([USDC.address]);
       assert.equal(await handler.tokenIsEnabled(USDC.address), true);
 
       await truffleAssert.reverts(
-        handler.enableToken(USDC.address, {
+        handler.enableTokens([USDC.address], {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -118,7 +118,7 @@ describe("InternalHandler contract", function () {
 
     it("Should not allow to enable token already enabled", async function () {
       await truffleAssert.reverts(
-        handler.enableToken(USDC.address),
+        handler.enableTokens([USDC.address]),
         "enableToken: Has been enabled!"
       );
     });

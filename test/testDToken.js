@@ -54,7 +54,7 @@ describe("DToken Contract", function () {
     handler_addresses = new Array();
     for (i = 0; i < handler_num; i++) {
       let h = await InternalHandler.new(dtoken_addresses.address);
-      await h.enableToken(USDC.address);
+      await h.enableTokens([USDC.address]);
       await h.setAuthority(ds_guard.address);
 
       handler_addresses.push(h.address);

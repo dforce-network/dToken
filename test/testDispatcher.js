@@ -61,7 +61,7 @@ describe("Dispatcher Contract", function () {
     handler_addresses = new Array();
     for (i = 0; i < handler_num; i++) {
       let h = await InternalHandler.new(dtoken_addresses.address);
-      await h.enableToken(USDC.address);
+      await h.enableTokens([USDC.address]);
       await USDC.allocateTo(h.address, 1000e6);
 
       handler_addresses.push(h.address);
