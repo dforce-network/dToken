@@ -49,10 +49,26 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Authorized function to disable an underlying token.
-     * @param _underlyingToken Token to disable.
+     * @dev Authorized function to disable some underlying tokens.
+     * @param _underlyingTokens Tokens to disable.
      */
-    function disableToken(address _underlyingToken) external auth {
+    function disableTokens(address[] calldata _underlyingTokens) external auth {
+        for (uint256 i = 0; i < _underlyingTokens.length; i++) {
+            _disableToken(_underlyingTokens[i]);
+        }
+    }
+
+    /**
+     * @dev Authorized function to enable some underlying tokens.
+     * @param _underlyingTokens Tokens to enable.
+     */
+    function enableTokens(address[] calldata _underlyingTokens) external auth {
+        for (uint256 i = 0; i < _underlyingTokens.length; i++) {
+            _enableToken(_underlyingTokens[i]);
+        }
+    }
+
+    function _disableToken(address _underlyingToken) internal {
         require(
             tokensEnable[_underlyingToken],
             "disableToken: Has been disabled!"
@@ -61,11 +77,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         emit DisableToken(_underlyingToken);
     }
 
-    /**
-     * @dev Authorized function to enable an underlying token.
-     * @param _underlyingToken Token to enable.
-     */
-    function enableToken(address _underlyingToken) external auth {
+    function _enableToken(address _underlyingToken) internal {
         require(
             !tokensEnable[_underlyingToken],
             "enableToken: Has been enabled!"

@@ -40,6 +40,10 @@ contract dTokenAddresses is DSAuth {
     function _setdTokenRelation(address _token, address _mappingdToken)
         internal
     {
+        require(
+            dTokens[_token] == address(0x0),
+            "_setdTokenRelation: Has set!"
+        );
         dTokens[_token] = _mappingdToken;
         emit NewMappingdToken(_token, _mappingdToken);
     }
