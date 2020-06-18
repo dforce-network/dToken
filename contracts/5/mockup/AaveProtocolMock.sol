@@ -4,28 +4,10 @@ pragma solidity 0.5.12;
 import "../library/SafeMath.sol";
 
 contract AaveLendingPoolCoreMock {
-    address public reserve;
-    uint256 public liquidity;
-    uint256 public borrowsStable;
-    uint256 public borrowsVariable;
-    uint256 public stableBorrowRate;
-    uint256 public apr;
-    address public aTokenAddress;
+    mapping(address => address) tokens;
 
-    function _setReserve(address _reserve) external {
-        reserve = _reserve;
-    }
-
-    function getReserveAvailableLiquidity(address _reserve)
-        public
-        view
-        returns (uint256)
-    {
-        return liquidity;
-    }
-
-    function setReserveAvailableLiquidity(uint256 _newVal) external {
-        liquidity = _newVal;
+    function transferReserveFrom(address _token, address _from, uint256 _amount) public {
+        IERC20(_token).transferFrom(_from, address(this), _amount);
     }
 
     function getReserveATokenAddress(address _reserve)
@@ -33,11 +15,23 @@ contract AaveLendingPoolCoreMock {
         view
         returns (address)
     {
-        return aTokenAddress;
+        return tokens[_reserve];
     }
 
-    function setReserveATokenAddress(address _newRes) public {
-        aTokenAddress = _newRes;
+    function setReserveATokenAddress(address _newRes, address _reserve) public {
+        tokens[_newRes] = _reserve;
+    }
+
+    function getReserveAvailableLiquidity(address _reserve)
+        external
+        view
+        returns (uint256) {
+            // TODO: for eth?
+            IERC20(_reserve).balanceOf(address(this));
+        }
+
+    function transferOut(address _tokenID, address _to, uint _amount) public {
+        IERC20(_tokenID).transfer(_to, _amount);
     }
 }
 
@@ -57,34 +51,12 @@ contract AaveLendPoolMock {
     }
 
     function deposit(
-        address,
+        address _token,
         uint256 _amount,
         uint16
     ) external payable {
-        // require(IERC20(usdc).transferFrom(tx.origin, lendingPoolCore, _amount), "Error during transferFrom");
+        AaveLendingPoolCoreMock(lendingPoolCore).transferReserveFrom(_token, msg.sender, _amount);
         IERC20(aUSDC)._mint(msg.sender, _amount);
-    }
-
-    function getReserveData(address _reserve)
-        external
-        view
-        returns (
-            uint256 totalLiquidity,
-            uint256 availableLiquidity,
-            uint256 totalBorrowsStable,
-            uint256 totalBorrowsVariable,
-            uint256 liquidityRate,
-            uint256 variableBorrowRate,
-            uint256 stableBorrowRate,
-            uint256 averageStableBorrowRate,
-            uint256 utilizationRate,
-            uint256 liquidityIndex,
-            uint256 variableBorrowIndex,
-            address aTokenAddress,
-            uint40 lastUpdateTimestamp
-        )
-    {
-        aTokenAddress = aUSDC;
     }
 }
 
@@ -222,13 +194,15 @@ contract ERC20 is IERC20 {
 
 // contract aUSDCMock is ERC20, AToken {
 contract aUSDCMock is ERC20 {
+    address public lendingPoolCore;
     address public usdc;
     uint256 public price = 10**18;
     mapping(address => uint256) public balance;
     mapping(address => uint256) public principalBalance;
 
-    constructor(address _usdc, address tokenOwner) public {
+    constructor(address _usdc, address tokenOwner, address _core) public {
         usdc = _usdc;
+        lendingPoolCore = _core;
         _mint(address(this), 10**21); // 1 thousand aUSDC
         _mint(tokenOwner, 10**24); // 1 million aUSDC
     }
@@ -248,11 +222,11 @@ contract aUSDCMock is ERC20 {
     function redeem(uint256 _amount) external {
         require(_amount <= balance[msg.sender], "Insufficient aToken");
         balance[msg.sender] = balance[msg.sender] - _amount;
-        IERC20(usdc).transfer(msg.sender, _amount);
+        AaveLendingPoolCoreMock(lendingPoolCore).transferOut(usdc, msg.sender, _amount);
     }
 
     function addInterest(address _account, uint256 _amount) public {
-        balance[_account] = balance[_account] - _amount;
+        balance[_account] = balance[_account] + _amount;
     }
 
     function balanceOf(address _account) public view returns (uint256) {

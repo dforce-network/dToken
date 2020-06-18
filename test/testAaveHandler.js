@@ -25,14 +25,14 @@ describe("Aave handler contract", function () {
     dTokenMappingContract = await dTokenAddresses.new();
 
     // Deploys Aave system
-    aUSDC = await aUSDCMock.new(usdc.address, accounts[0]);
     lendingPoolCore = await LendingPoolCore.new();
+    aUSDC = await aUSDCMock.new(usdc.address, accounts[0], lendingPoolCore.address);
     lendingPool = await LendPool.new(
       usdc.address,
       aUSDC.address,
       lendingPoolCore.address
     );
-    await lendingPoolCore.setReserveATokenAddress(aUSDC.address);
+    await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
 
     // Faucets assets:
     await usdc.initialize(
@@ -81,32 +81,43 @@ describe("Aave handler contract", function () {
 
       await aaveHandler.approve(usdc.address);
 
+      await usdc.allocateTo(aaveHandler.address, 1000e6);
       console.log(
-        "before deposit, usdc balance is: ",
-        (await usdc.balanceOf(accounts[0])).toString()
+        "before deposit, aave handler usdc balance is: ",
+        (await usdc.balanceOf(aaveHandler.address)).toString()
       );
       console.log(
         "before deposit, aave handler aUSDC balance is: ",
         (await aUSDC.balanceOf(aaveHandler.address)).toString()
       );
-      await usdc.approve(lendingPool.address, 10e9);
+
       await aaveHandler.deposit(usdc.address, 100);
+
+      console.log(
+        "after deposit, aave handler usdc balance is: ",
+        (await usdc.balanceOf(aaveHandler.address)).toString()
+      );
       console.log(
         "after deposit, aave handler aUSDC balance is: ",
         (await aUSDC.balanceOf(aaveHandler.address)).toString()
       );
-      console.log(
-        "after deposit, usdc balance is: ",
-        (await usdc.balanceOf(accounts[0])).toString()
-      );
+
       console.log(
         "before withdraw, aave handler usdc balance is: ",
         (await usdc.balanceOf(aaveHandler.address)).toString()
+      );
+      console.log(
+        "before withdraw, aave handler aUSDC balance is: ",
+        (await aUSDC.balanceOf(aaveHandler.address)).toString()
       );
       await aaveHandler.withdraw(usdc.address, 10);
       console.log(
         "after withdraw, aave handler usdc balance is: ",
         (await usdc.balanceOf(aaveHandler.address)).toString()
+      );
+      console.log(
+        "after withdraw, aave handler aUSDC balance is: ",
+        (await aUSDC.balanceOf(aaveHandler.address)).toString()
       );
     });
   });
