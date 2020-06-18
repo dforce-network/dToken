@@ -29,6 +29,12 @@ Run a local develop network with buidler EVM
 npx buidler node
 ```
 
+And then you can run the test case to get a gas report
+
+```
+npx buidler test --network localhost
+```
+
 Then run the test with the local network
 
 ```

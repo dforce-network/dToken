@@ -1,7 +1,7 @@
 // For unit test
 usePlugin("@nomiclabs/buidler-truffle5");
 // usePlugin("@nomiclabs/builder-ganache");
-// usePlugin("buidler-gas-reporter");
+usePlugin("buidler-gas-reporter");
 
 // // For scripts
 // // usePlugin("@nomiclabs/builder-ethers");
@@ -27,5 +27,10 @@ module.exports = {
     },
     paths: {
         sources: "./contracts/5",
-    }
+    },
+    gasReporter: {
+        // enabled: (process.env.REPORT_GAS) ? true : false
+        enabled: true,
+        currency: 'USD'
+    },
 };
