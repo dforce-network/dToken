@@ -12,6 +12,7 @@ const BN = require("bn.js");
 
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
+const FEE = new BN(10).pow(new BN(14));
 
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
@@ -115,7 +116,10 @@ describe("DToken Contract Integration", function () {
     balances.dusdc = await dUSDC.balanceOf(account);
     balances.dusdt = await dUSDT.balanceOf(account);
 
-    //console.log(balances);
+    // console.log("usdc:" + balances.usdc.toString());
+    // console.log("usdt:" + balances.usdt.toString());
+    // console.log("dusdc:" + balances.dusdc.toString());
+    // console.log("dusdt:" + balances.dusdt.toString());
 
     return balances;
   }
@@ -131,18 +135,23 @@ describe("DToken Contract Integration", function () {
     liquidities.com_usdt = await compound_handler.getLiquidity(USDT.address);
     liquidities.aav_usdt = await aave_handler.getLiquidity(USDT.address);
 
-    //console.log(liquidities);
+    // console.log("int_usdc:" + liquidities.int_usdc.toString());
+    // console.log("com_usdc:" + liquidities.com_usdc.toString());
+    // console.log("aav_usdc:" + liquidities.aav_usdc.toString());
+    // console.log("int_usdc:" + liquidities.int_usdt.toString());
+    // console.log("com_usdc:" + liquidities.com_usdt.toString());
+    // console.log("aav_usdc:" + liquidities.aav_usdt.toString());
 
     return liquidities;
   }
 
-  async function calcDiff(asyncFn, account) {
+  async function calcDiff(asyncFn, amount, account) {
     let diff = {};
 
     let balances = await getAllTokenBalances(account);
     let liq = await getAllLiquidities();
 
-    await asyncFn;
+    await asyncFn(account, amount, { from: account });
 
     let new_balances = await getAllTokenBalances(account);
     let new_liq = await getAllLiquidities();
@@ -158,9 +167,16 @@ describe("DToken Contract Integration", function () {
     diff.com_usdt = new_liq.com_usdt.sub(liq.com_usdt).toString();
     diff.aav_usdt = new_liq.aav_usdt.sub(liq.aav_usdt).toString();
 
-    console.log(diff);
+    //console.log(diff);
 
     return diff;
+  }
+
+  function mulFraction(x, num, denom) {
+    let bn_num = new BN(num);
+    let bn_denom = new BN(denom);
+
+    return x.mul(bn_num).div(bn_denom);
   }
 
   describe("DToken Integration: Only internal handler", function () {
@@ -200,42 +216,58 @@ describe("DToken Contract Integration", function () {
 
     it("Case 1", async function () {
       let amount = new BN(1000e6);
+      let diff;
+
+      // 24. Add compound handler
       await dispatcher.addHandler([compound_handler.address]);
 
-      let balance = await dUSDC.balanceOf(account1);
-      let liq = await internal_handler.getLiquidity(USDC.address);
-      console.log(balance.toString());
-      console.log(liq.toString());
+      // 25. mint some dusdc
+      diff = await calcDiff(dUSDC.mint, amount, account1);
+      assert.equal(diff.usdc, "-" + amount.toString());
+      assert.equal(diff.dusdc, amount.toString());
+      assert.equal(diff.int_usdc, amount.toString());
+      assert.equal(diff.com_usdc, "0");
 
-      let diff = await calcDiff(
-        dUSDC.mint(account1, amount, { from: account1 }),
-        account1
+      // burn some
+      diff = await calcDiff(dUSDC.burn, amount, account1);
+      assert.equal(diff.usdc, amount.toString());
+      assert.equal(diff.dusdc, "-" + amount.toString());
+      assert.equal(diff.int_usdc, "-" + amount.toString());
+      assert.equal(diff.com_usdc, "0");
+
+      // redeem some
+      await dUSDC.mint(account1, amount, { from: account1 });
+      diff = await calcDiff(dUSDC.redeem, amount, account1);
+      assert.equal(diff.usdc, amount.toString());
+      assert.equal(diff.dusdc, "-" + amount.toString());
+      assert.equal(diff.int_usdc, "-" + amount.toString());
+      assert.equal(diff.com_usdc, "0");
+
+      // 26. update an invalid proportion
+      await truffleAssert.reverts(
+        dispatcher.resetHandler(
+          [internal_handler.address, compound_handler.address],
+          [100000, 100000]
+        ),
+        "the sum of propotions must be 1000000"
       );
 
-      balance = await dUSDC.balanceOf(account1);
-      console.log(balance.toString());
-
-      //assert.equal(diff.usdc, "-" + amount.toString());
-      //assert.equal(diff.dusdc, amount.toString());
-      //assert.equal(diff.int_usdc, amount.toString());
-
+      // 27. update a valid proportion
       await dispatcher.updatePropotion(
         [internal_handler.address, compound_handler.address],
         [900000, 100000]
       );
 
-      diff = await calcDiff(
-        dUSDC.mint(account1, 1000e6, { from: account1 }),
-        account1
-      );
+      // 28. Charge some fee here 1/10000
+      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE);
+      await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE);
 
-      balance = await dUSDC.balanceOf(account1);
-      console.log(balance.toString());
-
-      liq = await internal_handler.getLiquidity(USDC.address);
-      console.log(liq.toString());
-
-      await dUSDC.mint(account1, 1000e6, { from: account1 });
+      diff = await calcDiff(dUSDC.mint, amount, account1);
+      let real_amount = mulFraction(amount, 9999, 10000);
+      assert.equal(diff.usdc, "-" + amount.toString());
+      assert.equal(diff.dusdc, real_amount.toString());
+      assert.equal(diff.int_usdc, mulFraction(real_amount, 9, 10).toString());
+      assert.equal(diff.com_usdc, mulFraction(real_amount, 1, 10).toString());
     });
   });
 
