@@ -36,17 +36,11 @@ contract AaveLendingPoolCoreMock {
 }
 
 contract AaveLendPoolMock {
-    address public usdc;
-    address public aUSDC;
     address public lendingPoolCore;
 
     constructor(
-        address _usdc,
-        address _aUSDC,
         address _core
     ) public {
-        usdc = _usdc;
-        aUSDC = _aUSDC;
         lendingPoolCore = _core;
     }
 
@@ -56,7 +50,8 @@ contract AaveLendPoolMock {
         uint16
     ) external payable {
         AaveLendingPoolCoreMock(lendingPoolCore).transferReserveFrom(_token, msg.sender, _amount);
-        IERC20(aUSDC)._mint(msg.sender, _amount);
+        address aToken = AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(_token);
+        IERC20(aToken)._mint(msg.sender, _amount);
     }
 }
 

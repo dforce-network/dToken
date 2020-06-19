@@ -29,8 +29,8 @@ module.exports = {
         sources: "./contracts/5",
     },
     gasReporter: {
-        // enabled: (process.env.REPORT_GAS) ? true : false
-        enabled: true,
+        enabled: (process.env.REPORT_GAS) ? true : false,
+        // enabled: true,
         currency: 'USD'
     },
 };

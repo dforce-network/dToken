@@ -27,9 +27,8 @@ describe("Aave handler contract", function () {
     // Deploys Aave system
     lendingPoolCore = await LendingPoolCore.new();
     aUSDC = await aUSDCMock.new(usdc.address, accounts[0], lendingPoolCore.address);
+    await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
     lendingPool = await LendPool.new(
-      usdc.address,
-      aUSDC.address,
       lendingPoolCore.address
     );
     await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
