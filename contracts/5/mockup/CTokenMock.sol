@@ -15,6 +15,7 @@ contract CTokenMock is ERC20SafeTransfer {
     uint256 public interestRate;
     uint256 public exchangeRate;
     uint256 public random;
+    uint256 public blockNumber;
 
     address public token;
 
@@ -72,20 +73,23 @@ contract CTokenMock is ERC20SafeTransfer {
     }
 
     function exchangeRateCurrent() public returns (uint256) {
-        uint256 _random = uint256(uint8(abi.encodePacked(msg.sender)[random]));
-        _random = uint256(
-            uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32])
-        );
-        uint256 _balance = IERC20(token).balanceOf(address(this));
-        Token(token).allocateTo(
-            address(this),
-            rmul(_balance, interestRate.mul(_random))
-        );
-        random = _random % 20;
-        _balance = IERC20(token).balanceOf(address(this));
-        exchangeRate = totalSupply == 0 || _balance == 0
-            ? exchangeRate
-            : rdiv(IERC20(token).balanceOf(address(this)), totalSupply);
+        if (blockNumber != block.number) {
+            uint256 _random = uint256(uint8(abi.encodePacked(msg.sender)[random]));
+            _random = uint256(
+                uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32])
+            );
+            uint256 _balance = IERC20(token).balanceOf(address(this));
+            Token(token).allocateTo(
+                address(this),
+                rmul(_balance, interestRate.mul(_random))
+            );
+            random = _random % 20;
+            blockNumber = block.number;
+            _balance = IERC20(token).balanceOf(address(this));
+            exchangeRate = totalSupply == 0 || _balance == 0
+                ? exchangeRate
+                : rdiv(IERC20(token).balanceOf(address(this)), totalSupply);
+        }
         return exchangeRate;
     }
 
