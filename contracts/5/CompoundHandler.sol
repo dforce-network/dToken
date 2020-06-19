@@ -184,7 +184,8 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         require(_cToken != address(0x0), "deposit: Do not support token!");
 
         uint256 _lastTotalBalance = getRealBalance(_underlyingToken);
-
+        // expect the balance of the contract is 0, if not, there is some unexpected transfer.
+        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(address(this));
 
             InterestDetails storage currentInterests
          = interestsDetails[_underlyingToken];
@@ -194,9 +195,11 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
 
         require(
-            ICompound(_cToken).mint(_amount) == 0,
+            // ensure no cash be remained in the handler.
+            ICompound(_cToken).mint(_handlerBalance) == 0,
             "deposit: Fail to supply to compound!"
         );
+        // including unexpected transfer.
         uint256 _currentTotalBalance = getRealBalance(_underlyingToken);
 
         currentInterests.interest = currentInterests.interest.add(
@@ -204,8 +207,9 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
         currentInterests.totalUnderlyingBalance = _currentTotalBalance;
 
-        // return change amount.
-        return _currentTotalBalance.sub(_lastTotalBalance);
+        uint256 _changedAmount = _currentTotalBalance.sub(_lastTotalBalance);
+        // return a smaller value.
+        return _changedAmount > _amount ? _amount : _changedAmount;
     }
 
     /**
@@ -230,7 +234,6 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
 
         uint256 _lastTotalBalance = getRealBalance(_underlyingToken);
-
 
             InterestDetails storage currentInterests
          = interestsDetails[_underlyingToken];
@@ -259,6 +262,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
                 "withdraw: Fail to withdraw from market!"
             );
         }
+        // including unexpected transfer.
         uint256 _currentHandlerBalance = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
@@ -270,8 +274,9 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             _underlyingToken
         );
 
-        // return change amount.
-        return _currentHandlerBalance.sub(_previousHandlerBalance);
+        uint256 _changedAmount = _currentHandlerBalance.sub(_previousHandlerBalance);
+        // return a smaller value.
+        return _changedAmount > _amount ? _amount : _changedAmount;
     }
 
     /**

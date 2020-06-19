@@ -113,15 +113,16 @@ contract Handler is ERC20SafeTransfer, Pausable {
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
         );
-
+        // including unexpected transfer.
+        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(address(this));
         _updateInterest(_underlyingToken);
 
         require(
-            ILendFMe(targetAddr).supply(address(_underlyingToken), _amount) ==
+            ILendFMe(targetAddr).supply(address(_underlyingToken), _handlerBalance) ==
                 0,
             "deposit: Fail to supply to money market!"
         );
-        return _amount;
+        return _handlerBalance > _amount ? _amount : _handlerBalance;
     }
 
     /**
@@ -149,7 +150,10 @@ contract Handler is ERC20SafeTransfer, Pausable {
             "withdraw: Fail to withdraw from money market!"
         );
 
-        return _amount;
+        // including unexpected transfer.
+        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(address(this));
+
+        return _handlerBalance > _amount ? _amount : _handlerBalance;
     }
 
     /**
