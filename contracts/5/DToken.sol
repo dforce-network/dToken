@@ -434,6 +434,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
     struct BurnLocalVars {
         address token;
+        address defaultHandler;
         address[] handlers;
         uint256[] amounts;
         uint256 exchangeRate;
@@ -474,6 +475,15 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
         require(_burnLocal.handlers.length > 0, "burn:");
 
+        _burnLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
+        require(
+            _burnLocal.defaultHandler != address(0) &&
+                IDispatcher(dispatcher).handlerActive(
+                    _burnLocal.defaultHandler
+                ),
+            "redeem:"
+        );
+
         _burnLocal.originationFee = originationFee[msg.sig];
         for (uint256 i = 0; i < _burnLocal.handlers.length; i++) {
             if (_burnLocal.amounts[i] == 0) continue;
@@ -486,41 +496,27 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 "burn: handler withdraw failed"
             );
 
-            _burnLocal.fee = rmul(
-                _burnLocal.withdrawAmount,
-                _burnLocal.originationFee
-            );
-            // Transfer the token trade fee from the `handler` to the `dToken`.
-            if (_burnLocal.fee > 0)
+            // Transfer the calculated token amount from the `handler` to the receiver `default handler`
+            if (_burnLocal.defaultHandler != _burnLocal.handlers[i])
                 require(
                     doTransferFrom(
                         _burnLocal.token,
                         _burnLocal.handlers[i],
-                        feeRecipient,
-                        _burnLocal.fee
+                        _burnLocal.defaultHandler,
+                        _burnLocal.withdrawAmount
                     ),
-                    "burn: transfer fee failed"
-                );
-
-            // // After subtracting the fee, the user finally can get quantity.
-            _burnLocal.userAmount = _burnLocal.withdrawAmount.sub(
-                _burnLocal.fee
-            );
-            // Transfer the calculated token amount from the `handler` to the receiver `_src`.
-            if (_burnLocal.userAmount > 0)
-                require(
-                    doTransferFrom(
-                        _burnLocal.token,
-                        _burnLocal.handlers[i],
-                        msg.sender,
-                        _burnLocal.userAmount
-                    ),
-                    "burn: transfer to user failed"
+                    "burn: transfer to default handler failed"
                 );
             _burnLocal.withdrawTotalAmount = _burnLocal.withdrawTotalAmount.add(
                 _burnLocal.withdrawAmount
             );
         }
+
+        require(
+            _burnLocal.withdrawTotalAmount <=
+                rmul(_wad, _burnLocal.exchangeRate),
+            "burn:"
+        );
 
         updateInterest(_src, _burnLocal.exchangeRate);
 
@@ -536,6 +532,39 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _balance.value = _balance.value.sub(_wad);
         totalSupply = totalSupply.sub(_wad);
 
+        _burnLocal.fee = rmul(
+            _burnLocal.withdrawTotalAmount,
+            _burnLocal.originationFee
+        );
+        // Transfer the token trade fee from the `handler` to the `dToken`.
+        if (_burnLocal.fee > 0)
+            require(
+                doTransferFrom(
+                    _burnLocal.token,
+                    _burnLocal.defaultHandler,
+                    feeRecipient,
+                    _burnLocal.fee
+                ),
+                "burn: transfer fee failed"
+            );
+
+        // After subtracting the fee, the user finally can get quantity.
+
+        _burnLocal.userAmount = _burnLocal.withdrawTotalAmount.sub(
+            _burnLocal.fee
+        );
+        // Transfer the calculated token amount from the `handler` to the receiver `_src`.
+        if (_burnLocal.userAmount > 0)
+            require(
+                doTransferFrom(
+                    _burnLocal.token,
+                    _burnLocal.defaultHandler,
+                    msg.sender,
+                    _burnLocal.userAmount
+                ),
+                "burn: transfer to user failed"
+            );
+
         emit Transfer(_src, address(0), _wad);
         emit Burn(
             _src,
@@ -548,6 +577,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
     struct RedeemLocalVars {
         address token;
+        address defaultHandler;
         address[] handlers;
         uint256[] amounts;
         uint256 exchangeRate;
@@ -583,6 +613,15 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
         require(_redeemLocal.handlers.length > 0, "redeem:");
 
+        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
+        require(
+            _redeemLocal.defaultHandler != address(0) &&
+                IDispatcher(dispatcher).handlerActive(
+                    _redeemLocal.defaultHandler
+                ),
+            "redeem:"
+        );
+
         // Get current exchange rate.
         _redeemLocal.exchangeRate = getCurrentExchangeRateByHandler(
             _redeemLocal.handlers,
@@ -596,42 +635,23 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 .withdraw(_redeemLocal.token, _redeemLocal.amounts[i]);
             require(_redeemLocal.redeemAmount > 0, "redeem: ");
 
-            // The calculated amount contains exchange token fee, if it exists.
-            _redeemLocal.fee = rmul(
-                _redeemLocal.redeemAmount,
-                _redeemLocal.originationFee
-            );
-            // Transfer the token trade fee from the `handler` to the `dToken`.
-            if (_redeemLocal.fee > 0)
+            // Transfer the calculated token amount from the `handler` to the receiver `default handler`
+            if (_redeemLocal.defaultHandler != _redeemLocal.handlers[i])
                 require(
                     doTransferFrom(
                         _redeemLocal.token,
                         _redeemLocal.handlers[i],
-                        feeRecipient,
-                        _redeemLocal.fee
+                        _redeemLocal.defaultHandler,
+                        _redeemLocal.redeemAmount
                     ),
-                    "redeem: transfer fee failed"
-                );
-
-            // After subtracting the fee, the user finally can get quantity.
-            _redeemLocal.userAmount = _redeemLocal.redeemAmount.sub(
-                _redeemLocal.fee
-            );
-            // Transfer the calculated token amount from the `handler` to the receiver `_src`
-            if (_redeemLocal.userAmount > 0)
-                require(
-                    doTransferFrom(
-                        _redeemLocal.token,
-                        _redeemLocal.handlers[i],
-                        msg.sender,
-                        _redeemLocal.userAmount
-                    ),
-                    "redeem: transfer to user failed"
+                    "redeem: transfer to default handler failed"
                 );
             _redeemLocal.redeemTotalAmount = _redeemLocal.redeemTotalAmount.add(
                 _redeemLocal.redeemAmount
             );
         }
+
+        require(_redeemLocal.redeemTotalAmount >= _pie, "redeem:");
 
         // Calculate amount of the dToken based on current exchange rate.
         _redeemLocal.wad = rdivup(
@@ -657,6 +677,34 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         }
         _balance.value = _balance.value.sub(_redeemLocal.wad);
         totalSupply = totalSupply.sub(_redeemLocal.wad);
+
+        // The calculated amount contains exchange token fee, if it exists.
+        _redeemLocal.fee = rmul(
+            _redeemLocal.redeemTotalAmount,
+            _redeemLocal.originationFee
+        );
+        // Transfer the token trade fee from the `default handler` to the `dToken`.
+        if (_redeemLocal.fee > 0)
+            require(
+                doTransferFrom(
+                    _redeemLocal.token,
+                    _redeemLocal.defaultHandler,
+                    feeRecipient,
+                    _redeemLocal.fee
+                ),
+                "redeem: transfer fee failed"
+            );
+
+        // Transfer the calculated token amount from the `default handler` to the receiver `_src`
+        require(
+            doTransferFrom(
+                _redeemLocal.token,
+                _redeemLocal.defaultHandler,
+                msg.sender,
+                _pie
+            ),
+            "redeem: transfer to user failed"
+        );
 
         emit Transfer(_src, address(0), _redeemLocal.wad);
         emit Burn(
