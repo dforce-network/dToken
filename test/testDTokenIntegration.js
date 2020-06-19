@@ -77,9 +77,7 @@ describe("DToken Contract Integration", function () {
     aUSDT = await aTokenMock.new(USDT.address, owner, lendingPoolCore.address);
     await lendingPoolCore.setReserveATokenAddress(USDC.address, aUSDC.address);
     await lendingPoolCore.setReserveATokenAddress(USDT.address, aUSDT.address);
-    lendingPool = await LendPool.new(
-      lendingPoolCore.address
-    );
+    lendingPool = await LendPool.new(lendingPoolCore.address);
 
     aave_handler = await AaveHandler.new(
       dtoken_addresses.address,
@@ -170,16 +168,20 @@ describe("DToken Contract Integration", function () {
     return liquidities;
   }
 
-  async function calcDiff(asyncFn, amount, account) {
+  async function calcDiff(asyncFn, args, account) {
     let diff = {};
 
     let balances = await getAllTokenBalances(account);
     let liq = await getAllLiquidities();
+    let dusdc_rate = (await dUSDC.data())["0"];
+    let dusdt_rate = (await dUSDT.data())["0"];
 
-    await asyncFn(account, amount, { from: account });
+    await asyncFn(...args);
 
     let new_balances = await getAllTokenBalances(account);
     let new_liq = await getAllLiquidities();
+    let new_dusdc_rate = (await dUSDC.data())["0"];
+    let new_dusdt_rate = (await dUSDT.data())["0"];
 
     diff.usdc = new_balances.usdc.sub(balances.usdc).toString();
     diff.usdt = new_balances.usdt.sub(balances.usdt).toString();
@@ -191,6 +193,24 @@ describe("DToken Contract Integration", function () {
     diff.int_usdt = new_liq.int_usdt.sub(liq.int_usdt).toString();
     diff.com_usdt = new_liq.com_usdt.sub(liq.com_usdt).toString();
     diff.aav_usdt = new_liq.aav_usdt.sub(liq.aav_usdt).toString();
+
+    if (!new_dusdc_rate.eq(dusdc_rate)) {
+      console.log(
+        "dUSDC Exchange rate: " +
+          dusdc_rate.toString() +
+          " => " +
+          new_dusdc_rate.toString()
+      );
+    }
+
+    if (!new_dusdt_rate.eq(dusdt_rate)) {
+      console.log(
+        "dUSDT Exchange rate: " +
+          dusdc_rate.toString() +
+          " => " +
+          new_dusdc_rate.toString()
+      );
+    }
 
     //console.log(diff);
 
@@ -235,26 +255,36 @@ describe("DToken Contract Integration", function () {
   });
 
   describe("DToken Integration: internal and compound handler ", async function () {
-    beforeEach(async function () {
+    before(async function () {
       await resetContracts();
     });
 
-    it("Case 1", async function () {
+    // 24. Add compound handler
+    it("Case 24", async function () {
+      await dispatcher.addHandler([compound_handler.address]);
+    });
+
+    // 25. mint some dusdc
+    it("Case 25", async function () {
       let amount = new BN(1000e6);
       let diff;
 
-      // 24. Add compound handler
-      await dispatcher.addHandler([compound_handler.address]);
-
-      // 25. mint some dusdc
-      diff = await calcDiff(dUSDC.mint, amount, account1);
+      diff = await calcDiff(
+        dUSDC.mint,
+        [account1, amount, { from: account1 }],
+        account1
+      );
       assert.equal(diff.usdc, "-" + amount.toString());
       assert.equal(diff.dusdc, amount.toString());
       assert.equal(diff.int_usdc, amount.toString());
       assert.equal(diff.com_usdc, "0");
 
       // burn some
-      diff = await calcDiff(dUSDC.burn, amount, account1);
+      diff = await calcDiff(
+        dUSDC.burn,
+        [account1, amount, { from: account1 }],
+        account1
+      );
       assert.equal(diff.usdc, amount.toString());
       assert.equal(diff.dusdc, "-" + amount.toString());
       assert.equal(diff.int_usdc, "-" + amount.toString());
@@ -262,13 +292,19 @@ describe("DToken Contract Integration", function () {
 
       // redeem some
       await dUSDC.mint(account1, amount, { from: account1 });
-      diff = await calcDiff(dUSDC.redeem, amount, account1);
+      diff = await calcDiff(
+        dUSDC.redeem,
+        [account1, amount, { from: account1 }],
+        account1
+      );
       assert.equal(diff.usdc, amount.toString());
       assert.equal(diff.dusdc, "-" + amount.toString());
       assert.equal(diff.int_usdc, "-" + amount.toString());
       assert.equal(diff.com_usdc, "0");
+    });
 
-      // 26. update an invalid proportion
+    // 26. update an invalid proportion
+    it("Case 26", async function () {
       await truffleAssert.reverts(
         dispatcher.resetHandler(
           [internal_handler.address, compound_handler.address],
@@ -276,23 +312,337 @@ describe("DToken Contract Integration", function () {
         ),
         "the sum of propotions must be 1000000"
       );
+    });
 
-      // 27. update a valid proportion
+    // 27. update a valid proportion
+    it("Case 27", async function () {
       await dispatcher.updatePropotion(
         [internal_handler.address, compound_handler.address],
         [900000, 100000]
       );
+    });
+
+    it("Case 28", async function () {
+      let amount = new BN(1000e6);
+      let diff;
 
       // 28. Charge some fee here 1/10000
-      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE);
-      await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE);
+      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
+      await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE); // Mint
 
-      diff = await calcDiff(dUSDC.mint, amount, account1);
+      diff = await calcDiff(
+        dUSDC.mint,
+        [account1, amount, { from: account1 }],
+        account1
+      );
+
       let real_amount = mulFraction(amount, 9999, 10000);
       assert.equal(diff.usdc, "-" + amount.toString());
       assert.equal(diff.dusdc, real_amount.toString());
       assert.equal(diff.int_usdc, mulFraction(real_amount, 9, 10).toString());
       assert.equal(diff.com_usdc, mulFraction(real_amount, 1, 10).toString());
+    });
+
+    // 29. Burn some dUSDC, should all withdraw from internal
+    it("Case 29: Should only withdraw from internal handler", async function () {
+      await resetContracts();
+      let diff;
+      let amount = new BN(1000e6);
+
+      await dispatcher.resetHandler(
+        [internal_handler.address, compound_handler.address],
+        [500000, 500000]
+      );
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
+
+      // Burn some dUSDC
+      // Now internal and compound each should have 1000
+      // and internal handler should have enough liquidity
+      diff = await calcDiff(
+        dUSDC.burn,
+        [account1, amount, { from: account1 }],
+        account1
+      );
+      let real_amount = mulFraction(amount, 9999, 10000);
+      assert.equal(diff.usdc, real_amount.toString());
+      assert.equal(diff.dusdc, "-" + amount.toString());
+      assert.equal(diff.int_usdc, "-" + amount.toString());
+
+      // Compound has some accrued interests
+      console.log(
+        "Please check the diff of compound liquidity:" +
+          diff.com_usdc +
+          ", should be around 0"
+      );
+      //assert.equal(diff.com_usdc, "0");
+    });
+
+    it("Case 30: Should withdraw from both internal and compound handlers", async function () {
+      await resetContracts();
+      let diff;
+      let amount = new BN(1500e6);
+
+      await dispatcher.resetHandler(
+        [internal_handler.address, compound_handler.address],
+        [500000, 500000]
+      );
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
+      // Now internal and compound each should have 1000
+
+      let internal_liquidity = new BN(1000e6);
+      let real_amount = mulFraction(amount, 9999, 10000);
+
+      diff = await calcDiff(
+        dUSDC.burn,
+        [account1, amount, { from: account1 }],
+        account1
+      );
+      assert.equal(diff.usdc, real_amount.toString());
+      assert.equal(diff.dusdc, "-" + amount.toString());
+      assert.equal(diff.int_usdc, "-" + internal_liquidity.toString());
+
+      // Compound has some accrued interests, so it would be < -500e6
+      console.log(
+        "Please check the diff of compound liquidity: " +
+          diff.com_usdc +
+          ", should be around -500000000"
+      );
+
+      await calcDiff(
+        dUSDC.mint,
+        [account1, amount, { from: account1 }],
+        account1
+      );
+    });
+
+    it("Case 31: Should withdraw from both internal and compound handlers", async function () {
+      await resetContracts();
+      let diff;
+      let amount = new BN(2000e6);
+
+      await dispatcher.resetHandler(
+        [internal_handler.address, compound_handler.address],
+        [500000, 500000]
+      );
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
+      // Now internal and compound each should have 1000
+
+      let internal_liquidity = new BN(1000e6);
+      let real_amount = mulFraction(amount, 9999, 10000);
+
+      diff = await calcDiff(
+        dUSDC.redeem,
+        [account1, amount, { from: account1 }],
+        account1
+      );
+      assert.equal(diff.usdc, real_amount.toString());
+      assert.equal(diff.dusdc, "-" + amount.toString());
+      assert.equal(diff.int_usdc, "-" + internal_liquidity.toString());
+
+      // Compound has some accrued interests, so it would be < -500e6
+      console.log(
+        "Please check the diff of compound liquidity: " +
+          diff.com_usdc +
+          ", should be around -500000000"
+      );
+
+      await calcDiff(
+        dUSDC.mint,
+        [account1, amount, { from: account1 }],
+        account1
+      );
+    });
+
+    it("Case 32: Should pause Compound handler", async function () {
+      await dUSDT.mint(account1, 2000e6, { from: account1 });
+      await compound_handler.pause();
+    });
+
+    it("Case 33: Should fail on Mint/Burn/Redeem when Compound handler paused", async function () {
+      await truffleAssert.reverts(
+        dUSDC.mint(account1, 2000e6, { from: account1 }),
+        "mint:"
+      );
+
+      await truffleAssert.reverts(
+        dUSDT.mint(account1, 2000e6, { from: account1 }),
+        "mint:"
+      );
+
+      await truffleAssert.reverts(
+        dUSDC.burn(account1, 2000e6, { from: account1 }),
+        "burn:"
+      );
+
+      await truffleAssert.reverts(
+        dUSDT.burn(account1, 2000e6, { from: account1 }),
+        "burn:"
+      );
+
+      await truffleAssert.reverts(
+        dUSDC.redeem(account1, 2000e6, { from: account1 }),
+        "redeem:"
+      );
+
+      await truffleAssert.reverts(
+        dUSDT.redeem(account1, 2000e6, { from: account1 }),
+        "redeem:"
+      );
+    });
+
+    it("Case 35: Should be able to transfer when Compound handler paused", async function () {
+      await dUSDT.transfer(account2, 1e6, { from: account1 });
+      await dUSDC.transfer(account2, 1e6, { from: account1 });
+    });
+
+    it("Case 36: should unpause Compound handler", async function () {
+      await compound_handler.unpause();
+    });
+
+    it("Case 37: Should succeed in Mint/Burn/Redeem", async function () {
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDT.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.burn(account1, 1000e6, { from: account1 });
+      await dUSDT.burn(account1, 1000e6, { from: account1 });
+      await dUSDC.redeem(account1, 900e6, { from: account1 });
+      await dUSDT.redeem(account1, 900e6, { from: account1 });
+    });
+
+    it("Case 38: Should be able to pause dToken", async function () {
+      await dUSDC.pause();
+      await dUSDT.pause();
+    });
+
+    it("Case 39: Should fail on Mint/Burn/Redeem when DToken paused", async function () {
+      await truffleAssert.reverts(
+        dUSDC.mint(account1, 2000e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+
+      await truffleAssert.reverts(
+        dUSDT.mint(account1, 2000e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+
+      await truffleAssert.reverts(
+        dUSDC.burn(account1, 2000e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+
+      await truffleAssert.reverts(
+        dUSDT.burn(account1, 2000e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+
+      await truffleAssert.reverts(
+        dUSDC.redeem(account1, 2000e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+
+      await truffleAssert.reverts(
+        dUSDT.redeem(account1, 2000e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+    });
+
+    it("Case 40: Should not be able to transfer when DToken paused", async function () {
+      await truffleAssert.reverts(
+        dUSDT.transfer(account2, 1e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+      await truffleAssert.reverts(
+        dUSDC.transfer(account2, 1e6, { from: account1 }),
+        "whenNotPaused: paused"
+      );
+    });
+
+    it("Case 41: Should unpause DToken", async function () {
+      await dUSDC.unpause();
+      await dUSDT.unpause();
+    });
+
+    it("Case 42: Should be able to mint/burn/redeem DToken", async function () {
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDT.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.burn(account1, 1000e6, { from: account1 });
+      await dUSDT.burn(account1, 1000e6, { from: account1 });
+      await dUSDC.redeem(account1, 100e6, { from: account1 });
+      await dUSDT.redeem(account1, 100e6, { from: account1 });
+    });
+
+    it("Case 43: Disable USDC in compound", async function () {
+      await compound_handler.disableTokens([USDC.address]);
+    });
+
+    it("Case 44: Should not be able to mint dUSDC", async function () {
+      await truffleAssert.reverts(
+        dUSDC.mint(account1, 1000e6, { from: account1 }),
+        "deposit: Token is disabled!"
+      );
+    });
+
+    it("Case 45: Should be able to burn/redeem dUSDC", async function () {
+      dUSDC.burn(account1, 10e6, { from: account1 });
+      dUSDC.redeem(account1, 10e6, { from: account1 });
+    });
+
+    it("Case 46: Should be able mint dUSDT", async function () {
+      dUSDT.mint(account1, 1000e6, { from: account1 });
+    });
+
+    it("Case 47: Should be able to burn/redeem dUSDT", async function () {
+      dUSDT.burn(account1, 10e6, { from: account1 });
+      dUSDT.redeem(account1, 10e6, { from: account1 });
+    });
+
+    it("Case 48: Enable USDC in compound", async function () {
+      await compound_handler.enableTokens([USDC.address]);
+    });
+
+    it("Case 49: Should be able to mint/burn/redeem dUSDC", async function () {
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.burn(account1, 1000e6, { from: account1 });
+      await dUSDC.redeem(account1, 100e6, { from: account1 });
+    });
+
+    it("Case 50: Should be able to rebalance 100 from compound to internal", async function () {
+      await compound_handler.getRealBalance(USDC.address);
+      let diff = await calcDiff(
+        dUSDC.rebalance,
+        [[compound_handler.address], [100e6], [], []],
+        account1
+      );
+      console.log(diff.com_usdc);
+      assert.equal(diff.com_usdc, "-100000000");
+      assert.equal(diff.int_usdc, "100000000");
+    });
+
+    it("Case 51: Should not be able to rebalance more than from compound's current liquidity", async function () {
+      let liquidity = await compound_handler.getLiquidity(USDC.address);
+      await truffleAssert.reverts(
+        dUSDC.rebalance(
+          [compound_handler.address],
+          [liquidity.add(new BN(100e6))],
+          [],
+          []
+        ),
+        ""
+      );
+    });
+
+    it("Case 52: Should not be able to rebalance more than from compound's current liquidity", async function () {
+      let diff = await calcDiff(
+        dUSDC.rebalance,
+        [[compound_handler.address], [UINT256_MAX], [], []],
+        account1
+      );
+
+      console.log(diff);
+      assert.equal(diff.com_usdc, "-100000000");
+      assert.equal(diff.int_usdc, "100000000");
     });
   });
 
@@ -302,7 +652,6 @@ describe("DToken Contract Integration", function () {
     });
     it("Case 1: Normal", async function () {
       // await resetContracts();
-
     });
   });
 });
