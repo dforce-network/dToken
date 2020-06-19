@@ -1,46 +1,49 @@
 pragma solidity 0.5.12;
 
-// interfaces
+import "../interface/IERC20.sol";
 import "../library/SafeMath.sol";
 
+contract Token {
+    function allocateTo(address _to, uint256 _amount) public;
+}
+
 contract AaveLendingPoolCoreMock {
-    mapping(address => address) tokens;
+    mapping(address => address) public aTokens;
 
     function transferReserveFrom(address _token, address _from, uint256 _amount) public {
         IERC20(_token).transferFrom(_from, address(this), _amount);
     }
 
-    function getReserveATokenAddress(address _reserve)
+    function getReserveATokenAddress(address _token)
         public
         view
         returns (address)
     {
-        return tokens[_reserve];
+        return aTokens[_token];
     }
 
-    function setReserveATokenAddress(address _newRes, address _reserve) public {
-        tokens[_newRes] = _reserve;
+    function setReserveATokenAddress(address _token, address _aToken) public {
+        aTokens[_token] = _aToken;
+        Token(_token).allocateTo(address(this), 1000000 * 10 ** IERC20(_token).decimals());
     }
 
-    function getReserveAvailableLiquidity(address _reserve)
+    function getReserveAvailableLiquidity(address _token)
         external
         view
-        returns (uint256) {
-            // TODO: for eth?
-            IERC20(_reserve).balanceOf(address(this));
-        }
+        returns (uint256)
+    {
+        return IERC20(_token).balanceOf(address(this));
+    }
 
-    function transferOut(address _tokenID, address _to, uint _amount) public {
-        IERC20(_tokenID).transfer(_to, _amount);
+    function transferOut(address _token, address _to, uint _amount) public {
+        IERC20(_token).transfer(_to, _amount);
     }
 }
 
 contract AaveLendPoolMock {
     address public lendingPoolCore;
 
-    constructor(
-        address _core
-    ) public {
+    constructor(address _core) public {
         lendingPoolCore = _core;
     }
 
@@ -50,59 +53,33 @@ contract AaveLendPoolMock {
         uint16
     ) external payable {
         AaveLendingPoolCoreMock(lendingPoolCore).transferReserveFrom(_token, msg.sender, _amount);
-        address aToken = AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(_token);
-        IERC20(aToken)._mint(msg.sender, _amount);
+        aUSDCMock(AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(_token))._mint(msg.sender, _amount);
     }
 }
 
-interface IERC20 {
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address account) external view returns (uint256);
-
-    function transfer(address recipient, uint256 amount)
-        external
-        returns (bool);
-
-    function allowance(address owner, address spender)
-        external
-        view
-        returns (uint256);
-
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    function transferFrom(
-        address sender,
-        address recipient,
-        uint256 amount
-    ) external returns (bool);
-
-    function _mint(address _account, uint256 _amount) external;
-
-    event Transfer(address indexed from, address indexed to, uint256 value);
-
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-}
-
-contract ERC20 is IERC20 {
+contract ERC20 {
     using SafeMath for uint256;
 
-    mapping(address => uint256) private _balances;
+    struct Balance {
+        uint value;
+        uint interestIndex;
+    }
+    mapping (address => Balance) public _balances;
 
-    mapping(address => mapping(address => uint256)) private _allowances;
+    mapping(address => mapping(address => uint256)) internal _allowances;
 
-    uint256 private _totalSupply;
+    uint256 internal _totalSupply;
+
+    // --- Event ---
+    event Approval(address indexed src, address indexed guy, uint wad);
+    event Transfer(address indexed src, address indexed dst, uint wad);
 
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
 
     function balanceOf(address account) public view returns (uint256) {
-        return _balances[account];
+        return _balances[account].value;
     }
 
     function transfer(address recipient, uint256 amount) public returns (bool) {
@@ -169,8 +146,8 @@ contract ERC20 is IERC20 {
         require(sender != address(0), "ERC20: transfer from the zero address");
         require(recipient != address(0), "ERC20: transfer to the zero address");
 
-        _balances[sender] = _balances[sender].sub(amount);
-        _balances[recipient] = _balances[recipient].add(amount);
+        _balances[sender].value = _balances[sender].value.sub(amount);
+        _balances[recipient].value = _balances[recipient].value.add(amount);
         emit Transfer(sender, recipient, amount);
     }
 
@@ -187,44 +164,74 @@ contract ERC20 is IERC20 {
     }
 }
 
-contract aTokenMock is ERC20 {
+contract aUSDCMock is ERC20 {
     address public lendingPoolCore;
-    address public usdc;
-    uint256 public price = 10**18;
-    mapping(address => uint256) public balance;
-    mapping(address => uint256) public principalBalance;
+    address public token;
+    uint256 constant BASE = 10**18;
+    uint256 public random;
+    uint256 public interestRate;
+    uint256 constant benchmark = BASE / (365 * 24 * 3600 * 255);
+    uint256 public interestIndex;
+    uint256 public time = block.timestamp;
 
-    constructor(address _usdc, address tokenOwner, address _core) public {
-        usdc = _usdc;
+    string  public name;
+    string  public symbol;
+    uint256   public decimals;
+
+    constructor(string memory _name, string memory _symbol, address _token, address _core) public {
+        name = _name;
+        symbol = _symbol;
+        decimals = IERC20(_token).decimals();
+        token = _token;
         lendingPoolCore = _core;
-        _mint(address(this), 10**21); // 1 thousand aUSDC
-        _mint(tokenOwner, 10**24); // 1 million aUSDC
+        interestRate = benchmark;
+        interestIndex = BASE;
+    }
+
+    function rmul(uint x, uint y) internal pure returns (uint z) {
+        z = x.mul(y) / BASE;
+    }
+
+    function rdiv(uint x, uint y) internal pure returns (uint z) {
+        z = x.mul(BASE) / y;
+    }
+
+    function updateInterestRate() public {
+        uint256 _random = uint256(uint8(abi.encodePacked(msg.sender)[random]));
+        _random = uint256(uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32]));
+        interestRate = benchmark.mul(_random);
+        random = _random % 20;
+    }
+
+    function getInterestIndex() public view returns (uint256) {
+        return (block.timestamp.sub(time) * interestRate).add(BASE) * interestIndex / BASE;
     }
 
     function _mint(address _account, uint256 _amount) public {
-        if (principalBalance[_account] == 0) {
-            principalBalance[_account] = principalBalance[_account] + _amount;
-        } else {
-            principalBalance[_account] =
-                principalBalance[_account] +
-                _amount +
-                50000; // 50000 for interest
-        }
-        balance[_account] = principalBalance[_account];
+        uint256 _interestIndex = getInterestIndex();
+        _balances[_account].value = balanceOf(_account).add(_amount);
+        _balances[_account].interestIndex = _interestIndex;
+        interestIndex = _interestIndex;
+        updateInterestRate();
+        emit Transfer(address(0), _account, _amount);
     }
 
     function redeem(uint256 _amount) external {
-        require(_amount <= balance[msg.sender], "Insufficient aToken");
-        balance[msg.sender] = balance[msg.sender] - _amount;
-        AaveLendingPoolCoreMock(lendingPoolCore).transferOut(usdc, msg.sender, _amount);
-    }
-
-    function addInterest(address _account, uint256 _amount) public {
-        balance[_account] = balance[_account] + _amount;
+        uint256 _interestIndex = getInterestIndex();
+        _balances[msg.sender].value = balanceOf(msg.sender).sub(_amount);
+        _balances[msg.sender].interestIndex = _interestIndex;
+        interestIndex = _interestIndex;
+        AaveLendingPoolCoreMock(lendingPoolCore).transferOut(token, msg.sender, _amount);
+        updateInterestRate();
+        emit Transfer(msg.sender, address(0), _amount);
     }
 
     function balanceOf(address _account) public view returns (uint256) {
-        return balance[_account];
+        uint256 _interestIndex = getInterestIndex();
+        if (_balances[_account].interestIndex == 0)
+            return _balances[_account].value;
+
+        return rmul(_balances[_account].value, rdiv(_interestIndex, _balances[_account].interestIndex));
     }
 
     function principalBalanceOf(address _account)
@@ -232,6 +239,6 @@ contract aTokenMock is ERC20 {
         view
         returns (uint256)
     {
-        return principalBalance[_account];
+        return _balances[_account].value;
     }
 }
