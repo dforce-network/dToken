@@ -72,24 +72,34 @@ contract CTokenMock is ERC20SafeTransfer {
         z = x.mul(BASE).add(y.sub(1)) / y;
     }
 
+    function updateExchangeRate(uint256 _percentage) public {
+        uint256 _balance = IERC20(token).balanceOf(address(this));
+        Token(token).allocateTo(address(this), rmul(_balance, _percentage));
+    }
+
     function exchangeRateCurrent() public returns (uint256) {
-        if (blockNumber != block.number) {
-            uint256 _random = uint256(uint8(abi.encodePacked(msg.sender)[random]));
-            _random = uint256(
-                uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32])
-            );
-            uint256 _balance = IERC20(token).balanceOf(address(this));
-            Token(token).allocateTo(
-                address(this),
-                rmul(_balance, interestRate.mul(_random))
-            );
-            random = _random % 20;
-            blockNumber = block.number;
-            _balance = IERC20(token).balanceOf(address(this));
+        // if (blockNumber != block.number) {
+        //     uint256 _random = uint256(uint8(abi.encodePacked(msg.sender)[random]));
+        //     _random = uint256(
+        //         uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32])
+        //     );
+        //     uint256 _balance = IERC20(token).balanceOf(address(this));
+        //     Token(token).allocateTo(
+        //         address(this),
+        //         rmul(_balance, interestRate.mul(_random))
+        //     );
+        //     random = _random % 20;
+        //     blockNumber = block.number;
+        //     _balance = IERC20(token).balanceOf(address(this));
+        //     exchangeRate = totalSupply == 0 || _balance == 0
+        //         ? exchangeRate
+        //         : rdiv(IERC20(token).balanceOf(address(this)), totalSupply);
+        // }
+        // return exchangeRate;
+        uint256 _balance = IERC20(token).balanceOf(address(this));
             exchangeRate = totalSupply == 0 || _balance == 0
                 ? exchangeRate
-                : rdiv(IERC20(token).balanceOf(address(this)), totalSupply);
-        }
+                : rdiv(_balance, totalSupply);
         return exchangeRate;
     }
 
