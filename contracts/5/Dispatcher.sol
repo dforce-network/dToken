@@ -294,48 +294,34 @@ contract Dispatcher is DSAuth {
     {
         address[] memory _handlers = handlers;
         // Sort `handlers` from large to small according to the liquidity of `_token`.
-        sortByLiquidity(
-            _handlers,
-            int256(0),
-            int256(_handlers.length - 1),
-            _token
-        );
+        if (_handlers.length > 2)
+            sortByLiquidity(
+                _handlers,
+                int256(1),
+                int256(_handlers.length - 1),
+                _token
+            );
 
-        address[] memory _withdrawHandlers = new address[](_handlers.length);
         uint256[] memory _amounts = new uint256[](_handlers.length);
-        address _defaultHandler = defaultHandler;
         uint256 _balance;
-
-        _withdrawHandlers[0] = _defaultHandler;
-        _balance = IHandler(_defaultHandler).getRealLiquidity(_token);
-        _amounts[0] = _balance > _amount ? _amount : _balance;
-        _amount = _amount.sub(_amounts[0]);
-
         uint256 _lastIndex = _amounts.length.sub(1);
-        uint256 _index = 1;
         for (uint256 i = 0; i < _handlers.length; i++) {
             if (IHandler(_handlers[i]).paused()) {
-                delete _withdrawHandlers;
+                delete _handlers;
                 delete _amounts;
                 break;
             }
 
-            if (_handlers[i] == _defaultHandler) {
-                _index = 0;
-                continue;
-            }
-
-            _withdrawHandlers[i + _index] = _handlers[i];
             if (i == _lastIndex) {
                 _amounts[i] = _amount;
                 break;
             }
             // The minimum amount can be withdrew from corresponding market.
             _balance = IHandler(_handlers[i]).getRealLiquidity(_token);
-            _amounts[i + _index] = _balance > _amount ? _amount : _balance;
-            _amount = _amount.sub(_amounts[i + _index]);
+            _amounts[i] = _balance > _amount ? _amount : _balance;
+            _amount = _amount.sub(_amounts[i]);
         }
 
-        return (_withdrawHandlers, _amounts);
+        return (_handlers, _amounts);
     }
 }
