@@ -173,6 +173,7 @@ contract aUSDCMock is ERC20 {
     uint256 constant benchmark = BASE / (365 * 24 * 3600 * 255);
     uint256 public interestIndex;
     uint256 public time = block.timestamp;
+    uint256 public percentage;
 
     string  public name;
     string  public symbol;
@@ -210,6 +211,7 @@ contract aUSDCMock is ERC20 {
     function _mint(address _account, uint256 _amount) public {
         uint256 _interestIndex = getInterestIndex();
         _balances[_account].value = balanceOf(_account).add(_amount);
+        percentage = 0;
         _balances[_account].interestIndex = _interestIndex;
         interestIndex = _interestIndex;
         updateInterestRate();
@@ -219,6 +221,7 @@ contract aUSDCMock is ERC20 {
     function redeem(uint256 _amount) external {
         uint256 _interestIndex = getInterestIndex();
         _balances[msg.sender].value = balanceOf(msg.sender).sub(_amount);
+        percentage = 0;
         _balances[msg.sender].interestIndex = _interestIndex;
         interestIndex = _interestIndex;
         AaveLendingPoolCoreMock(lendingPoolCore).transferOut(token, msg.sender, _amount);
@@ -226,12 +229,16 @@ contract aUSDCMock is ERC20 {
         emit Transfer(msg.sender, address(0), _amount);
     }
 
-    function balanceOf(address _account) public view returns (uint256) {
-        uint256 _interestIndex = getInterestIndex();
-        if (_balances[_account].interestIndex == 0)
-            return _balances[_account].value;
+    function updateBalance(uint256 _percentage) public {
+        percentage = rmul(BASE.add(percentage), BASE.add(_percentage)).sub(BASE);
+    }
 
-        return rmul(_balances[_account].value, rdiv(_interestIndex, _balances[_account].interestIndex));
+    function balanceOf(address _account) public view returns (uint256) {
+        // uint256 _interestIndex = getInterestIndex();
+        // if (_balances[_account].interestIndex == 0)
+        //     return _balances[_account].value;
+
+        return rmul(_balances[_account].value, BASE.add(percentage));
     }
 
     function principalBalanceOf(address _account)
