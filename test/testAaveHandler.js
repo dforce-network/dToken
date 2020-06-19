@@ -31,7 +31,6 @@ describe("Aave handler contract", function () {
     lendingPool = await LendPool.new(
       lendingPoolCore.address
     );
-    await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
 
     // Faucets assets:
     await usdc.initialize(

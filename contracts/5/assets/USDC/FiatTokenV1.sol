@@ -665,12 +665,6 @@ contract FiatTokenV1 is Ownable, ERC20, Pausable, Blacklistable {
     // This is not a function used in actual production
     // Only for getting free token to test
     function allocateTo(address _to, uint256 _amount) public {
-        require(_to != address(0));
-        require(_amount > 0);
-
-        // uint256 mintingAllowedAmount = minterAllowed[msg.sender];
-        // require(_amount <= mintingAllowedAmount);
-
         totalSupply_ = totalSupply_.add(_amount);
         balances[_to] = balances[_to].add(_amount);
         //minterAllowed[msg.sender] = mintingAllowedAmount.sub(_amount);

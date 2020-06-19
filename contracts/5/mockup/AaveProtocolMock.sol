@@ -187,8 +187,7 @@ contract ERC20 is IERC20 {
     }
 }
 
-// contract aUSDCMock is ERC20, AToken {
-contract aUSDCMock is ERC20 {
+contract aTokenMock is ERC20 {
     address public lendingPoolCore;
     address public usdc;
     uint256 public price = 10**18;

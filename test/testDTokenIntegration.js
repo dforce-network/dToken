@@ -1,6 +1,7 @@
 const truffleAssert = require("truffle-assertions");
 const FiatToken = artifacts.require("FiatTokenV1");
-const CToken = artifacts.require("CTokenMockup");
+const TetherToken = artifacts.require("TetherToken");
+const CToken = artifacts.require("CTokenMock");
 const CompoundHandler = artifacts.require("CompoundHandler");
 const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
@@ -9,6 +10,11 @@ const DToken = artifacts.require("DToken");
 const DSGuard = artifacts.require("DSGuard");
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 const BN = require("bn.js");
+
+const LendingPoolCore = artifacts.require("AaveLendingPoolCoreMock");
+const LendPool = artifacts.require("AaveLendPoolMock");
+const aTokenMock = artifacts.require("aTokenMock");
+const AaveHandler = artifacts.require("AaveHandler");
 
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
@@ -22,6 +28,10 @@ describe("DToken Contract Integration", function () {
   let dtoken_addresses;
   let internal_handler, compound_handler, aave_handler;
   let dUSDC, dUSDT;
+
+  let aUSDC, aUSDT;
+  let lendingPoolCore;
+  let lendingPool;
 
   before(async function () {
     [
@@ -45,7 +55,7 @@ describe("DToken Contract Integration", function () {
       owner
     );
 
-    USDT = await FiatToken.new("USDT", "USDT", 6, owner, owner, owner, owner);
+    USDT = await TetherToken.new("0", "USDT", "USDT", 6);
 
     dtoken_addresses = await dTokenAddresses.new();
     ds_guard = await DSGuard.new();
@@ -61,7 +71,21 @@ describe("DToken Contract Integration", function () {
       [cUSDT.address, cUSDC.address]
     );
 
-    aave_handler = await InternalHandler.new(dtoken_addresses.address);
+    // Deploys Aave system
+    lendingPoolCore = await LendingPoolCore.new();
+    aUSDC = await aTokenMock.new(USDC.address, owner, lendingPoolCore.address);
+    aUSDT = await aTokenMock.new(USDT.address, owner, lendingPoolCore.address);
+    await lendingPoolCore.setReserveATokenAddress(USDC.address, aUSDC.address);
+    await lendingPoolCore.setReserveATokenAddress(USDT.address, aUSDT.address);
+    lendingPool = await LendPool.new(
+      lendingPoolCore.address
+    );
+
+    aave_handler = await AaveHandler.new(
+      dtoken_addresses.address,
+      lendingPool.address,
+      lendingPoolCore.address
+    );
 
     // Use internal handler by default
     dispatcher = await Dispatcher.new([internal_handler.address], [1000000]);
@@ -94,6 +118,7 @@ describe("DToken Contract Integration", function () {
       await handler.approve(USDC.address);
       await handler.approve(USDT.address);
       await ds_guard.permitx(dUSDC.address, handler.address);
+      await ds_guard.permitx(dUSDT.address, handler.address);
 
       await handler.enableTokens([USDC.address, USDT.address]);
     }
@@ -112,7 +137,7 @@ describe("DToken Contract Integration", function () {
     let balances = {};
 
     balances.usdc = await USDC.balanceOf(account);
-    balances.usdt = await USDT.balanceOf(account);
+    balances.usdt = await USDT.balances(account);
     balances.dusdc = await dUSDC.balanceOf(account);
     balances.dusdt = await dUSDT.balanceOf(account);
 
@@ -275,6 +300,9 @@ describe("DToken Contract Integration", function () {
     beforeEach(async function () {
       await resetContracts();
     });
-    it("Case 1", async function () {});
+    it("Case 1: Normal", async function () {
+      // await resetContracts();
+
+    });
   });
 });

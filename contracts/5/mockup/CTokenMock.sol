@@ -7,7 +7,7 @@ contract Token {
     function allocateTo(address _to, uint256 _amount) public;
 }
 
-contract CToken is ERC20SafeTransfer {
+contract CTokenMock is ERC20SafeTransfer {
     using SafeMath for uint256;
     // --- Data ---
     uint256 constant BASE = 10**18;
