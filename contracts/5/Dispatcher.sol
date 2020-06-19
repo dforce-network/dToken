@@ -109,11 +109,10 @@ contract Dispatcher is DSAuth {
             handlerActive[_handlers[i]] = true;
         }
         // If the `handlers` is not empty, the sum of `propotions` should be 1000000.
-        if (handlers.length > 0)
-            require(
-                _sum == totalPropotion,
-                "the sum of propotions must be 1000000"
-            );
+        require(
+            _sum == totalPropotion,
+            "the sum of propotions must be 1000000"
+        );
     }
 
     /**
@@ -311,6 +310,8 @@ contract Dispatcher is DSAuth {
                 delete _amounts;
                 break;
             }
+
+            if (_amount == 0) continue;
 
             if (i == _lastIndex) {
                 _amounts[i] = _amount;
