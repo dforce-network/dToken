@@ -1,6 +1,6 @@
 pragma solidity 0.5.12;
 
-import "./helpers/ReentrancyGuard.sol";
+import "./library/ReentrancyGuard.sol";
 import "./library/Pausable.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/SafeMath.sol";

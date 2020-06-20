@@ -1,7 +1,7 @@
 pragma solidity 0.5.12;
 
 import "./dTokenAddresses.sol";
-import "./helpers/ReentrancyGuard.sol";
+import "./library/ReentrancyGuard.sol";
 import "./interface/ICompound.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/Pausable.sol";
