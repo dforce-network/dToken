@@ -14,23 +14,23 @@ usePlugin("buidler-gas-reporter");
 // defaultNetwork, networks, solc, and paths.
 // Go to https://buidler.dev/config/ to learn more
 module.exports = {
-    buidlerevm: {
-        throwOnTransactionFailures: true
+  buidlerevm: {
+    throwOnTransactionFailures: true,
+  },
+  // This is a sample solc configuration that specifies which version of solc to use
+  solc: {
+    version: "0.5.12",
+    optimizer: {
+      enabled: true,
+      runs: 200,
     },
-    // This is a sample solc configuration that specifies which version of solc to use
-    solc: {
-        version: "0.5.12",
-        optimizer: {
-            enabled: true,
-            runs: 200
-        },
-    },
-    paths: {
-        sources: "./contracts/5",
-    },
-    gasReporter: {
-        enabled: (process.env.REPORT_GAS) ? true : false,
-        // enabled: true,
-        currency: 'USD'
-    },
+  },
+  paths: {
+    sources: "./contracts",
+  },
+  gasReporter: {
+    enabled: process.env.REPORT_GAS ? true : false,
+    // enabled: true,
+    currency: "USD",
+  },
 };
