@@ -333,7 +333,7 @@ describe("DToken Contract Integration", function () {
       await resetContracts();
     });
 
-    it("Case 1", async function () {
+    it("Case 97~99", async function () {
       dispatcher.resetHandlers([internal_handler.address, compound_handler.address, aave_handler.address], [700000, 200000, 100000]);
 
       diff = await calcDiff(
@@ -473,7 +473,7 @@ describe("DToken Contract Integration", function () {
       await resetContracts();
     });
 
-    it("Case 1", async function () {
+    it("Case 100~104", async function () {
       await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
       await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE); // Mint
       diff = await calcDiff(
