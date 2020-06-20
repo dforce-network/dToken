@@ -185,7 +185,10 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
         uint256 _lastTotalBalance = getRealBalance(_underlyingToken);
         // expect the balance of the contract is 0, if not, there is some unexpected transfer.
-        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(address(this));
+        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(
+            address(this)
+        );
+
 
             InterestDetails storage currentInterests
          = interestsDetails[_underlyingToken];
@@ -235,6 +238,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
         uint256 _lastTotalBalance = getRealBalance(_underlyingToken);
 
+
             InterestDetails storage currentInterests
          = interestsDetails[_underlyingToken];
         uint256 _periodInterests = _lastTotalBalance.sub(
@@ -274,7 +278,9 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             _underlyingToken
         );
 
-        uint256 _changedAmount = _currentHandlerBalance.sub(_previousHandlerBalance);
+        uint256 _changedAmount = _currentHandlerBalance.sub(
+            _previousHandlerBalance
+        );
         // return a smaller value.
         return _changedAmount > _amount ? _amount : _changedAmount;
     }

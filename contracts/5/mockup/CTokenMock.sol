@@ -97,9 +97,9 @@ contract CTokenMock is ERC20SafeTransfer {
         // }
         // return exchangeRate;
         uint256 _balance = IERC20(token).balanceOf(address(this));
-            exchangeRate = totalSupply == 0 || _balance == 0
-                ? exchangeRate
-                : rdiv(_balance, totalSupply);
+        exchangeRate = totalSupply == 0 || _balance == 0
+            ? exchangeRate
+            : rdiv(_balance, totalSupply);
         return exchangeRate;
     }
 
