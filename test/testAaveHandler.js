@@ -26,11 +26,14 @@ describe("Aave handler contract", function () {
 
     // Deploys Aave system
     lendingPoolCore = await LendingPoolCore.new();
-    aUSDC = await aTokenMock.new("aUSDC", "aUSDC", usdc.address, lendingPoolCore.address);
-    await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
-    lendingPool = await LendPool.new(
+    aUSDC = await aTokenMock.new(
+      "aUSDC",
+      "aUSDC",
+      usdc.address,
       lendingPoolCore.address
     );
+    await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
+    lendingPool = await LendPool.new(lendingPoolCore.address);
 
     // Faucets assets:
     await usdc.initialize(
