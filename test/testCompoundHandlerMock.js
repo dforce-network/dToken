@@ -6,7 +6,7 @@ const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 
-describe("CompoundHandlerMockup contract", function () {
+describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC;
   let handler;

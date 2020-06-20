@@ -122,7 +122,7 @@ describe("Dispatcher Contract", function () {
 
       await dispatcher.updateProportion(handler_addresses, proportions);
 
-      let { 0: h, 1: p } = await dispatcher.getHandler();
+      let {0: h, 1: p} = await dispatcher.getHandler();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -175,7 +175,7 @@ describe("Dispatcher Contract", function () {
         (await InternalHandler.new(dtoken_addresses.address)).address,
       ];
       await truffleAssert.reverts(
-        dispatcher.addHandler(new_handlers, { from: account1 }),
+        dispatcher.addHandler(new_handlers, {from: account1}),
         "ds-auth-unauthorized"
       );
     });
@@ -258,7 +258,7 @@ describe("Dispatcher Contract", function () {
     });
 
     it("Should get Handler", async function () {
-      let { 0: h, 1: p } = await dispatcher.getHandler();
+      let {0: h, 1: p} = await dispatcher.getHandler();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -276,7 +276,7 @@ describe("Dispatcher Contract", function () {
 
     it("Should get deposit strategy", async function () {
       let amounts = [10000000, 0, 0, 0, 0];
-      let { 0: h, 1: p } = await dispatcher.getDepositStrategy(10000000);
+      let {0: h, 1: p} = await dispatcher.getDepositStrategy(10000000);
 
       assert_handlers_equal(
         h,
@@ -288,7 +288,7 @@ describe("Dispatcher Contract", function () {
 
     it("Should get empty deposit strategy if any handler is paused", async function () {
       await handlers[3].pause();
-      let { 0: h, 1: p } = await dispatcher.getDepositStrategy(10000000);
+      let {0: h, 1: p} = await dispatcher.getDepositStrategy(10000000);
 
       assert.equal(h.length, 0);
       assert.equal(p.length, 0);
@@ -317,7 +317,7 @@ describe("Dispatcher Contract", function () {
         handler_addresses[4],
       ];
       let amounts = [3000e6, 6000e6, 0, 0, 0];
-      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
+      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
@@ -352,7 +352,7 @@ describe("Dispatcher Contract", function () {
         handler_addresses[4],
       ];
       let amounts = [1500e6, 0, 0, 0, 0];
-      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
+      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
         USDC.address,
         1500e6
       );
@@ -379,7 +379,7 @@ describe("Dispatcher Contract", function () {
       await USDC.allocateTo(handler_addresses[4], 500e6);
 
       await handlers[3].pause();
-      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
+      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
@@ -388,7 +388,7 @@ describe("Dispatcher Contract", function () {
       // assert.equal(p.length, 0);
 
       await handlers[3].unpause();
-      let { 0: h1, 1: p1 } = await dispatcher.getWithdrawStrategy(
+      let {0: h1, 1: p1} = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
