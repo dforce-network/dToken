@@ -90,7 +90,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev This contract approves to `_dToken` contract with `_underlyingToken`.
      * @param _underlyingToken Token address to approve.
      */
-    function approve(address _underlyingToken) public auth {
+    function approve(address _underlyingToken) external auth {
         address _dToken = dTokenAddresses(dTokens).getdToken(_underlyingToken);
         if (
             IERC20(_underlyingToken).allowance(address(this), _dToken) !=

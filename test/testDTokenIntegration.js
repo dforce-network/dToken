@@ -829,7 +829,7 @@ describe("DToken Contract Integration", function () {
     it("Case 52: Should be able to rebalance all from compound's current liquidity", async function () {
       let liquidity = await compound_handler.getLiquidity(USDC.address);
 
-      console.log(liquidity.toString());
+      //console.log(liquidity.toString());
 
       let diff = await calcDiff(
         dUSDC.rebalance,
@@ -918,7 +918,7 @@ describe("DToken Contract Integration", function () {
         await dUSDC.balanceOf(account1)
       ).toString();
       await dUSDC.burn(account1, remained_dToken_balance, {from: account1});
-      console.log((await dUSDC.getExchangeRate()).toString());
+      //console.log((await dUSDC.getExchangeRate()).toString());
       let newExchangeRate = await dUSDC.getExchangeRate();
       // TODO:
       // assert.isAbove(Number((newExchangeRate.sub(BASE)).toString()), 0,'exchange rate should be greater than 1');
@@ -1239,7 +1239,9 @@ describe("DToken Contract Integration", function () {
 
     it("Case 69: Transfer 1 dusdc", async function () {
       let mint_amount = new BN(5 * 10 ** 6);
-      await dUSDC.transfer(account2, mint_amount.toString(), {from: account1});
+      await dUSDC.transfer(account2, mint_amount.toString(), {
+        from: account1,
+      });
     });
 
     it("Case 70: Unpause Aave handler", async function () {
@@ -1486,12 +1488,22 @@ describe("DToken Contract Integration", function () {
 
     // TODO:
     it("Case 84: Rebalance max value from Aave and Compound", async function () {
-      // let diff = await calcDiff(
-      //   dUSDC.rebalance,
-      //   [[compound_handler.address, aave_handler.address], [UINT256_MAX, UINT256_MAX], [internal_handler.address], [0]],
-      //   account1
-      // );
-      // console.log("diff", diff)
+      let diff = await calcDiff(
+        dUSDC.rebalance,
+        [
+          [compound_handler.address, aave_handler.address],
+          [UINT256_MAX, UINT256_MAX],
+          [internal_handler.address],
+          [0],
+        ],
+        account1
+      );
+
+      //console.log("diff", diff);
+      let liquidities = await getAllLiquidities();
+
+      assert.equal(liquidities.com_usdc, 0);
+      assert.equal(liquidities.aav_usdc, 0);
     });
 
     it("Case 85: Rebalance from internal handler value to Aave and Compound", async function () {
@@ -1512,7 +1524,7 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 86: Rebalance too much from internal handler", async function () {
-      // console.log((await internal_handler.getLiquidity(USDC.address)).toString())
+      let liquidities = await internal_handler.getLiquidity(USDC.address);
       await truffleAssert.reverts(
         calcDiff(
           dUSDC.rebalance,
@@ -1520,7 +1532,7 @@ describe("DToken Contract Integration", function () {
             [internal_handler.address],
             [0],
             [compound_handler.address, aave_handler.address],
-            [300e6, 300e6],
+            [liquidities, 1e6],
           ],
           account1
         ),
@@ -1704,6 +1716,39 @@ describe("DToken Contract Integration", function () {
         [account1, redeem_amount.toString(), {from: account1}],
         account1
       );
+    });
+  });
+
+  describe("DToken Integration: Fee related cases ", async function () {
+    before(async function () {
+      await resetContracts();
+      await dUSDC.updateOriginationFee(BURN_SELECTOR, FEE);
+      await dUSDC.updateOriginationFee(MINT_SELECTOR, FEE);
+    });
+
+    it("Case 108: Should be able to set fee recipient", async function () {
+      await dUSDC.setFeeRecipient(account2);
+      let amount = new BN(10000e6);
+      let fee = new BN(1e6);
+
+      let diff = await calcDiff(
+        dUSDC.mint,
+        [account1, amount, {from: account1}],
+        account2
+      );
+      assert.equal(diff.usdc, fee.toString());
+    });
+
+    it("Case 109: Should be able to transfer Fee out", async function () {
+      await dUSDC.mint(account1, 10000e6, {from: account1});
+      let fee = await USDC.balanceOf(dUSDC.address);
+
+      let diff = await calcDiff(
+        dUSDC.transferFee,
+        [USDC.address, fee],
+        account2
+      );
+      assert.equal(diff.usdc, fee.toString());
     });
   });
 });

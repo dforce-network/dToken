@@ -249,7 +249,9 @@ contract aTokenMock is ERC20 {
 
     function redeem(uint256 _amount) external {
         uint256 _interestIndex = getInterestIndex();
-        uint256 _realAmount = _amount == uint256(-1) ? balanceOf(msg.sender) : _amount;
+        uint256 _realAmount = _amount == uint256(-1)
+            ? balanceOf(msg.sender)
+            : _amount;
         _balances[msg.sender].value = balanceOf(msg.sender).sub(_realAmount);
         percentage = 0;
         _balances[msg.sender].interestIndex = _interestIndex;
