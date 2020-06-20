@@ -347,6 +347,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         uint256 exchangeRate;
         uint256 originationFee;
         uint256 fee;
+        uint256 netDepositAmount;
         uint256 mintAmount;
         uint256 wad;
         uint256 interestIncrease;
@@ -378,9 +379,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 "mint: transferFrom fee failed"
             );
 
+        _mintLocal.netDepositAmount = _pie.sub(_mintLocal.fee);
         // Get deposit strategy base on the deposit amount `_pie`.
         (_mintLocal.handlers, _mintLocal.amounts) = IDispatcher(dispatcher)
-            .getDepositStrategy(_pie.sub(_mintLocal.fee));
+            .getDepositStrategy(_mintLocal.netDepositAmount);
         require(_mintLocal.handlers.length > 0, "mint:");
 
         // Get current exchange rate.
@@ -412,6 +414,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
+        require(_mintLocal.mintAmount <= _mintLocal.netDepositAmount, "mint:");
         // Calculate amount of the dToken based on current exchange rate.
         _mintLocal.wad = rdiv(_mintLocal.mintAmount, _mintLocal.exchangeRate);
         require(_mintLocal.wad > 0, "mint:");
@@ -438,6 +441,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address[] handlers;
         uint256[] amounts;
         uint256 exchangeRate;
+        uint256 consumeAmount;
         uint256 withdrawAmount;
         uint256 withdrawTotalAmount;
         uint256 userAmount;
@@ -467,12 +471,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _burnLocal.token
         );
 
+        _burnLocal.consumeAmount = rmul(_wad, _burnLocal.exchangeRate);
         // Get `_token` best withdraw strategy base on the withdraw amount `_pie`.
         (_burnLocal.handlers, _burnLocal.amounts) = IDispatcher(dispatcher)
-            .getWithdrawStrategy(
-            _burnLocal.token,
-            rmul(_wad, _burnLocal.exchangeRate)
-        );
+            .getWithdrawStrategy(_burnLocal.token, _burnLocal.consumeAmount);
         require(_burnLocal.handlers.length > 0, "burn:");
 
         _burnLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
@@ -513,8 +515,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         }
 
         require(
-            _burnLocal.withdrawTotalAmount <=
-                rmul(_wad, _burnLocal.exchangeRate),
+            _burnLocal.withdrawTotalAmount <= _burnLocal.consumeAmount,
             "burn:"
         );
 
@@ -581,6 +582,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address[] handlers;
         uint256[] amounts;
         uint256 exchangeRate;
+        uint256 consumeAmountWithFee;
         uint256 redeemAmount;
         uint256 redeemTotalAmount;
         uint256 userAmount;
@@ -605,11 +607,15 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _redeemLocal.token = token;
         _redeemLocal.originationFee = originationFee[0x9dc29fac];
 
+        _redeemLocal.consumeAmountWithFee = rdivup(
+            _pie,
+            BASE.sub(_redeemLocal.originationFee)
+        );
         // Get `_token` best redeem strategy base on the redeem amount including fee.
         (_redeemLocal.handlers, _redeemLocal.amounts) = IDispatcher(dispatcher)
             .getWithdrawStrategy(
             _redeemLocal.token,
-            rdivup(_pie, BASE.sub(_redeemLocal.originationFee))
+            _redeemLocal.consumeAmountWithFee
         );
         require(_redeemLocal.handlers.length > 0, "redeem:");
 
@@ -651,7 +657,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
-        require(_redeemLocal.redeemTotalAmount >= _pie, "redeem:");
+        require(
+            _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
+            "redeem:"
+        );
 
         // Calculate amount of the dToken based on current exchange rate.
         _redeemLocal.wad = rdivup(
@@ -679,10 +688,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         totalSupply = totalSupply.sub(_redeemLocal.wad);
 
         // The calculated amount contains exchange token fee, if it exists.
-        _redeemLocal.fee = rmul(
-            _redeemLocal.redeemTotalAmount,
-            _redeemLocal.originationFee
-        );
+        _redeemLocal.fee = _redeemLocal.redeemTotalAmount.sub(_pie);
         // Transfer the token trade fee from the `default handler` to the `dToken`.
         if (_redeemLocal.fee > 0)
             require(
