@@ -1,5 +1,5 @@
 const CompoundHandler = artifacts.require("CompoundHandler");
-const CToken = artifacts.require("CTokenMockup");
+const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
 const dTokenAddresses = artifacts.require("dTokenAddresses");
 const truffleAssert = require("truffle-assertions");
@@ -39,9 +39,6 @@ describe("CompoundHandlerMockup contract", function () {
         from: owner,
       }
     );
-    await USDC.allocateTo(handler.address, 100000e6, {
-      from: owner,
-    });
 
     let cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
     handler.setcTokensRelation([USDC.address], [cUSDC.address]);
@@ -191,11 +188,14 @@ describe("CompoundHandlerMockup contract", function () {
   describe("withdraw", function () {
     beforeEach(async function () {
       await resetContracts();
-      await handler.deposit(USDC.address, 1000e6);
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 10000e6);
     });
 
     it("Should only allow auth to withdraw", async function () {
-      let amount = await handler.withdraw(USDC.address, 100e6);
+      let amount = await handler.withdraw(USDC.address, 10000e6);
 
       //TODO: Check returen value from transaction
       //console.log(JSON.stringify(amount));
@@ -223,24 +223,30 @@ describe("CompoundHandlerMockup contract", function () {
   describe("getBalance", function () {
     beforeEach(async function () {
       await resetContracts();
-      await handler.deposit(USDC.address, 1000e6);
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
     });
 
     it("Should get some balance", async function () {
       let balance = await handler.getBalance(USDC.address);
-      assert.equal(balance.eq(new BN(1000e6)), true);
+      assert.equal(balance.toString(), 100000e6);
     });
   });
 
   describe("getLiquidity", function () {
     beforeEach(async function () {
       await resetContracts();
-      await handler.deposit(USDC.address, 1000e6);
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
     });
 
     it("Should get some liquidity", async function () {
       let balance = await handler.getLiquidity(USDC.address);
-      assert.equal(balance.eq(new BN(1000e6)), true);
+      assert.equal(balance.toString(), 100000e6);
     });
   });
 
