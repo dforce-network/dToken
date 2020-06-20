@@ -146,8 +146,8 @@ describe("DToken Contract Integration", function () {
     for (const account of accounts) {
       await USDC.allocateTo(account, 100000e6);
       await USDT.allocateTo(account, 100000e6);
-      USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
-      USDT.approve(dUSDT.address, UINT256_MAX, {from: account});
+      USDC.approve(dUSDC.address, UINT256_MAX, { from: account });
+      USDT.approve(dUSDT.address, UINT256_MAX, { from: account });
     }
   }
 
@@ -265,14 +265,14 @@ describe("DToken Contract Integration", function () {
 
     it("Case 4: Should be able to disable underlying token", async function () {
       // We need to mint some in order to burn
-      await dUSDC.mint(account1, 1000e6, {from: account1});
+      await dUSDC.mint(account1, 1000e6, { from: account1 });
 
       await internal_handler.disableTokens([USDC.address]);
     });
 
     it("Case 5: Should not be able to mint after underlying token is disabled", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 1000e6, {from: account1}),
+        dUSDC.mint(account1, 1000e6, { from: account1 }),
         "deposit: Token is disabled!"
       );
     });
@@ -282,7 +282,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 500e6, {from: account1}],
+        [account1, 500e6, { from: account1 }],
         account1
       );
 
@@ -292,7 +292,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.redeem,
-        [account1, 500e6, {from: account1}],
+        [account1, 500e6, { from: account1 }],
         account1
       );
 
@@ -310,7 +310,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, 1000e6, {from: account1}],
+        [account1, 1000e6, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, -1000e6);
@@ -319,7 +319,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 500e6, {from: account1}],
+        [account1, 500e6, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, 500e6);
@@ -328,7 +328,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.redeem,
-        [account1, 500e6, {from: account1}],
+        [account1, 500e6, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, 500e6);
@@ -337,27 +337,27 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 9: Should be able to pause internal handler", async function () {
-      await dUSDC.mint(account1, 1000e6, {from: account1});
+      await dUSDC.mint(account1, 1000e6, { from: account1 });
       await internal_handler.pause();
     });
 
     it("Case 10: Should not be able to mint/burn/redeem after internal handler is paused", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 1000e6, {from: account1}),
+        dUSDC.mint(account1, 1000e6, { from: account1 }),
         "mint:"
       );
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 500e6, {from: account1}),
+        dUSDC.burn(account1, 500e6, { from: account1 }),
         "burn:"
       );
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 500e6, {from: account1}),
+        dUSDC.redeem(account1, 500e6, { from: account1 }),
         "redeem:"
       );
     });
 
     it("Case 11: Should be able to transfer after internal handler is paused", async function () {
-      await dUSDC.transfer(account2, 100e6, {from: account1});
+      await dUSDC.transfer(account2, 100e6, { from: account1 });
     });
 
     it("Case 12: Should be able to unpause internal handler", async function () {
@@ -365,9 +365,9 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 13: Should be able to mint/burn/redeem after unpause internal handler", async function () {
-      await dUSDC.mint(account1, 1000e6, {from: account1});
-      await dUSDC.burn(account1, 500e6, {from: account1});
-      await dUSDC.redeem(account1, 500e6, {from: account1});
+      await dUSDC.mint(account1, 1000e6, { from: account1 });
+      await dUSDC.burn(account1, 500e6, { from: account1 });
+      await dUSDC.redeem(account1, 500e6, { from: account1 });
     });
 
     it("Case 14: Should be able to pause DToken", async function () {
@@ -376,22 +376,22 @@ describe("DToken Contract Integration", function () {
 
     it("Case 15: Should not be able to mint/burn/redeem after DToken is paused", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 1000e6, {from: account1}),
+        dUSDC.mint(account1, 1000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 500e6, {from: account1}),
+        dUSDC.burn(account1, 500e6, { from: account1 }),
         "whenNotPaused: paused"
       );
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 500e6, {from: account1}),
+        dUSDC.redeem(account1, 500e6, { from: account1 }),
         "whenNotPaused: paused"
       );
     });
 
     it("Case 16: Should not be able to transfer after DToken is paused", async function () {
       await truffleAssert.reverts(
-        dUSDC.transfer(account2, 100e6, {from: account1}),
+        dUSDC.transfer(account2, 100e6, { from: account1 }),
         "whenNotPaused: paused"
       );
     });
@@ -401,13 +401,13 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 18: Should be able to mint/burn/redeem DToken", async function () {
-      await dUSDC.mint(account1, 1000e6, {from: account1});
-      await dUSDC.burn(account1, 500e6, {from: account1});
-      await dUSDC.redeem(account1, 500e6, {from: account1});
+      await dUSDC.mint(account1, 1000e6, { from: account1 });
+      await dUSDC.burn(account1, 500e6, { from: account1 });
+      await dUSDC.redeem(account1, 500e6, { from: account1 });
     });
 
     it("Case 19: Should be able to transfer DToken", async function () {
-      await dUSDC.transfer(account2, 100e6, {from: account1});
+      await dUSDC.transfer(account2, 100e6, { from: account1 });
     });
 
     it("Case 20: Should be able to mint and check internal liquidity", async function () {
@@ -418,7 +418,7 @@ describe("DToken Contract Integration", function () {
 
       let diff = await calcDiff(
         dUSDC.mint,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
 
@@ -434,7 +434,7 @@ describe("DToken Contract Integration", function () {
 
       let diff = await calcDiff(
         dUSDC.burn,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
 
@@ -447,7 +447,7 @@ describe("DToken Contract Integration", function () {
 
       let diff = await calcDiff(
         dUSDC.burn,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
 
@@ -487,7 +487,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, "-" + amount.toString());
@@ -498,7 +498,7 @@ describe("DToken Contract Integration", function () {
       // burn some
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, amount.toString());
@@ -507,10 +507,10 @@ describe("DToken Contract Integration", function () {
       assert.equal(diff.com_usdc, "0");
 
       // redeem some
-      await dUSDC.mint(account1, amount, {from: account1});
+      await dUSDC.mint(account1, amount, { from: account1 });
       diff = await calcDiff(
         dUSDC.redeem,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, amount.toString());
@@ -548,7 +548,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
 
@@ -569,7 +569,7 @@ describe("DToken Contract Integration", function () {
         [internal_handler.address, compound_handler.address],
         [500000, 500000]
       );
-      await dUSDC.mint(account1, 2000e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
       await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
 
       // Burn some dUSDC
@@ -577,7 +577,7 @@ describe("DToken Contract Integration", function () {
       // and internal handler should have enough liquidity
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
       let real_amount = mulFraction(amount, 9999, 10000);
@@ -596,7 +596,7 @@ describe("DToken Contract Integration", function () {
         [internal_handler.address, compound_handler.address],
         [500000, 500000]
       );
-      await dUSDC.mint(account1, 2000e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
       await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
       // Now internal and compound each should have 1000
 
@@ -605,7 +605,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, real_amount.toString());
@@ -626,7 +626,7 @@ describe("DToken Contract Integration", function () {
         [internal_handler.address, compound_handler.address],
         [500000, 500000]
       );
-      await dUSDC.mint(account1, 2000e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
       await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
       // Now internal and compound each should have 1000
 
@@ -635,7 +635,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, amount, {from: account1}],
+        [account1, amount, { from: account1 }],
         account1
       );
       assert.equal(diff.usdc, real_amount.toString());
@@ -649,47 +649,47 @@ describe("DToken Contract Integration", function () {
 
     it("Case 32: Should pause Compound handler", async function () {
       //Mint some dToken for later use
-      await dUSDT.mint(account1, 2000e6, {from: account1});
-      await dUSDC.mint(account1, 2000e6, {from: account1});
+      await dUSDT.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
 
       await compound_handler.pause();
     });
 
     it("Case 33: Should fail on Mint/Burn/Redeem when Compound handler paused", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 2000e6, {from: account1}),
+        dUSDC.mint(account1, 2000e6, { from: account1 }),
         "mint:"
       );
 
       await truffleAssert.reverts(
-        dUSDT.mint(account1, 2000e6, {from: account1}),
+        dUSDT.mint(account1, 2000e6, { from: account1 }),
         "mint:"
       );
 
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 2000e6, {from: account1}),
+        dUSDC.burn(account1, 2000e6, { from: account1 }),
         "burn:"
       );
 
       await truffleAssert.reverts(
-        dUSDT.burn(account1, 2000e6, {from: account1}),
+        dUSDT.burn(account1, 2000e6, { from: account1 }),
         "burn:"
       );
 
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 2000e6, {from: account1}),
+        dUSDC.redeem(account1, 2000e6, { from: account1 }),
         "redeem:"
       );
 
       await truffleAssert.reverts(
-        dUSDT.redeem(account1, 2000e6, {from: account1}),
+        dUSDT.redeem(account1, 2000e6, { from: account1 }),
         "redeem:"
       );
     });
 
     it("Case 35: Should be able to transfer when Compound handler paused", async function () {
-      await dUSDT.transfer(account2, 1e6, {from: account1});
-      await dUSDC.transfer(account2, 1e6, {from: account1});
+      await dUSDT.transfer(account2, 1e6, { from: account1 });
+      await dUSDC.transfer(account2, 1e6, { from: account1 });
     });
 
     it("Case 36: should unpause Compound handler", async function () {
@@ -697,12 +697,12 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 37: Should succeed in Mint/Burn/Redeem", async function () {
-      await dUSDC.mint(account1, 2000e6, {from: account1});
-      await dUSDT.mint(account1, 2000e6, {from: account1});
-      await dUSDC.burn(account1, 1000e6, {from: account1});
-      await dUSDT.burn(account1, 1000e6, {from: account1});
-      await dUSDC.redeem(account1, 900e6, {from: account1});
-      await dUSDT.redeem(account1, 900e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDT.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.burn(account1, 1000e6, { from: account1 });
+      await dUSDT.burn(account1, 1000e6, { from: account1 });
+      await dUSDC.redeem(account1, 900e6, { from: account1 });
+      await dUSDT.redeem(account1, 900e6, { from: account1 });
     });
 
     it("Case 38: Should be able to pause dToken", async function () {
@@ -712,43 +712,43 @@ describe("DToken Contract Integration", function () {
 
     it("Case 39: Should fail on Mint/Burn/Redeem when DToken paused", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 2000e6, {from: account1}),
+        dUSDC.mint(account1, 2000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
 
       await truffleAssert.reverts(
-        dUSDT.mint(account1, 2000e6, {from: account1}),
+        dUSDT.mint(account1, 2000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
 
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 2000e6, {from: account1}),
+        dUSDC.burn(account1, 2000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
 
       await truffleAssert.reverts(
-        dUSDT.burn(account1, 2000e6, {from: account1}),
+        dUSDT.burn(account1, 2000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
 
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 2000e6, {from: account1}),
+        dUSDC.redeem(account1, 2000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
 
       await truffleAssert.reverts(
-        dUSDT.redeem(account1, 2000e6, {from: account1}),
+        dUSDT.redeem(account1, 2000e6, { from: account1 }),
         "whenNotPaused: paused"
       );
     });
 
     it("Case 40: Should not be able to transfer when DToken paused", async function () {
       await truffleAssert.reverts(
-        dUSDT.transfer(account2, 1e6, {from: account1}),
+        dUSDT.transfer(account2, 1e6, { from: account1 }),
         "whenNotPaused: paused"
       );
       await truffleAssert.reverts(
-        dUSDC.transfer(account2, 1e6, {from: account1}),
+        dUSDC.transfer(account2, 1e6, { from: account1 }),
         "whenNotPaused: paused"
       );
     });
@@ -759,12 +759,12 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 42: Should be able to mint/burn/redeem DToken", async function () {
-      await dUSDC.mint(account1, 2000e6, {from: account1});
-      await dUSDT.mint(account1, 2000e6, {from: account1});
-      await dUSDC.burn(account1, 1000e6, {from: account1});
-      await dUSDT.burn(account1, 1000e6, {from: account1});
-      await dUSDC.redeem(account1, 100e6, {from: account1});
-      await dUSDT.redeem(account1, 100e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDT.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.burn(account1, 1000e6, { from: account1 });
+      await dUSDT.burn(account1, 1000e6, { from: account1 });
+      await dUSDC.redeem(account1, 100e6, { from: account1 });
+      await dUSDT.redeem(account1, 100e6, { from: account1 });
     });
 
     it("Case 43: Disable USDC in compound", async function () {
@@ -773,23 +773,23 @@ describe("DToken Contract Integration", function () {
 
     it("Case 44: Should not be able to mint dUSDC", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 1000e6, {from: account1}),
+        dUSDC.mint(account1, 1000e6, { from: account1 }),
         "deposit: Token is disabled!"
       );
     });
 
     it("Case 45: Should be able to burn/redeem dUSDC", async function () {
-      dUSDC.burn(account1, 10e6, {from: account1});
-      dUSDC.redeem(account1, 10e6, {from: account1});
+      dUSDC.burn(account1, 10e6, { from: account1 });
+      dUSDC.redeem(account1, 10e6, { from: account1 });
     });
 
     it("Case 46: Should be able mint dUSDT", async function () {
-      dUSDT.mint(account1, 1000e6, {from: account1});
+      dUSDT.mint(account1, 1000e6, { from: account1 });
     });
 
     it("Case 47: Should be able to burn/redeem dUSDT", async function () {
-      dUSDT.burn(account1, 10e6, {from: account1});
-      dUSDT.redeem(account1, 10e6, {from: account1});
+      dUSDT.burn(account1, 10e6, { from: account1 });
+      dUSDT.redeem(account1, 10e6, { from: account1 });
     });
 
     it("Case 48: Enable USDC in compound", async function () {
@@ -797,9 +797,9 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 49: Should be able to mint/burn/redeem dUSDC", async function () {
-      await dUSDC.mint(account1, 2000e6, {from: account1});
-      await dUSDC.burn(account1, 1000e6, {from: account1});
-      await dUSDC.redeem(account1, 100e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
+      await dUSDC.burn(account1, 1000e6, { from: account1 });
+      await dUSDC.redeem(account1, 100e6, { from: account1 });
     });
 
     it("Case 50: Should be able to rebalance 100 from compound to internal", async function () {
@@ -854,7 +854,7 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 54: Should not be able to rebalance more than its liquidity from internal to compound", async function () {
-      let amount = (await compound_handler.getLiquidity(USDC.address)).add(
+      let amount = (await internal_handler.getLiquidity(USDC.address)).add(
         new BN(1)
       );
 
@@ -865,7 +865,7 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 55: Should be able to rebalance from internal to compound", async function () {
-      await dUSDC.mint(account1, 2000e6, {from: account1});
+      await dUSDC.mint(account1, 2000e6, { from: account1 });
       let amount = await internal_handler.getLiquidity(USDC.address);
       let diff = await calcDiff(
         dUSDC.rebalance,
@@ -900,24 +900,24 @@ describe("DToken Contract Integration", function () {
 
       await calcDiff(
         dUSDC.mint,
-        [account1, mint_amount.toString(), {from: account1}],
+        [account1, mint_amount.toString(), { from: account1 }],
         account1
       );
       await calcDiff(
         dUSDC.burn,
-        [account1, burn_amount.toString(), {from: account1}],
+        [account1, burn_amount.toString(), { from: account1 }],
         account1
       );
       let redeem_amount = (await dUSDC.balanceOf(account1)).toString();
       await calcDiff(
         dUSDC.redeem,
-        [account1, redeem_amount, {from: account1}],
+        [account1, redeem_amount, { from: account1 }],
         account1
       );
       let remained_dToken_balance = (
         await dUSDC.balanceOf(account1)
       ).toString();
-      await dUSDC.burn(account1, remained_dToken_balance, {from: account1});
+      await dUSDC.burn(account1, remained_dToken_balance, { from: account1 });
       console.log((await dUSDC.getExchangeRate()).toString());
       let newExchangeRate = await dUSDC.getExchangeRate();
       // TODO:
@@ -972,19 +972,19 @@ describe("DToken Contract Integration", function () {
 
       await calcDiff(
         dUSDC.mint,
-        [account1, mint_amount.toString(), {from: account1}],
+        [account1, mint_amount.toString(), { from: account1 }],
         account1
       );
       await calcDiff(
         dUSDC.burn,
-        [account1, burn_amount.toString(), {from: account1}],
+        [account1, burn_amount.toString(), { from: account1 }],
         account1
       );
       let redeem_amount = (await dUSDC.balanceOf(account1)).toString();
 
       await calcDiff(
         dUSDC.redeem,
-        [account1, redeem_amount, {from: account1}],
+        [account1, redeem_amount, { from: account1 }],
         account1
       );
 
@@ -999,7 +999,7 @@ describe("DToken Contract Integration", function () {
 
       let mint_result = await calcDiff(
         dUSDC.mint,
-        [account1, mint_amount.toString(), {from: account1}],
+        [account1, mint_amount.toString(), { from: account1 }],
         account1
       );
       console.log("mint result----", mint_result);

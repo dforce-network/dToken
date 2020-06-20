@@ -82,7 +82,7 @@ describe("Dispatcher Contract", function () {
 
       await truffleAssert.reverts(
         resetContracts(2, proportions),
-        "setHandler: array parameters mismatch"
+        "setHandlers: array parameters mismatch"
       );
     });
 
@@ -92,7 +92,7 @@ describe("Dispatcher Contract", function () {
 
       await truffleAssert.reverts(
         Dispatcher.new(handler_addresses, proportions),
-        "setHandler: handlerAddr contract address invalid"
+        "setHandlers: handlerAddr contract address invalid"
       );
     });
 
@@ -100,13 +100,13 @@ describe("Dispatcher Contract", function () {
       let proportions = [2000000];
       await truffleAssert.reverts(
         resetContracts(1, proportions),
-        "the sum of propotions must be 1000000"
+        "the sum of proportions must be 1000000"
       );
 
       proportions = [100000, 100000, 100000, 100000, 100000];
       await truffleAssert.reverts(
         resetContracts(5, proportions),
-        "the sum of propotions must be 1000000"
+        "the sum of proportions must be 1000000"
       );
     });
   });
@@ -120,9 +120,9 @@ describe("Dispatcher Contract", function () {
     it("Should only allow auth to update proportion", async function () {
       let proportions = [500000, 500000, 0, 0, 0];
 
-      await dispatcher.updatePropotion(handler_addresses, proportions);
+      await dispatcher.updateProportion(handler_addresses, proportions);
 
-      let {0: h, 1: p} = await dispatcher.getHandler();
+      let { 0: h, 1: p } = await dispatcher.getHandler();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -131,7 +131,7 @@ describe("Dispatcher Contract", function () {
       );
 
       await truffleAssert.reverts(
-        dispatcher.updatePropotion(handler_addresses, proportions, {
+        dispatcher.updateProportion(handler_addresses, proportions, {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -141,8 +141,8 @@ describe("Dispatcher Contract", function () {
     it("Should not update proportion as length mismatch", async function () {
       let proportions = [500000, 500000, 0, 0];
       await truffleAssert.reverts(
-        dispatcher.updatePropotion(handler_addresses, proportions),
-        "updatePropotion: array parameters mismatch"
+        dispatcher.updateProportion(handler_addresses, proportions),
+        "updateProportion: array parameters mismatch"
       );
     });
 
@@ -151,8 +151,8 @@ describe("Dispatcher Contract", function () {
       let addresses = handler_addresses;
       addresses[0] = account1;
       await truffleAssert.reverts(
-        dispatcher.updatePropotion(addresses, proportions),
-        "updatePropotion: the handler contract address does not exist"
+        dispatcher.updateProportion(addresses, proportions),
+        "updateProportion: the handler contract address does not exist"
       );
     });
   });
@@ -175,7 +175,7 @@ describe("Dispatcher Contract", function () {
         (await InternalHandler.new(dtoken_addresses.address)).address,
       ];
       await truffleAssert.reverts(
-        dispatcher.addHandler(new_handlers, {from: account1}),
+        dispatcher.addHandler(new_handlers, { from: account1 }),
         "ds-auth-unauthorized"
       );
     });
@@ -197,7 +197,7 @@ describe("Dispatcher Contract", function () {
     });
   });
 
-  describe("resetHandler", function () {
+  describe("resetHandlers", function () {
     beforeEach(async function () {
       let proportions = [1000000, 0, 0, 0, 0];
       await resetContracts(5, proportions);
@@ -206,12 +206,12 @@ describe("Dispatcher Contract", function () {
     it("Should only allow auth to reset handlers ", async function () {
       let new_handlers = handler_addresses;
       let new_proportions = [500000, 500000, 0, 0, 0];
-      await dispatcher.resetHandler(new_handlers, new_proportions);
+      await dispatcher.resetHandlers(new_handlers, new_proportions);
 
       //TODO: Check new handlers are retrievable
 
       await truffleAssert.reverts(
-        dispatcher.resetHandler(new_handlers, new_proportions, {
+        dispatcher.resetHandlers(new_handlers, new_proportions, {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -258,7 +258,7 @@ describe("Dispatcher Contract", function () {
     });
 
     it("Should get Handler", async function () {
-      let {0: h, 1: p} = await dispatcher.getHandler();
+      let { 0: h, 1: p } = await dispatcher.getHandler();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -276,7 +276,7 @@ describe("Dispatcher Contract", function () {
 
     it("Should get deposit strategy", async function () {
       let amounts = [10000000, 0, 0, 0, 0];
-      let {0: h, 1: p} = await dispatcher.getDepositStrategy(10000000);
+      let { 0: h, 1: p } = await dispatcher.getDepositStrategy(10000000);
 
       assert_handlers_equal(
         h,
@@ -288,7 +288,7 @@ describe("Dispatcher Contract", function () {
 
     it("Should get empty deposit strategy if any handler is paused", async function () {
       await handlers[3].pause();
-      let {0: h, 1: p} = await dispatcher.getDepositStrategy(10000000);
+      let { 0: h, 1: p } = await dispatcher.getDepositStrategy(10000000);
 
       assert.equal(h.length, 0);
       assert.equal(p.length, 0);
@@ -317,7 +317,7 @@ describe("Dispatcher Contract", function () {
         handler_addresses[4],
       ];
       let amounts = [3000e6, 6000e6, 0, 0, 0];
-      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
+      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
@@ -352,7 +352,7 @@ describe("Dispatcher Contract", function () {
         handler_addresses[4],
       ];
       let amounts = [1500e6, 0, 0, 0, 0];
-      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
+      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
         USDC.address,
         1500e6
       );
@@ -379,7 +379,7 @@ describe("Dispatcher Contract", function () {
       await USDC.allocateTo(handler_addresses[4], 500e6);
 
       await handlers[3].pause();
-      let {0: h, 1: p} = await dispatcher.getWithdrawStrategy(
+      let { 0: h, 1: p } = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
@@ -388,7 +388,7 @@ describe("Dispatcher Contract", function () {
       // assert.equal(p.length, 0);
 
       await handlers[3].unpause();
-      let {0: h1, 1: p1} = await dispatcher.getWithdrawStrategy(
+      let { 0: h1, 1: p1 } = await dispatcher.getWithdrawStrategy(
         USDC.address,
         9000e6
       );
