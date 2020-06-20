@@ -1,7 +1,7 @@
 const FiatToken = artifacts.require("FiatTokenV1");
 const LendingPoolCore = artifacts.require("AaveLendingPoolCoreMock");
 const LendPool = artifacts.require("AaveLendPoolMock");
-const aUSDCMock = artifacts.require("aUSDCMock");
+const aTokenMock = artifacts.require("aTokenMock");
 const AaveHandler = artifacts.require("AaveHandler");
 const dTokenAddresses = artifacts.require("dTokenAddresses");
 
@@ -26,7 +26,7 @@ describe("Aave handler contract", function () {
 
     // Deploys Aave system
     lendingPoolCore = await LendingPoolCore.new();
-    aUSDC = await aUSDCMock.new(usdc.address, accounts[0], lendingPoolCore.address);
+    aUSDC = await aTokenMock.new("aUSDC", "aUSDC", usdc.address, lendingPoolCore.address);
     await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
     lendingPool = await LendPool.new(
       lendingPoolCore.address

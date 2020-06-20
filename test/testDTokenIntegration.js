@@ -1,7 +1,7 @@
 const truffleAssert = require("truffle-assertions");
 const FiatToken = artifacts.require("FiatTokenV1");
 const TetherToken = artifacts.require("TetherToken");
-const CToken = artifacts.require("CTokenMock");
+const CTokenMock = artifacts.require("CTokenMock");
 const CompoundHandler = artifacts.require("CompoundHandler");
 const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
@@ -20,6 +20,9 @@ const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
 const FEE = new BN(10).pow(new BN(14));
 
+const MINT_SELECTOR = "0x40c10f19";
+const BURN_SELECTOR = "0x9dc29fac";
+
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
   let USDC, USDT;
@@ -28,10 +31,10 @@ describe("DToken Contract Integration", function () {
   let dtoken_addresses;
   let internal_handler, compound_handler, aave_handler;
   let dUSDC, dUSDT;
-
+  let cUSDT, cUSDC;
   let aUSDC, aUSDT;
-  let lendingPoolCore;
-  let lendingPool;
+  let lending_pool_core;
+  let lending_pool;
 
   before(async function () {
     [
@@ -62,8 +65,8 @@ describe("DToken Contract Integration", function () {
 
     internal_handler = await InternalHandler.new(dtoken_addresses.address);
 
-    let cUSDT = await CToken.new("cUSDT", "cUSDT", USDT.address);
-    let cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
+    cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
+    cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
     compound_handler = await CompoundHandler.new(dtoken_addresses.address);
     await compound_handler.setcTokensRelation(
@@ -72,17 +75,19 @@ describe("DToken Contract Integration", function () {
     );
 
     // Deploys Aave system
-    lendingPoolCore = await LendingPoolCore.new();
-    aUSDC = await aTokenMock.new(USDC.address, owner, lendingPoolCore.address);
-    aUSDT = await aTokenMock.new(USDT.address, owner, lendingPoolCore.address);
-    await lendingPoolCore.setReserveATokenAddress(USDC.address, aUSDC.address);
-    await lendingPoolCore.setReserveATokenAddress(USDT.address, aUSDT.address);
-    lendingPool = await LendPool.new(lendingPoolCore.address);
+    lending_pool_core = await LendingPoolCore.new();
+    aUSDC = await aTokenMock.new("aUSDC", "aUSDC", USDC.address, lending_pool_core.address);
+    aUSDT = await aTokenMock.new("aUSDT", "aUSDT", USDT.address, lending_pool_core.address);
+    await lending_pool_core.setReserveATokenAddress(USDC.address, aUSDC.address);
+    await lending_pool_core.setReserveATokenAddress(USDT.address, aUSDT.address);
+    lending_pool = await LendPool.new(
+      lending_pool_core.address
+    );
 
     aave_handler = await AaveHandler.new(
       dtoken_addresses.address,
-      lendingPool.address,
-      lendingPoolCore.address
+      lending_pool.address,
+      lending_pool_core.address
     );
 
     // Use internal handler by default
@@ -647,11 +652,75 @@ describe("DToken Contract Integration", function () {
   });
 
   describe("DToken Integration: internal, compound and avee handler ", async function () {
-    beforeEach(async function () {
+    before(async function () {
       await resetContracts();
     });
-    it("Case 1: Normal", async function () {
-      // await resetContracts();
+
+    it("Case 56: Add aave handler", async function () {
+      await dispatcher.resetHandler([internal_handler.address, compound_handler.address, aave_handler.address], [900000, 100000, 0]);
+    });
+
+    it("Case 57: Normal executions with two handlers", async function () {
+      let mint_amount = new BN(10**9)
+      let burn_amount = new BN(4 * 10 ** 6)
+
+      await calcDiff(dUSDC.mint, [account1, mint_amount.toString(), { from: account1 }], account1);
+      await calcDiff(dUSDC.burn, [account1, burn_amount.toString(), { from: account1 }], account1);
+      let redeem_amount = (await dUSDC.balanceOf(account1)).toString();
+      await calcDiff(dUSDC.redeem, [account1, redeem_amount, { from: account1 }], account1);
+      let remained_dToken_balance = (await dUSDC.balanceOf(account1)).toString();
+      await dUSDC.burn(account1, remained_dToken_balance, { from: account1 });
+      console.log((await dUSDC.getExchangeRate()).toString())
+      let newExchangeRate = await dUSDC.getExchangeRate();
+      // TODO:
+      // assert.isAbove(Number((newExchangeRate.sub(BASE)).toString()), 0,'exchange rate should be greater than 1');
+    });
+
+    it("Case 58: failed to update propotions", async function () {
+      await truffleAssert.reverts(
+        dispatcher.updatePropotion([internal_handler.address, compound_handler.address, aave_handler.address], [1000000, 1000000, 1000000]),
+        "the sum of propotions must be 1000000"
+      );
+    });
+
+    it("Case 59: succeed to update propotions", async function () {
+      let original_propotions = [700000, 200000, 100000];
+      await dispatcher.updatePropotion(
+        [internal_handler.address, compound_handler.address, aave_handler.address],
+        original_propotions
+      );
+      let actual_propotions = (await dispatcher.getHandler())[1];
+      assert.equal(Number(actual_propotions[0]).toString(), original_propotions[0], "propotion should be the same");
+      assert.equal(Number(actual_propotions[1]).toString(), original_propotions[1], "propotion should be the same");
+      assert.equal(Number(actual_propotions[2]).toString(), original_propotions[2], "propotion should be the same");
+    });
+
+    it("Case 60: Normal executions with three handlers", async function () {
+      let mint_amount = new BN(10 ** 9);
+      let burn_amount = new BN(4 * 10 ** 6);
+
+      await calcDiff(dUSDC.mint, [account1, mint_amount.toString(), { from: account1 }], account1);
+      await calcDiff(dUSDC.burn, [account1, burn_amount.toString(), { from: account1 }], account1);
+      let redeem_amount = (await dUSDC.balanceOf(account1)).toString();
+
+      await calcDiff(dUSDC.redeem, [account1, redeem_amount, { from: account1 }], account1);
+
+      let newExchangeRate = await dUSDC.getExchangeRate();
+      // TODO:
+      // assert.isAbove(Number((newExchangeRate.sub(BASE)).toString()), 0,'exchange rate should be greater than 1');
+    });
+
+    it("Case 61: Execution with three handlers and fee of mint", async function () {
+      let mint_amount = new BN(10 ** 9);
+      await dUSDC.updateOriginationFee("0x40c10f19", FEE); // Mint
+
+      let mint_result = await calcDiff(dUSDC.mint, [account1, mint_amount.toString(), { from: account1 }], account1);
+      console.log("mint result----", mint_result)
+
+      assert.equal(mint_result.dusdc, 999900000, "When exchange rate is 1, and fee is 0.1%, dusdc should be equal to 999.9");
+      assert.equal(mint_result.int_usdc, 699930000, "Based on current propotions, internal handler should has 699.93 usdc");
+      assert.equal(mint_result.com_usdc, 199980000, "Based on current propotions, compound handler should has 199.98 usdc");
+      assert.equal(mint_result.aav_usdc, 99990000, "Based on current propotions, aave handler should has 99.99 usdc");
     });
   });
 });

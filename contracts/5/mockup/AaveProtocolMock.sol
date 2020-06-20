@@ -53,7 +53,7 @@ contract AaveLendPoolMock {
         uint16
     ) external payable {
         AaveLendingPoolCoreMock(lendingPoolCore).transferReserveFrom(_token, msg.sender, _amount);
-        aUSDCMock(AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(_token))._mint(msg.sender, _amount);
+        aTokenMock(AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(_token))._mint(msg.sender, _amount);
     }
 }
 
@@ -164,7 +164,7 @@ contract ERC20 {
     }
 }
 
-contract aUSDCMock is ERC20 {
+contract aTokenMock is ERC20 {
     address public lendingPoolCore;
     address public token;
     uint256 constant BASE = 10**18;
