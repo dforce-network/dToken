@@ -29,3 +29,7 @@ logs
 *.db
 artifacts
 cache
+.coverage_cache
+.coverage_contracts
+.pytest_cache
+reports
