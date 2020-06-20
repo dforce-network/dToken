@@ -249,17 +249,18 @@ contract aTokenMock is ERC20 {
 
     function redeem(uint256 _amount) external {
         uint256 _interestIndex = getInterestIndex();
-        _balances[msg.sender].value = balanceOf(msg.sender).sub(_amount);
+        uint256 _realAmount = _amount == uint256(-1) ? balanceOf(msg.sender) : _amount;
+        _balances[msg.sender].value = balanceOf(msg.sender).sub(_realAmount);
         percentage = 0;
         _balances[msg.sender].interestIndex = _interestIndex;
         interestIndex = _interestIndex;
         AaveLendingPoolCoreMock(lendingPoolCore).transferOut(
             token,
             msg.sender,
-            _amount
+            _realAmount
         );
         updateInterestRate();
-        emit Transfer(msg.sender, address(0), _amount);
+        emit Transfer(msg.sender, address(0), _realAmount);
     }
 
     function updateBalance(uint256 _percentage) public {
