@@ -237,7 +237,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                     _token,
                     _withdraw[i],
                     _defaultHandler,
-                    _withdrawAmount[i]
+                    _withdrawAmountResult[i]
                 ),
                 "rebalance: transfer to user failed"
             );
