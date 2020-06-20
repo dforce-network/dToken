@@ -18,9 +18,9 @@ contract Dispatcher is DSAuth {
      * @dev Deposit ratio of each handler contract.
      *      Notice: the sum of all deposit ratio should be 1000000.
      */
-    mapping(address => uint256) public propotions;
+    mapping(address => uint256) public proportions;
 
-    uint256 public constant totalPropotion = 1000000;
+    uint256 public constant totalProportion = 1000000;
 
     /**
      * @dev map: handlerAddress -> true/false,
@@ -32,12 +32,12 @@ contract Dispatcher is DSAuth {
      * @dev Set original handler contract and its depoist ratio.
      *      Notice: the sum of all deposit ratio should be 1000000.
      * @param _handlers The original support handler contract.
-     * @param _propotions The original depoist ratio of support handler.
+     * @param _proportions The original depoist ratio of support handler.
      */
-    constructor(address[] memory _handlers, uint256[] memory _propotions)
+    constructor(address[] memory _handlers, uint256[] memory _proportions)
         public
     {
-        setHandler(_handlers, _propotions);
+        setHandlers(_handlers, _proportions);
     }
 
     /**
@@ -78,74 +78,74 @@ contract Dispatcher is DSAuth {
     }
 
     /**
-     * @dev Set config for `handlers` and corresponding `propotions`.
+     * @dev Set config for `handlers` and corresponding `proportions`.
      * @param _handlers The support handler contract.
-     * @param _propotions Depoist ratio of support handler.
+     * @param _proportions Depoist ratio of support handler.
      */
-    function setHandler(
+    function setHandlers(
         address[] memory _handlers,
-        uint256[] memory _propotions
+        uint256[] memory _proportions
     ) private {
-        // The length of `_handlers` must be equal to the length of `_propotions`.
+        // The length of `_handlers` must be equal to the length of `_proportions`.
         require(
-            _handlers.length == _propotions.length && _handlers.length > 0,
-            "setHandler: array parameters mismatch"
+            _handlers.length == _proportions.length && _handlers.length > 0,
+            "setHandlers: array parameters mismatch"
         );
         defaultHandler = _handlers[0];
         uint256 _sum = 0;
         for (uint256 i = 0; i < _handlers.length; i++) {
             require(
                 _handlers[i] != address(0),
-                "setHandler: handlerAddr contract address invalid"
+                "setHandlers: handlerAddr contract address invalid"
             );
             require(
                 !handlerActive[_handlers[i]],
-                "setHandler: handler contract address already exists"
+                "setHandlers: handler contract address already exists"
             );
-            _sum = _sum.add(_propotions[i]);
+            _sum = _sum.add(_proportions[i]);
 
             handlers.push(_handlers[i]);
-            propotions[_handlers[i]] = _propotions[i];
+            proportions[_handlers[i]] = _proportions[i];
             handlerActive[_handlers[i]] = true;
         }
-        // If the `handlers` is not empty, the sum of `propotions` should be 1000000.
+        // If the `handlers` is not empty, the sum of `proportions` should be 1000000.
         require(
-            _sum == totalPropotion,
-            "the sum of propotions must be 1000000"
+            _sum == totalProportion,
+            "the sum of proportions must be 1000000"
         );
     }
 
     /**
-     * @dev Update `propotions` of the `handlers`.
+     * @dev Update `proportions` of the `handlers`.
      * @param _handlers List of the `handlers` to update.
-     * @param _propotions List of the `promotions` corresponding to `handlers` to update.
+     * @param _proportions List of the `promotions` corresponding to `handlers` to update.
      */
-    function updatePropotion(
+    function updateProportion(
         address[] memory _handlers,
-        uint256[] memory _propotions
+        uint256[] memory _proportions
     ) public auth {
-        // The length of `_handlers` must be equal to the length of `_propotions`
+        // The length of `_handlers` must be equal to the length of `_proportions`
         require(
-            _handlers.length == _propotions.length &&
-                handlers.length == _propotions.length,
-            "updatePropotion: array parameters mismatch"
+            _handlers.length == _proportions.length &&
+                handlers.length == _proportions.length,
+            "updateProportion: array parameters mismatch"
         );
 
         uint256 _sum = 0;
-        for (uint256 i = 0; i < _propotions.length; i++) {
+        for (uint256 i = 0; i < _proportions.length; i++) {
             require(
                 handlerActive[_handlers[i]],
-                "updatePropotion: the handler contract address does not exist"
+                "updateProportion: the handler contract address does not exist"
             );
-            _sum = _sum.add(_propotions[i]);
+            _sum = _sum.add(_proportions[i]);
 
-            propotions[_handlers[i]] = _propotions[i];
+            proportions[_handlers[i]] = _proportions[i];
         }
 
-        // The sum of `propotions` should be 1000000.
+        // The sum of `proportions` should be 1000000.
         require(
-            _sum == totalPropotion,
-            "the sum of propotions must be 1000000"
+            _sum == totalProportion,
+            "the sum of proportions must be 1000000"
         );
     }
 
@@ -166,29 +166,29 @@ contract Dispatcher is DSAuth {
             );
 
             handlers.push(_handlers[i]);
-            propotions[_handlers[i]] = 0;
+            proportions[_handlers[i]] = 0;
             handlerActive[_handlers[i]] = true;
         }
     }
 
     /**
-     * @dev Set config for `handlers` and corresponding `propotions`.
+     * @dev Set config for `handlers` and corresponding `proportions`.
      * @param _handlers The support handler contract.
-     * @param _propotions Depoist ratio of support handler.
+     * @param _proportions Depoist ratio of support handler.
      */
-    function resetHandler(
+    function resetHandlers(
         address[] calldata _handlers,
-        uint256[] calldata _propotions
+        uint256[] calldata _proportions
     ) external auth {
         address[] memory _oldHandlers = handlers;
         for (uint256 i = 0; i < _oldHandlers.length; i++) {
-            delete propotions[_oldHandlers[i]];
+            delete proportions[_oldHandlers[i]];
             delete handlerActive[_oldHandlers[i]];
         }
         defaultHandler = address(0);
         delete handlers;
 
-        setHandler(_handlers, _propotions);
+        setHandlers(_handlers, _proportions);
     }
 
     /**
@@ -211,9 +211,9 @@ contract Dispatcher is DSAuth {
         for (uint256 i = 0; i < _handlers.length; i++) {
             if (_oldDefaultHandler == _handlers[i]) {
                 _handlers[i] = _defaultHandler;
-                propotions[_defaultHandler] = propotions[_oldDefaultHandler];
+                proportions[_defaultHandler] = proportions[_oldDefaultHandler];
                 handlerActive[_defaultHandler] = true;
-                delete propotions[_oldDefaultHandler];
+                delete proportions[_oldDefaultHandler];
                 delete handlerActive[_oldDefaultHandler];
                 break;
             }
@@ -233,11 +233,11 @@ contract Dispatcher is DSAuth {
         returns (address[] memory, uint256[] memory)
     {
         address[] memory _handlers = handlers;
-        uint256[] memory _propotions = new uint256[](_handlers.length);
-        for (uint256 i = 0; i < _propotions.length; i++)
-            _propotions[i] = propotions[_handlers[i]];
+        uint256[] memory _proportions = new uint256[](_handlers.length);
+        for (uint256 i = 0; i < _proportions.length; i++)
+            _proportions[i] = proportions[_handlers[i]];
 
-        return (_handlers, _propotions);
+        return (_handlers, _proportions);
     }
 
     /**
@@ -271,8 +271,8 @@ contract Dispatcher is DSAuth {
             }
 
             _amounts[i] =
-                _amount.mul(propotions[_handlers[i]]) /
-                totalPropotion;
+                _amount.mul(proportions[_handlers[i]]) /
+                totalProportion;
             _sum = _sum.add(_amounts[i]);
         }
 

@@ -160,7 +160,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         address _aToken = getaToken(_underlyingToken);
         require(_aToken != address(0x0), "deposit: Do not support token!");
         // expect the balance of the contract is 0, if not, there is some unexpected transfer.
-        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(address(this));
+        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(
+            address(this)
+        );
         uint256 _lastTotalBalance = _updateInterest(_underlyingToken);
 
         LendingPool(aaveLendingPool).deposit(
@@ -210,7 +212,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             address(this)
         );
 
-        uint256 _changedAmount = _currentHandlerBalance.sub(_previousHandlerBalance);
+        uint256 _changedAmount = _currentHandlerBalance.sub(
+            _previousHandlerBalance
+        );
 
         // return a smaller value.
         return _changedAmount > _amount ? _amount : _changedAmount;

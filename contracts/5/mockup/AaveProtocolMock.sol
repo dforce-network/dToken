@@ -10,7 +10,11 @@ contract Token {
 contract AaveLendingPoolCoreMock {
     mapping(address => address) public aTokens;
 
-    function transferReserveFrom(address _token, address _from, uint256 _amount) public {
+    function transferReserveFrom(
+        address _token,
+        address _from,
+        uint256 _amount
+    ) public {
         IERC20(_token).transferFrom(_from, address(this), _amount);
     }
 
@@ -24,7 +28,10 @@ contract AaveLendingPoolCoreMock {
 
     function setReserveATokenAddress(address _token, address _aToken) public {
         aTokens[_token] = _aToken;
-        Token(_token).allocateTo(address(this), 1000000 * 10 ** IERC20(_token).decimals());
+        Token(_token).allocateTo(
+            address(this),
+            1000000 * 10**IERC20(_token).decimals()
+        );
     }
 
     function getReserveAvailableLiquidity(address _token)
@@ -35,7 +42,11 @@ contract AaveLendingPoolCoreMock {
         return IERC20(_token).balanceOf(address(this));
     }
 
-    function transferOut(address _token, address _to, uint _amount) public {
+    function transferOut(
+        address _token,
+        address _to,
+        uint256 _amount
+    ) public {
         IERC20(_token).transfer(_to, _amount);
     }
 }
@@ -52,8 +63,17 @@ contract AaveLendPoolMock {
         uint256 _amount,
         uint16
     ) external payable {
-        AaveLendingPoolCoreMock(lendingPoolCore).transferReserveFrom(_token, msg.sender, _amount);
-        aTokenMock(AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(_token))._mint(msg.sender, _amount);
+        AaveLendingPoolCoreMock(lendingPoolCore).transferReserveFrom(
+            _token,
+            msg.sender,
+            _amount
+        );
+        aTokenMock(
+            AaveLendingPoolCoreMock(lendingPoolCore).getReserveATokenAddress(
+                _token
+            )
+        )
+            ._mint(msg.sender, _amount);
     }
 }
 
@@ -61,18 +81,18 @@ contract ERC20 {
     using SafeMath for uint256;
 
     struct Balance {
-        uint value;
-        uint interestIndex;
+        uint256 value;
+        uint256 interestIndex;
     }
-    mapping (address => Balance) public _balances;
+    mapping(address => Balance) public _balances;
 
     mapping(address => mapping(address => uint256)) internal _allowances;
 
     uint256 internal _totalSupply;
 
     // --- Event ---
-    event Approval(address indexed src, address indexed guy, uint wad);
-    event Transfer(address indexed src, address indexed dst, uint wad);
+    event Approval(address indexed src, address indexed guy, uint256 wad);
+    event Transfer(address indexed src, address indexed dst, uint256 wad);
 
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
@@ -175,11 +195,16 @@ contract aTokenMock is ERC20 {
     uint256 public time = block.timestamp;
     uint256 public percentage;
 
-    string  public name;
-    string  public symbol;
-    uint256   public decimals;
+    string public name;
+    string public symbol;
+    uint256 public decimals;
 
-    constructor(string memory _name, string memory _symbol, address _token, address _core) public {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        address _token,
+        address _core
+    ) public {
         name = _name;
         symbol = _symbol;
         decimals = IERC20(_token).decimals();
@@ -189,23 +214,27 @@ contract aTokenMock is ERC20 {
         interestIndex = BASE;
     }
 
-    function rmul(uint x, uint y) internal pure returns (uint z) {
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x.mul(y) / BASE;
     }
 
-    function rdiv(uint x, uint y) internal pure returns (uint z) {
+    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x.mul(BASE) / y;
     }
 
     function updateInterestRate() public {
         uint256 _random = uint256(uint8(abi.encodePacked(msg.sender)[random]));
-        _random = uint256(uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32]));
+        _random = uint256(
+            uint8(abi.encodePacked(blockhash(block.number - 12))[_random % 32])
+        );
         interestRate = benchmark.mul(_random);
         random = _random % 20;
     }
 
     function getInterestIndex() public view returns (uint256) {
-        return (block.timestamp.sub(time) * interestRate).add(BASE) * interestIndex / BASE;
+        return
+            ((block.timestamp.sub(time) * interestRate).add(BASE) *
+                interestIndex) / BASE;
     }
 
     function _mint(address _account, uint256 _amount) public {
@@ -224,13 +253,19 @@ contract aTokenMock is ERC20 {
         percentage = 0;
         _balances[msg.sender].interestIndex = _interestIndex;
         interestIndex = _interestIndex;
-        AaveLendingPoolCoreMock(lendingPoolCore).transferOut(token, msg.sender, _amount);
+        AaveLendingPoolCoreMock(lendingPoolCore).transferOut(
+            token,
+            msg.sender,
+            _amount
+        );
         updateInterestRate();
         emit Transfer(msg.sender, address(0), _amount);
     }
 
     function updateBalance(uint256 _percentage) public {
-        percentage = rmul(BASE.add(percentage), BASE.add(_percentage)).sub(BASE);
+        percentage = rmul(BASE.add(percentage), BASE.add(_percentage)).sub(
+            BASE
+        );
     }
 
     function balanceOf(address _account) public view returns (uint256) {

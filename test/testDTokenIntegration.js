@@ -251,15 +251,15 @@ describe("DToken Contract Integration", function () {
 
     it("Case 2: Should not reset handler with invalid proportion", async function () {
       await truffleAssert.reverts(
-        dispatcher.resetHandler([internal_handler.address], [10000]),
-        "the sum of propotions must be 1000000"
+        dispatcher.resetHandlers([internal_handler.address], [10000]),
+        "the sum of proportions must be 1000000"
       );
     });
 
     it("Case 3: Should not update handler proportion with invalid one", async function () {
       await truffleAssert.reverts(
-        dispatcher.updatePropotion([internal_handler.address], [10000]),
-        "the sum of propotions must be 1000000"
+        dispatcher.updateProportion([internal_handler.address], [10000]),
+        "the sum of proportions must be 1000000"
       );
     });
 
@@ -278,8 +278,27 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 6: Should be able to burn/redeem even after underlying token is disabled", async function () {
-      await dUSDC.burn(account1, 500e6, {from: account1});
-      await dUSDC.redeem(account1, 500e6, {from: account1});
+      let diff = {};
+
+      diff = await calcDiff(
+        dUSDC.burn,
+        [account1, 500e6, {from: account1}],
+        account1
+      );
+
+      assert.equal(diff.usdc, 500e6);
+      assert.equal(diff.dusdc, -500e6);
+      assert.equal(diff.int_usdc, -500e6);
+
+      diff = await calcDiff(
+        dUSDC.redeem,
+        [account1, 500e6, {from: account1}],
+        account1
+      );
+
+      assert.equal(diff.usdc, 500e6);
+      assert.equal(diff.dusdc, -500e6);
+      assert.equal(diff.int_usdc, -500e6);
     });
 
     it("Case 7: Should be able to enable underlying token", async function () {
@@ -287,9 +306,34 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 8: Should be able to mint/burn/redeem after enabling underlying token", async function () {
-      await dUSDC.mint(account1, 1000e6, {from: account1});
-      await dUSDC.burn(account1, 500e6, {from: account1});
-      await dUSDC.redeem(account1, 500e6, {from: account1});
+      let diff = {};
+
+      diff = await calcDiff(
+        dUSDC.mint,
+        [account1, 1000e6, {from: account1}],
+        account1
+      );
+      assert.equal(diff.usdc, -1000e6);
+      assert.equal(diff.dusdc, 1000e6);
+      assert.equal(diff.int_usdc, 1000e6);
+
+      diff = await calcDiff(
+        dUSDC.burn,
+        [account1, 500e6, {from: account1}],
+        account1
+      );
+      assert.equal(diff.usdc, 500e6);
+      assert.equal(diff.dusdc, -500e6);
+      assert.equal(diff.int_usdc, -500e6);
+
+      diff = await calcDiff(
+        dUSDC.redeem,
+        [account1, 500e6, {from: account1}],
+        account1
+      );
+      assert.equal(diff.usdc, 500e6);
+      assert.equal(diff.dusdc, -500e6);
+      assert.equal(diff.int_usdc, -500e6);
     });
 
     it("Case 9: Should be able to pause internal handler", async function () {
@@ -478,17 +522,17 @@ describe("DToken Contract Integration", function () {
     // 26. update an invalid proportion
     it("Case 26: Should not update proportion to 10/10", async function () {
       await truffleAssert.reverts(
-        dispatcher.resetHandler(
+        dispatcher.resetHandlers(
           [internal_handler.address, compound_handler.address],
           [100000, 100000]
         ),
-        "the sum of propotions must be 1000000"
+        "the sum of proportions must be 1000000"
       );
     });
 
     // 27. update a valid proportion
     it("Case 27: Should update the proportion to 90/10", async function () {
-      await dispatcher.updatePropotion(
+      await dispatcher.updateProportion(
         [internal_handler.address, compound_handler.address],
         [900000, 100000]
       );
@@ -521,7 +565,7 @@ describe("DToken Contract Integration", function () {
       let diff;
       let amount = new BN(1000e6);
 
-      await dispatcher.resetHandler(
+      await dispatcher.resetHandlers(
         [internal_handler.address, compound_handler.address],
         [500000, 500000]
       );
@@ -548,7 +592,7 @@ describe("DToken Contract Integration", function () {
       let diff;
       let amount = new BN(1500e6);
 
-      await dispatcher.resetHandler(
+      await dispatcher.resetHandlers(
         [internal_handler.address, compound_handler.address],
         [500000, 500000]
       );
@@ -578,7 +622,7 @@ describe("DToken Contract Integration", function () {
       let diff;
       let amount = new BN(2000e6);
 
-      await dispatcher.resetHandler(
+      await dispatcher.resetHandlers(
         [internal_handler.address, compound_handler.address],
         [500000, 500000]
       );
@@ -784,7 +828,8 @@ describe("DToken Contract Integration", function () {
 
     it("Case 52: Should be able to rebalance all from compound's current liquidity", async function () {
       let liquidity = await compound_handler.getLiquidity(USDC.address);
-      let balance = await USDC.balanceOf(compound_handler.address);
+
+      console.log(liquidity.toString());
 
       let diff = await calcDiff(
         dUSDC.rebalance,
@@ -792,7 +837,6 @@ describe("DToken Contract Integration", function () {
         account1
       );
 
-      console.log(liquidity.toString(), balance.toString());
       assert.equal(diff.com_usdc, "-" + liquidity.toString());
       assert.equal(diff.int_usdc, liquidity.toString());
     });
@@ -840,53 +884,109 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 56: Add aave handler", async function () {
-      await dispatcher.resetHandler([internal_handler.address, compound_handler.address, aave_handler.address], [900000, 100000, 0]);
+      await dispatcher.resetHandlers(
+        [
+          internal_handler.address,
+          compound_handler.address,
+          aave_handler.address,
+        ],
+        [900000, 100000, 0]
+      );
     });
 
     it("Case 57: Normal executions with two handlers", async function () {
-      let mint_amount = new BN(10**9)
-      let burn_amount = new BN(4 * 10 ** 6)
+      let mint_amount = new BN(10 ** 9);
+      let burn_amount = new BN(4 * 10 ** 6);
 
-      await calcDiff(dUSDC.mint, [account1, mint_amount.toString(), { from: account1 }], account1);
-      await calcDiff(dUSDC.burn, [account1, burn_amount.toString(), { from: account1 }], account1);
+      await calcDiff(
+        dUSDC.mint,
+        [account1, mint_amount.toString(), {from: account1}],
+        account1
+      );
+      await calcDiff(
+        dUSDC.burn,
+        [account1, burn_amount.toString(), {from: account1}],
+        account1
+      );
       let redeem_amount = (await dUSDC.balanceOf(account1)).toString();
-      await calcDiff(dUSDC.redeem, [account1, redeem_amount, { from: account1 }], account1);
-      let remained_dToken_balance = (await dUSDC.balanceOf(account1)).toString();
+      await calcDiff(
+        dUSDC.redeem,
+        [account1, redeem_amount, {from: account1}],
+        account1
+      );
+      let remained_dToken_balance = (
+        await dUSDC.balanceOf(account1)
+      ).toString();
       await dUSDC.burn(account1, remained_dToken_balance, {from: account1});
-      console.log((await dUSDC.getExchangeRate()).toString())
+      console.log((await dUSDC.getExchangeRate()).toString());
       let newExchangeRate = await dUSDC.getExchangeRate();
       // TODO:
       // assert.isAbove(Number((newExchangeRate.sub(BASE)).toString()), 0,'exchange rate should be greater than 1');
     });
 
-    it("Case 58: failed to update propotions", async function () {
+    it("Case 58: failed to update proportions", async function () {
       await truffleAssert.reverts(
-        dispatcher.updatePropotion([internal_handler.address, compound_handler.address, aave_handler.address], [1000000, 1000000, 1000000]),
-        "the sum of propotions must be 1000000"
+        dispatcher.updateProportion(
+          [
+            internal_handler.address,
+            compound_handler.address,
+            aave_handler.address,
+          ],
+          [1000000, 1000000, 1000000]
+        ),
+        "the sum of proportions must be 1000000"
       );
     });
 
-    it("Case 59: succeed to update propotions", async function () {
-      let original_propotions = [700000, 200000, 100000];
-      await dispatcher.updatePropotion(
-        [internal_handler.address, compound_handler.address, aave_handler.address],
-        original_propotions
+    it("Case 59: succeed to update proportions", async function () {
+      let original_proportions = [700000, 200000, 100000];
+      await dispatcher.updateProportion(
+        [
+          internal_handler.address,
+          compound_handler.address,
+          aave_handler.address,
+        ],
+        original_proportions
       );
-      let actual_propotions = (await dispatcher.getHandler())[1];
-      assert.equal(Number(actual_propotions[0]).toString(), original_propotions[0], "propotion should be the same");
-      assert.equal(Number(actual_propotions[1]).toString(), original_propotions[1], "propotion should be the same");
-      assert.equal(Number(actual_propotions[2]).toString(), original_propotions[2], "propotion should be the same");
+      let actual_proportions = (await dispatcher.getHandler())[1];
+      assert.equal(
+        Number(actual_proportions[0]).toString(),
+        original_proportions[0],
+        "propotion should be the same"
+      );
+      assert.equal(
+        Number(actual_proportions[1]).toString(),
+        original_proportions[1],
+        "propotion should be the same"
+      );
+      assert.equal(
+        Number(actual_proportions[2]).toString(),
+        original_proportions[2],
+        "propotion should be the same"
+      );
     });
 
     it("Case 60: Normal executions with three handlers", async function () {
       let mint_amount = new BN(10 ** 9);
       let burn_amount = new BN(4 * 10 ** 6);
 
-      await calcDiff(dUSDC.mint, [account1, mint_amount.toString(), { from: account1 }], account1);
-      await calcDiff(dUSDC.burn, [account1, burn_amount.toString(), { from: account1 }], account1);
+      await calcDiff(
+        dUSDC.mint,
+        [account1, mint_amount.toString(), {from: account1}],
+        account1
+      );
+      await calcDiff(
+        dUSDC.burn,
+        [account1, burn_amount.toString(), {from: account1}],
+        account1
+      );
       let redeem_amount = (await dUSDC.balanceOf(account1)).toString();
 
-      await calcDiff(dUSDC.redeem, [account1, redeem_amount, { from: account1 }], account1);
+      await calcDiff(
+        dUSDC.redeem,
+        [account1, redeem_amount, {from: account1}],
+        account1
+      );
 
       let newExchangeRate = await dUSDC.getExchangeRate();
       // TODO:
@@ -897,13 +997,33 @@ describe("DToken Contract Integration", function () {
       let mint_amount = new BN(10 ** 9);
       await dUSDC.updateOriginationFee("0x40c10f19", FEE); // Mint
 
-      let mint_result = await calcDiff(dUSDC.mint, [account1, mint_amount.toString(), { from: account1 }], account1);
-      console.log("mint result----", mint_result)
+      let mint_result = await calcDiff(
+        dUSDC.mint,
+        [account1, mint_amount.toString(), {from: account1}],
+        account1
+      );
+      console.log("mint result----", mint_result);
 
-      assert.equal(mint_result.dusdc, 999900000, "When exchange rate is 1, and fee is 0.1%, dusdc should be equal to 999.9");
-      assert.equal(mint_result.int_usdc, 699930000, "Based on current propotions, internal handler should has 699.93 usdc");
-      assert.equal(mint_result.com_usdc, 199980000, "Based on current propotions, compound handler should has 199.98 usdc");
-      assert.equal(mint_result.aav_usdc, 99990000, "Based on current propotions, aave handler should has 99.99 usdc");
+      assert.equal(
+        mint_result.dusdc,
+        999900000,
+        "When exchange rate is 1, and fee is 0.1%, dusdc should be equal to 999.9"
+      );
+      assert.equal(
+        mint_result.int_usdc,
+        699930000,
+        "Based on current proportions, internal handler should has 699.93 usdc"
+      );
+      assert.equal(
+        mint_result.com_usdc,
+        199980000,
+        "Based on current proportions, compound handler should has 199.98 usdc"
+      );
+      assert.equal(
+        mint_result.aav_usdc,
+        99990000,
+        "Based on current proportions, aave handler should has 99.99 usdc"
+      );
     });
   });
 });
