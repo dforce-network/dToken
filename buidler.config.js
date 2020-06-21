@@ -2,6 +2,7 @@
 usePlugin("@nomiclabs/buidler-truffle5");
 // usePlugin("@nomiclabs/builder-ganache");
 usePlugin("buidler-gas-reporter");
+usePlugin("solidity-coverage");
 
 // // For scripts
 // // usePlugin("@nomiclabs/builder-ethers");
