@@ -106,7 +106,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     /**
      * @dev Deposit token to market, but only for dToken contract.
      * @param _underlyingToken Token to deposit.
-     * @return True is success, false is failure.
+     * @return The actual deposited token amount.
      */
     function deposit(address _underlyingToken, uint256 _amount)
         external
@@ -123,7 +123,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Withdraw token from market, but only for dToken contract.
      * @param _underlyingToken Token to withdraw.
      * @param _amount Token amount to withdraw.
-     * @return Actually withdraw token amount.
+     * @return The actual withdrawed token amount.
      */
     function withdraw(address _underlyingToken, uint256 _amount)
         external
@@ -140,6 +140,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
     /**
      * @dev Support token or not.
+     * @param _underlyingToken Token to check.
      */
     function tokenIsEnabled(address _underlyingToken)
         public
@@ -176,7 +177,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     /**
      * @dev The latest total balance with any accumulated interest for `_underlyingToken` belonging
      *       to `handler`.
-     * @param _underlyingToken Token to get actual balance.
+     * @param _underlyingToken Token to get real balance.
      */
     function getRealBalance(address _underlyingToken)
         external
