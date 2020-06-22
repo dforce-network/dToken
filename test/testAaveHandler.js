@@ -77,7 +77,7 @@ describe("Aave handler contract", function () {
 
       await dTokenMappingContract.setdTokensRelation(
         [usdc.address],
-        [aUSDC.address]
+        [dUSDC.address]
       );
 
       await aaveHandler.approve(usdc.address);
