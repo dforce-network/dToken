@@ -78,13 +78,27 @@ describe("DToken Contract Integration", function () {
 
     // Deploys Aave system
     lending_pool_core = await LendingPoolCore.new();
-    aUSDC = await aTokenMock.new("aUSDC", "aUSDC", USDC.address, lending_pool_core.address);
-    aUSDT = await aTokenMock.new("aUSDT", "aUSDT", USDT.address, lending_pool_core.address);
-    await lending_pool_core.setReserveATokenAddress(USDC.address, aUSDC.address);
-    await lending_pool_core.setReserveATokenAddress(USDT.address, aUSDT.address);
-    lending_pool = await LendPool.new(
+    aUSDC = await aTokenMock.new(
+      "aUSDC",
+      "aUSDC",
+      USDC.address,
       lending_pool_core.address
     );
+    aUSDT = await aTokenMock.new(
+      "aUSDT",
+      "aUSDT",
+      USDT.address,
+      lending_pool_core.address
+    );
+    await lending_pool_core.setReserveATokenAddress(
+      USDC.address,
+      aUSDC.address
+    );
+    await lending_pool_core.setReserveATokenAddress(
+      USDT.address,
+      aUSDT.address
+    );
+    lending_pool = await LendPool.new(lending_pool_core.address);
 
     aave_handler = await AaveHandler.new(
       dtoken_addresses.address,
@@ -133,8 +147,8 @@ describe("DToken Contract Integration", function () {
     for (const account of accounts) {
       await USDC.allocateTo(account, 100000e6);
       await USDT.allocateTo(account, 100000e6);
-      USDC.approve(dUSDC.address, UINT256_MAX, { from: account });
-      USDT.approve(dUSDT.address, UINT256_MAX, { from: account });
+      USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
+      USDT.approve(dUSDT.address, UINT256_MAX, {from: account});
     }
   }
 
@@ -218,14 +232,20 @@ describe("DToken Contract Integration", function () {
     if (dusdc_rate.gt(new_dusdc_rate)) {
       console.log(
         "dUSDC Exchange rate decrease to: " +
-        toStringDecimals(divFractionBN(new_dusdc_rate, dusdc_rate, BASE).toString(), 18)
+          toStringDecimals(
+            divFractionBN(new_dusdc_rate, dusdc_rate, BASE).toString(),
+            18
+          )
       );
     }
 
     if (new_dusdc_rate.gt(dusdc_rate)) {
       console.log(
         "dUSDC Exchange rate increase to: " +
-        toStringDecimals(divFractionBN(new_dusdc_rate, dusdc_rate, BASE).toString(), 18)
+          toStringDecimals(
+            divFractionBN(new_dusdc_rate, dusdc_rate, BASE).toString(),
+            18
+          )
       );
     }
 
@@ -238,27 +258,33 @@ describe("DToken Contract Integration", function () {
       );
     }
 
-    if (diff.dusdc != '0') {
+    if (diff.dusdc != "0") {
       console.log(
-        "account dusdc executing exchange rate: " + 
-        divFraction(diff.usdc, diff.dusdc, BASE).toLocaleString().replace(/,/g,''));
-      
+        "account dusdc executing exchange rate: " +
+          divFraction(diff.usdc, diff.dusdc, BASE)
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
     }
 
     // if (diff.dusdc != '0') {
     //   console.log(
-    //     "account dusdc executing exchange rate: " + 
+    //     "account dusdc executing exchange rate: " +
     //     divUpFraction(diff.usdc, diff.dusdc, BASE).toLocaleString().replace(/,/g,''));
-      
+
     // }
 
-    if (diff.dusdt != '0') {
-      console.log("account dusdt executing exchange rate: " + 
-      divFraction(diff.usdt, diff.dusdt, BASE).toLocaleString().replace(/,/g,''));
+    if (diff.dusdt != "0") {
+      console.log(
+        "account dusdt executing exchange rate: " +
+          divFraction(diff.usdt, diff.dusdt, BASE)
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
     }
 
     // console.log(diff);
-    console.log('\n\n');
+    console.log("\n\n");
 
     return diff;
   }
@@ -279,7 +305,7 @@ describe("DToken Contract Integration", function () {
   }
 
   function divUpFraction(x, num, denom) {
-    let bn_x = new BN(x).add(new BN('1')).abs();
+    let bn_x = new BN(x).add(new BN("1")).abs();
     let bn_num = new BN(num).abs();
     let bn_denom = new BN(denom).abs();
 
@@ -294,39 +320,46 @@ describe("DToken Contract Integration", function () {
     return x.mul(denom).div(num);
   }
 
-  function randomNum(minNum,maxNum){ 
-    switch(arguments.length){ 
-        case 1: 
-            return parseInt(Math.random()*minNum+1,10); 
-        break; 
-        case 2: 
-            return parseInt(Math.random()*(maxNum-minNum+1)+minNum,10); 
-        break; 
-            default: 
-                return 0; 
-            break; 
-    } 
+  function randomNum(minNum, maxNum) {
+    switch (arguments.length) {
+      case 1:
+        return parseInt(Math.random() * minNum + 1, 10);
+        break;
+      case 2:
+        return parseInt(Math.random() * (maxNum - minNum + 1) + minNum, 10);
+        break;
+      default:
+        return 0;
+        break;
+    }
   }
 
   function toStringDecimals(numStr, decimals, decimalPlace = decimals) {
-    numStr = numStr.toLocaleString().replace(/,/g, '');
+    numStr = numStr.toLocaleString().replace(/,/g, "");
     decimals = decimals.toString();
 
-    var str = Number(`1e+${decimals}`).toLocaleString().replace(/,/g, '').slice(1);
+    var str = Number(`1e+${decimals}`)
+      .toLocaleString()
+      .replace(/,/g, "")
+      .slice(1);
 
-    var res = (numStr.length > decimals ?
-        numStr.slice(0, numStr.length - decimals) + '.' + numStr.slice(numStr.length - decimals) :
-        '0.' + str.slice(0, str.length - numStr.length) + numStr).replace(/(0+)$/g, "");
+    var res = (numStr.length > decimals
+      ? numStr.slice(0, numStr.length - decimals) +
+        "." +
+        numStr.slice(numStr.length - decimals)
+      : "0." + str.slice(0, str.length - numStr.length) + numStr
+    ).replace(/(0+)$/g, "");
 
     // res = res.slice(-1) == '.' ? res + '00' : res;
 
-    if (decimalPlace == 0)
-        return res.slice(0, res.indexOf('.'));
+    if (decimalPlace == 0) return res.slice(0, res.indexOf("."));
 
-    var length = res.indexOf('.') + 1 + decimalPlace;
-    res = res.slice(0, length >= res.length ? res.length : length).replace(/(0+)$/g, "");
-    return res.slice(-1) == '.' ? res + '00' : res;
-}
+    var length = res.indexOf(".") + 1 + decimalPlace;
+    res = res
+      .slice(0, length >= res.length ? res.length : length)
+      .replace(/(0+)$/g, "");
+    return res.slice(-1) == "." ? res + "00" : res;
+  }
 
   describe("DToken Integration: Other case reset handler", function () {
     beforeEach(async function () {
@@ -334,70 +367,111 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 97~99", async function () {
-      dispatcher.resetHandlers([internal_handler.address, compound_handler.address, aave_handler.address], [700000, 200000, 100000]);
+      dispatcher.resetHandlers(
+        [
+          internal_handler.address,
+          compound_handler.address,
+          aave_handler.address,
+        ],
+        [700000, 200000, 100000]
+      );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dispatcher.resetHandlers,
-        [[internal_handler.address, aave_handler.address], [100000, 900000]],
+        [
+          [internal_handler.address, aave_handler.address],
+          [100000, 900000],
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(1, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              1,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dispatcher.resetHandlers,
-        [[internal_handler.address, compound_handler.address, aave_handler.address], [600000, 350000, 50000]],
+        [
+          [
+            internal_handler.address,
+            compound_handler.address,
+            aave_handler.address,
+          ],
+          [600000, 350000, 50000],
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(10, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              10,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
-
 
       diff = await calcDiff(
         dispatcher.resetHandlers,
-        [[internal_handler.address, aave_handler.address], [100000, 900000]],
+        [
+          [internal_handler.address, aave_handler.address],
+          [100000, 900000],
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, { from: account1 }],
+        [account1, 1, {from: account1}],
         account1
       );
-      console.log('dUSDC empty!');
+      console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
+        [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
@@ -406,65 +480,102 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
-      
+
       let amount = new BN(randomNum(1, 100));
-      console.log('Exchange rate is expected to grow: ' + amount.toString());
+      console.log("Exchange rate is expected to grow: " + amount.toString());
       diff = await calcDiff(
         USDC.allocateTo,
-        [internal_handler.address, mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE), { from: account1 }],
+        [
+          internal_handler.address,
+          mulFraction(
+            await dUSDC.getTotalBalance(),
+            BASE.div(new BN("100")).mul(amount),
+            BASE
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, { from: account1 }],
+        [account1, 1, {from: account1}],
         account1
       );
-      console.log('dUSDC empty!');
+      console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
+        [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
       amount = new BN(randomNum(1, 100));
-      console.log('Exchange rate is expected to grow: 0');
+      console.log("Exchange rate is expected to grow: 0");
       diff = await calcDiff(
         DF.allocateTo,
-        [internal_handler.address, mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE), { from: account1 }],
+        [
+          internal_handler.address,
+          mulFraction(
+            await dUSDC.getTotalBalance(),
+            BASE.div(new BN("100")).mul(amount),
+            BASE
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, { from: account1 }],
+        [account1, 1, {from: account1}],
         account1
       );
-      console.log('dUSDC empty!');
+      console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
+        [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
-      console.log('account balance: ' + (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''));
-      console.log('totalSupply: ' + (await dUSDC.totalSupply()).toLocaleString().replace(/,/g,''));
-      console.log('internal balance: ' + (await internal_handler.getLiquidity(USDC.address)).toLocaleString().replace(/,/g,''));
-      console.log('comp balance: ' + (await compound_handler.getLiquidity(USDC.address)).toLocaleString().replace(/,/g,''));
-      console.log('aave balance: ' + (await aave_handler.getLiquidity(USDC.address)).toLocaleString().replace(/,/g,''));
+      console.log(
+        "account balance: " +
+          (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g, "")
+      );
+      console.log(
+        "totalSupply: " +
+          (await dUSDC.totalSupply()).toLocaleString().replace(/,/g, "")
+      );
+      console.log(
+        "internal balance: " +
+          (await internal_handler.getLiquidity(USDC.address))
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
+      console.log(
+        "comp balance: " +
+          (await compound_handler.getLiquidity(USDC.address))
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
+      console.log(
+        "aave balance: " +
+          (await aave_handler.getLiquidity(USDC.address))
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
     });
   });
 
@@ -478,158 +589,286 @@ describe("DToken Contract Integration", function () {
       await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE); // Mint
       diff = await calcDiff(
         dispatcher.resetHandlers,
-        [[internal_handler.address, compound_handler.address, aave_handler.address], [700000, 200000, 100000]],
+        [
+          [
+            internal_handler.address,
+            compound_handler.address,
+            aave_handler.address,
+          ],
+          [700000, 200000, 100000],
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(1, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              1,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(10, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              10,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
-      let amount = new BN('2');
-      console.log('Exchange rate is expected to grow: ' + amount.toString());
+      let amount = new BN("2");
+      console.log("Exchange rate is expected to grow: " + amount.toString());
       diff = await calcDiff(
         USDC.allocateTo,
-        [internal_handler.address, mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE), { from: account1 }],
+        [
+          internal_handler.address,
+          mulFraction(
+            await dUSDC.getTotalBalance(),
+            BASE.div(new BN("100")).mul(amount),
+            BASE
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(1, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              1,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(10, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              10,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
-      amount = new BN('98');
-      console.log('Exchange rate is expected to grow: ' + amount.toString());
+      amount = new BN("98");
+      console.log("Exchange rate is expected to grow: " + amount.toString());
       diff = await calcDiff(
         USDC.allocateTo,
-        [internal_handler.address, mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE), { from: account1 }],
+        [
+          internal_handler.address,
+          mulFraction(
+            await dUSDC.getTotalBalance(),
+            BASE.div(new BN("100")).mul(amount),
+            BASE
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(1, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              1,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(10, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              10,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(1000e6, 10000e6)), { from: account1 }],
+        [account1, new BN(randomNum(1000e6, 10000e6)), {from: account1}],
         account1
       );
 
-      amount = new BN('50');
+      amount = new BN("50");
       diff = await calcDiff(
         dUSDC.rebalance,
         [
-          [compound_handler.address, aave_handler.address], 
-          [UINT256_MAX, UINT256_MAX], 
-          [compound_handler.address], 
-          [mulFractionBN((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE)]],
+          [compound_handler.address, aave_handler.address],
+          [UINT256_MAX, UINT256_MAX],
+          [compound_handler.address],
+          [
+            mulFractionBN(
+              await dUSDC.getTotalBalance(),
+              BASE.div(new BN("100")).mul(amount),
+              BASE
+            ),
+          ],
+        ],
         account1
       );
-      console.log('Exchange rate is expected to fall: ' + amount.toString());
+      console.log("Exchange rate is expected to fall: " + amount.toString());
       diff = await calcDiff(
         dispatcher.resetHandlers,
-        [[internal_handler.address, aave_handler.address], [900000, 100000]],
+        [
+          [internal_handler.address, aave_handler.address],
+          [900000, 100000],
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(1, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              1,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, new BN(randomNum(10, (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''))), { from: account1 }],
+        [
+          account1,
+          new BN(
+            randomNum(
+              10,
+              (await dUSDC.balanceOf(account1))
+                .toLocaleString()
+                .replace(/,/g, "")
+            )
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(1000e6, 10000e6)), { from: account1 }],
+        [account1, new BN(randomNum(1000e6, 10000e6)), {from: account1}],
         account1
       );
 
-      amount = new BN('50');
+      amount = new BN("50");
       diff = await calcDiff(
         dUSDC.rebalance,
         [
-          [aave_handler.address], 
-          [UINT256_MAX], 
-          [aave_handler.address], 
-          [mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE)]],
+          [aave_handler.address],
+          [UINT256_MAX],
+          [aave_handler.address],
+          [
+            mulFraction(
+              await dUSDC.getTotalBalance(),
+              BASE.div(new BN("100")).mul(amount),
+              BASE
+            ),
+          ],
+        ],
         account1
       );
-      console.log('Exchange rate is expected to fall: ' + amount.toString());
+      console.log("Exchange rate is expected to fall: " + amount.toString());
       diff = await calcDiff(
         dispatcher.resetHandlers,
         [[internal_handler.address], [1000000]],
@@ -638,82 +877,119 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, { from: account1 }],
+        [account1, 1, {from: account1}],
         account1
       );
-      console.log('dUSDC empty!');
+      console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
+        [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
-      
+
       amount = new BN(randomNum(1, 100));
-      console.log('Exchange rate is expected to grow: ' + amount.toString());
+      console.log("Exchange rate is expected to grow: " + amount.toString());
       diff = await calcDiff(
         USDC.allocateTo,
-        [internal_handler.address, mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE), { from: account1 }],
+        [
+          internal_handler.address,
+          mulFraction(
+            await dUSDC.getTotalBalance(),
+            BASE.div(new BN("100")).mul(amount),
+            BASE
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, { from: account1 }],
+        [account1, 1, {from: account1}],
         account1
       );
-      console.log('dUSDC empty!');
+      console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
+        [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
       amount = new BN(randomNum(1, 100));
-      console.log('Exchange rate is expected to grow: 0');
+      console.log("Exchange rate is expected to grow: 0");
       diff = await calcDiff(
         DF.allocateTo,
-        [internal_handler.address, mulFraction((await dUSDC.getTotalBalance()), BASE.div(new BN('100')).mul(amount), BASE), { from: account1 }],
+        [
+          internal_handler.address,
+          mulFraction(
+            await dUSDC.getTotalBalance(),
+            BASE.div(new BN("100")).mul(amount),
+            BASE
+          ),
+          {from: account1},
+        ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
+        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, { from: account1 }],
+        [account1, 1, {from: account1}],
         account1
       );
-      console.log('dUSDC empty!');
+      console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
+        [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
-      console.log('account balance: ' + (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g,''));
-      console.log('totalSupply: ' + (await dUSDC.totalSupply()).toLocaleString().replace(/,/g,''));
-      console.log('internal balance: ' + (await internal_handler.getLiquidity(USDC.address)).toLocaleString().replace(/,/g,''));
-      console.log('comp balance: ' + (await compound_handler.getLiquidity(USDC.address)).toLocaleString().replace(/,/g,''));
-      console.log('aave balance: ' + (await aave_handler.getLiquidity(USDC.address)).toLocaleString().replace(/,/g,''));
+      console.log(
+        "account balance: " +
+          (await dUSDC.balanceOf(account1)).toLocaleString().replace(/,/g, "")
+      );
+      console.log(
+        "totalSupply: " +
+          (await dUSDC.totalSupply()).toLocaleString().replace(/,/g, "")
+      );
+      console.log(
+        "internal balance: " +
+          (await internal_handler.getLiquidity(USDC.address))
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
+      console.log(
+        "comp balance: " +
+          (await compound_handler.getLiquidity(USDC.address))
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
+      console.log(
+        "aave balance: " +
+          (await aave_handler.getLiquidity(USDC.address))
+            .toLocaleString()
+            .replace(/,/g, "")
+      );
     });
   });
 });

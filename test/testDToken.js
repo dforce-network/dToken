@@ -7,7 +7,7 @@ const DToken = artifacts.require("DToken");
 const DSGuard = artifacts.require("DSGuard");
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 const BN = require("bn.js");
-const { syncBuiltinESMExports } = require("module");
+const {syncBuiltinESMExports} = require("module");
 
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
@@ -80,8 +80,8 @@ describe("DToken Contract", function () {
 
     await USDC.allocateTo(account1, 1000e6);
     await USDC.allocateTo(account2, 1000e6);
-    USDC.approve(dUSDC.address, UINT256_MAX, { from: account1 });
-    USDC.approve(dUSDC.address, UINT256_MAX, { from: account2 });
+    USDC.approve(dUSDC.address, UINT256_MAX, {from: account1});
+    USDC.approve(dUSDC.address, UINT256_MAX, {from: account2});
   }
 
   describe("Deployment", function () {
@@ -112,7 +112,7 @@ describe("DToken Contract", function () {
       let orig_usdc = await USDC.balanceOf(account1);
       let orig_dusdc = await dUSDC.balanceOf(account1);
 
-      await dUSDC.mint(account1, amount, { from: account1 });
+      await dUSDC.mint(account1, amount, {from: account1});
 
       let usdc = await USDC.balanceOf(account1);
       let dusdc = await dUSDC.balanceOf(account1);
@@ -125,7 +125,7 @@ describe("DToken Contract", function () {
 
     it("Should mint for account other than sender", async function () {
       let amount = new BN(10e6);
-      await dUSDC.mint(account2, amount, { from: account1 });
+      await dUSDC.mint(account2, amount, {from: account1});
 
       let balance1 = await dUSDC.balanceOf(account1);
       let balance2 = await dUSDC.balanceOf(account2);
@@ -136,14 +136,14 @@ describe("DToken Contract", function () {
 
     it("Should not mint less than 1 dtoken", async function () {
       // when exchange rate <= 1, it should be fine
-      await dUSDC.mint(account1, 1, { from: account1 });
+      await dUSDC.mint(account1, 1, {from: account1});
 
       // Some mockup interest to make the exchange rate go up > 1
       await USDC.allocateTo(handlers[1].address, 10e4);
 
       // Now try to mint 1 underlying token whose value is < 1 dtoken
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 1, { from: account1 }),
+        dUSDC.mint(account1, 1, {from: account1}),
         "mint:"
       );
     });
@@ -156,10 +156,10 @@ describe("DToken Contract", function () {
     });
 
     it("Should burn all tokens", async function () {
-      await dUSDC.mint(account1, 10e6, { from: account1 });
+      await dUSDC.mint(account1, 10e6, {from: account1});
 
       let balance = await dUSDC.balanceOf(account1);
-      await dUSDC.burn(account1, balance, { from: account1 });
+      await dUSDC.burn(account1, balance, {from: account1});
 
       balance = await dUSDC.balanceOf(account1);
       assert.equal(balance.toString(), "0");
@@ -173,19 +173,19 @@ describe("DToken Contract", function () {
 
     it("Should burn for account other than sender", async function () {
       let amount = new BN(10e6);
-      await dUSDC.mint(account2, amount, { from: account2 });
+      await dUSDC.mint(account2, amount, {from: account2});
 
       let original1 = await dUSDC.balanceOf(account1);
       let original2 = await dUSDC.balanceOf(account2);
 
       // account2 has not approve account1 yet
       await truffleAssert.reverts(
-        dUSDC.burn(account2, amount, { from: account1 }),
+        dUSDC.burn(account2, amount, {from: account1}),
         "burn: insufficient allowance"
       );
 
-      await dUSDC.approve(account1, amount, { from: account2 });
-      await dUSDC.burn(account2, amount, { from: account1 });
+      await dUSDC.approve(account1, amount, {from: account2});
+      await dUSDC.burn(account2, amount, {from: account1});
 
       let current1 = await dUSDC.balanceOf(account1);
       let current2 = await dUSDC.balanceOf(account2);
@@ -197,7 +197,7 @@ describe("DToken Contract", function () {
     });
 
     it("Should burn minimum dtoken when exchange rate >= 1", async function () {
-      await dUSDC.mint(account1, 10e6, { from: account1 });
+      await dUSDC.mint(account1, 10e6, {from: account1});
 
       // Some mockup interest to make the exchange rate go up
       await USDC.allocateTo(handlers[1].address, 10e4);
@@ -206,7 +206,7 @@ describe("DToken Contract", function () {
       let orig_usdc = await USDC.balanceOf(account1);
 
       // Now try to burn 1 dtoken
-      await dUSDC.burn(account1, 1, { from: account1 });
+      await dUSDC.burn(account1, 1, {from: account1});
 
       let dusdc = await dUSDC.balanceOf(account1);
       let usdc = await USDC.balanceOf(account1);
@@ -229,8 +229,8 @@ describe("DToken Contract", function () {
 
     it("Should redeem all tokens", async function () {
       // Exchange rate does not change here, should remain 1
-      await dUSDC.mint(account1, 10e6, { from: account1 });
-      await dUSDC.redeem(account1, 10e6, { from: account1 });
+      await dUSDC.mint(account1, 10e6, {from: account1});
+      await dUSDC.redeem(account1, 10e6, {from: account1});
 
       let balance = await dUSDC.balanceOf(account1);
       assert.equal(balance.toString(), "0");
@@ -243,7 +243,7 @@ describe("DToken Contract", function () {
     });
 
     it("Should redeem minimum underlying token", async function () {
-      await dUSDC.mint(account1, 10e6, { from: account1 });
+      await dUSDC.mint(account1, 10e6, {from: account1});
 
       let orig_dusdc = await dUSDC.balanceOf(account1);
       let orig_usdc = await USDC.balanceOf(account1);
@@ -251,7 +251,7 @@ describe("DToken Contract", function () {
       // Some mockup interest to make the exchange rate go up to 2
       await USDC.allocateTo(handlers[1].address, 10e6);
 
-      await dUSDC.redeem(account1, 1, { from: account1 });
+      await dUSDC.redeem(account1, 1, {from: account1});
 
       let dusdc = await dUSDC.balanceOf(account1);
       let usdc = await USDC.balanceOf(account1);
@@ -277,7 +277,7 @@ describe("DToken Contract", function () {
     });
 
     it("Should get total balance", async function () {
-      await dUSDC.mint(account1, 10e6, { from: account1 });
+      await dUSDC.mint(account1, 10e6, {from: account1});
       await USDC.allocateTo(handlers[4].address, 1e6);
 
       let expected = new BN(11e6);
@@ -301,7 +301,7 @@ describe("DToken Contract", function () {
     });
 
     it("Should update the exchange rate", async function () {
-      await dUSDC.mint(account1, 10e6, { from: account1 });
+      await dUSDC.mint(account1, 10e6, {from: account1});
 
       // Some mockup interest to make the exchange rate go up to 2
       await USDC.allocateTo(handlers[0].address, 10e6);

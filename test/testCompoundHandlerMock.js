@@ -155,7 +155,7 @@ describe("CompoundHandlerMock contract", function () {
     it("Should only allow auth to deposit", async function () {
       let amount = await handler.deposit(USDC.address, 1000e6);
 
-      //TODO: Check returen value from transaction
+      //TODO: Check return value from transaction
       //console.log(JSON.stringify(amount));
       //assert.equal(amount.eq(new BN(1000e6)), true);
 
