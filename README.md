@@ -35,10 +35,12 @@ And then you can run the test case to get a gas report
 npx buidler test --network localhost
 ```
 
-Then run the test with the local network
+Solidity code coverage plugin: `solidity-coverage`, install:
 
-```
-npx buidler test --network localhost
-```
+`npm install --save-dev solidity-coverage`
+
+This plugin implements a coverage task
+
+`npx buidler coverage`
 
 For more information please check [Buidler's doc](https://buidler.dev/getting-started)

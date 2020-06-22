@@ -7,8 +7,9 @@ package-lock.json
 /.pnp
 .pnp.js
 
-# testing
+# coverage
 /coverage
+coverage.*
 
 # production
 /build
