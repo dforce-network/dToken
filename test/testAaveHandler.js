@@ -4,11 +4,13 @@ const LendPool = artifacts.require("AaveLendPoolMock");
 const aTokenMock = artifacts.require("aTokenMock");
 const AaveHandler = artifacts.require("AaveHandler");
 const dTokenAddresses = artifacts.require("dTokenAddresses");
+const Dispatcher = artifacts.require("Dispatcher");
+const DToken = artifacts.require("DToken");
 
 describe("Aave handler contract", function () {
   let accounts;
   let usdc;
-  let aUSDC;
+  let aUSDC, dUSDC, dispatcher;
   let lendingPoolCore;
   let lendingPool;
   let aaveHandler;
@@ -34,6 +36,19 @@ describe("Aave handler contract", function () {
     );
     await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
     lendingPool = await LendPool.new(lendingPoolCore.address);
+    aaveHandler = await AaveHandler.new(
+      dTokenMappingContract.address,
+      lendingPool.address,
+      lendingPoolCore.address
+    );
+
+    dispatcher = await Dispatcher.new([aaveHandler.address], [1000000]);
+    dUSDC = await DToken.new(
+      "dUSDC",
+      "dUSDC",
+      usdc.address,
+      dispatcher.address
+    );
 
     // Faucets assets:
     await usdc.initialize(
@@ -60,11 +75,6 @@ describe("Aave handler contract", function () {
 
   describe("Deployment", function () {
     it("Deploy aave handler contract", async function () {
-      aaveHandler = await AaveHandler.new(
-        dTokenMappingContract.address,
-        lendingPool.address,
-        lendingPoolCore.address
-      );
       console.log(
         "before enable usdc, aave handler supports it: ",
         await aaveHandler.tokenIsEnabled(usdc.address)
