@@ -72,7 +72,7 @@ describe("Dispatcher Contract", function () {
 
       await truffleAssert.reverts(
         resetContracts(2, proportions),
-        "setHandlers: array parameters mismatch"
+        "setHandlers: handlers & proportions should not have 0 or different lengths"
       );
     });
 
@@ -101,7 +101,7 @@ describe("Dispatcher Contract", function () {
     });
   });
 
-  describe("updateProportion", function () {
+  describe("updateProportions", function () {
     beforeEach(async function () {
       let proportions = [1000000, 0, 0, 0, 0];
       await resetContracts(5, proportions);
@@ -110,9 +110,9 @@ describe("Dispatcher Contract", function () {
     it("Should only allow auth to update proportion", async function () {
       let proportions = [500000, 500000, 0, 0, 0];
 
-      await dispatcher.updateProportion(handler_addresses, proportions);
+      await dispatcher.updateProportions(handler_addresses, proportions);
 
-      let {0: h, 1: p} = await dispatcher.getHandler();
+      let {0: h, 1: p} = await dispatcher.getHandlers();
       assert_handlers_equal(
         h,
         handler_addresses,
@@ -121,7 +121,7 @@ describe("Dispatcher Contract", function () {
       );
 
       await truffleAssert.reverts(
-        dispatcher.updateProportion(handler_addresses, proportions, {
+        dispatcher.updateProportions(handler_addresses, proportions, {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -131,8 +131,8 @@ describe("Dispatcher Contract", function () {
     it("Should not update proportion as length mismatch", async function () {
       let proportions = [500000, 500000, 0, 0];
       await truffleAssert.reverts(
-        dispatcher.updateProportion(handler_addresses, proportions),
-        "updateProportion: array parameters mismatch"
+        dispatcher.updateProportions(handler_addresses, proportions),
+        "updateProportions: handlers & proportions must match the current length"
       );
     });
 
@@ -141,13 +141,13 @@ describe("Dispatcher Contract", function () {
       let addresses = handler_addresses;
       addresses[0] = account1;
       await truffleAssert.reverts(
-        dispatcher.updateProportion(addresses, proportions),
-        "updateProportion: the handler contract address does not exist"
+        dispatcher.updateProportions(addresses, proportions),
+        "updateProportions: the handler contract address does not exist"
       );
     });
   });
 
-  describe("addHandler", function () {
+  describe("addHandlers", function () {
     beforeEach(async function () {
       let proportions = [1000000, 0, 0, 0, 0];
       await resetContracts(5, proportions);
@@ -157,7 +157,7 @@ describe("Dispatcher Contract", function () {
       let new_handlers = [
         (await InternalHandler.new(dtoken_controller.address)).address,
       ];
-      await dispatcher.addHandler(new_handlers);
+      await dispatcher.addHandlers(new_handlers);
 
       //TODO: Check new handlers are retrievable
 
@@ -165,7 +165,7 @@ describe("Dispatcher Contract", function () {
         (await InternalHandler.new(dtoken_controller.address)).address,
       ];
       await truffleAssert.reverts(
-        dispatcher.addHandler(new_handlers, {from: account1}),
+        dispatcher.addHandlers(new_handlers, {from: account1}),
         "ds-auth-unauthorized"
       );
     });
@@ -173,16 +173,16 @@ describe("Dispatcher Contract", function () {
     it("Should not add existing handler ", async function () {
       let new_handlers = handler_addresses;
       await truffleAssert.reverts(
-        dispatcher.addHandler(new_handlers),
-        "addHandler: handler contract address already exists"
+        dispatcher.addHandlers(new_handlers),
+        "addHandlers: handler address already exists"
       );
     });
 
     it("Should not add handler with invalid address", async function () {
       let new_handlers = [ZERO_ADDR];
       await truffleAssert.reverts(
-        dispatcher.addHandler(new_handlers),
-        "addHandler: handler contract address invalid"
+        dispatcher.addHandlers(new_handlers),
+        "addHandlers: handler address invalid"
       );
     });
   });
@@ -241,14 +241,14 @@ describe("Dispatcher Contract", function () {
     });
   });
 
-  describe("getHandler", function () {
+  describe("getHandlers", function () {
     let proportions = [1000000, 0, 0, 0, 0];
     beforeEach(async function () {
       await resetContracts(5, proportions);
     });
 
     it("Should get Handler", async function () {
-      let {0: h, 1: p} = await dispatcher.getHandler();
+      let {0: h, 1: p} = await dispatcher.getHandlers();
       assert_handlers_equal(
         h,
         handler_addresses,

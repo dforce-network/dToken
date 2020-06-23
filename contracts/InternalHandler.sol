@@ -125,7 +125,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Withdraw token from market, but only for dToken contract.
      * @param _underlyingToken Token to withdraw.
      * @param _amount Token amount to withdraw.
-     * @return The actual withdrawed token amount.
+     * @return The actual withdrown token amount.
      */
     function withdraw(address _underlyingToken, uint256 _amount)
         external

@@ -26,7 +26,7 @@ contract Dispatcher is DSAuth {
      * @dev map: handlerAddress -> true/false,
      *      Whether the handler has been added or not.
      */
-    mapping(address => bool) public handlerActive;
+    mapping(address => bool) public isHandlerActive;
 
     /**
      * @dev Set original handler contract and its depoist ratio.
@@ -41,8 +41,8 @@ contract Dispatcher is DSAuth {
     }
 
     /**
-     * @dev Sort `handlers` from large to small according to the liquidity of the corresponding market asset.
-     * @param _data The data to sort, that is the `handlers` at here.
+     * @dev Sort handlers in descending order of the liquidity in each market.
+     * @param _data The data to sort, which are the handlers here.
      * @param _left The index of data to start sorting.
      * @param _right The index of data to end sorting.
      * @param _token Asset address.
@@ -77,21 +77,27 @@ contract Dispatcher is DSAuth {
         if (i < _right) sortByLiquidity(_data, i, _right, _token);
     }
 
+    /************************/
+    /*** Admin Operations ***/
+    /************************/
+
     /**
-     * @dev Set config for `handlers` and corresponding `proportions`.
-     * @param _handlers The support handler contract.
-     * @param _proportions Depoist ratio of support handler.
+     * @dev Replace current handlers with _handlers and corresponding _proportions,
+     * @param _handlers The list of new handlers, the 1st one will act as default hanlder.
+     * @param _proportions The list of corresponding proportions.
      */
     function setHandlers(
         address[] memory _handlers,
         uint256[] memory _proportions
     ) private {
-        // The length of `_handlers` must be equal to the length of `_proportions`.
         require(
             _handlers.length == _proportions.length && _handlers.length > 0,
-            "setHandlers: array parameters mismatch"
+            "setHandlers: handlers & proportions should not have 0 or different lengths"
         );
+
+        // The 1st will act as the default handler.
         defaultHandler = _handlers[0];
+
         uint256 _sum = 0;
         for (uint256 i = 0; i < _handlers.length; i++) {
             require(
@@ -99,16 +105,17 @@ contract Dispatcher is DSAuth {
                 "setHandlers: handlerAddr contract address invalid"
             );
             require(
-                !handlerActive[_handlers[i]],
+                !isHandlerActive[_handlers[i]],
                 "setHandlers: handler contract address already exists"
             );
             _sum = _sum.add(_proportions[i]);
 
             handlers.push(_handlers[i]);
             proportions[_handlers[i]] = _proportions[i];
-            handlerActive[_handlers[i]] = true;
+            isHandlerActive[_handlers[i]] = true;
         }
-        // If the `handlers` is not empty, the sum of `proportions` should be 1000000.
+
+        // The sum of proportions should be 1000000.
         require(
             _sum == totalProportion,
             "the sum of proportions must be 1000000"
@@ -116,26 +123,25 @@ contract Dispatcher is DSAuth {
     }
 
     /**
-     * @dev Update `proportions` of the `handlers`.
-     * @param _handlers List of the `handlers` to update.
-     * @param _proportions List of the `promotions` corresponding to `handlers` to update.
+     * @dev Update proportions of the handlers.
+     * @param _handlers List of the handlers to update.
+     * @param _proportions List of the corresponding proportions to update.
      */
-    function updateProportion(
+    function updateProportions(
         address[] memory _handlers,
         uint256[] memory _proportions
     ) public auth {
-        // The length of `_handlers` must be equal to the length of `_proportions`
         require(
             _handlers.length == _proportions.length &&
                 handlers.length == _proportions.length,
-            "updateProportion: array parameters mismatch"
+            "updateProportions: handlers & proportions must match the current length"
         );
 
         uint256 _sum = 0;
         for (uint256 i = 0; i < _proportions.length; i++) {
             require(
-                handlerActive[_handlers[i]],
-                "updateProportion: the handler contract address does not exist"
+                isHandlerActive[_handlers[i]],
+                "updateProportions: the handler contract address does not exist"
             );
             _sum = _sum.add(_proportions[i]);
 
@@ -151,30 +157,30 @@ contract Dispatcher is DSAuth {
 
     /**
      * @dev Add new handler.
-     *      Notice: the corresponding ratio of the new handler is 0.
+     *      Notice: the corresponding proportion of the new handler is 0.
      * @param _handlers List of the new handlers to add.
      */
-    function addHandler(address[] memory _handlers) public auth {
+    function addHandlers(address[] memory _handlers) public auth {
         for (uint256 i = 0; i < _handlers.length; i++) {
             require(
-                !handlerActive[_handlers[i]],
-                "addHandler: handler contract address already exists"
+                !isHandlerActive[_handlers[i]],
+                "addHandlers: handler address already exists"
             );
             require(
                 _handlers[i] != address(0),
-                "addHandler: handler contract address invalid"
+                "addHandlers: handler address invalid"
             );
 
             handlers.push(_handlers[i]);
             proportions[_handlers[i]] = 0;
-            handlerActive[_handlers[i]] = true;
+            isHandlerActive[_handlers[i]] = true;
         }
     }
 
     /**
-     * @dev Set config for `handlers` and corresponding `proportions`.
-     * @param _handlers The support handler contract.
-     * @param _proportions Depoist ratio of support handler.
+     * @dev Reset handlers and corresponding proportions, will delete the old ones.
+     * @param _handlers The list of new handlers.
+     * @param _proportions the list of corresponding proportions.
      */
     function resetHandlers(
         address[] calldata _handlers,
@@ -183,7 +189,7 @@ contract Dispatcher is DSAuth {
         address[] memory _oldHandlers = handlers;
         for (uint256 i = 0; i < _oldHandlers.length; i++) {
             delete proportions[_oldHandlers[i]];
-            delete handlerActive[_oldHandlers[i]];
+            delete isHandlerActive[_oldHandlers[i]];
         }
         defaultHandler = address(0);
         delete handlers;
@@ -192,8 +198,8 @@ contract Dispatcher is DSAuth {
     }
 
     /**
-     * @dev Update `defaultHandler`.
-     * @param _defaultHandler `defaultHandler` to update.
+     * @dev Update the default handler.
+     * @param _defaultHandler The default handler to update.
      */
     function updateDefaultHandler(address _defaultHandler) public auth {
         require(
@@ -212,9 +218,9 @@ contract Dispatcher is DSAuth {
             if (_oldDefaultHandler == _handlers[i]) {
                 _handlers[i] = _defaultHandler;
                 proportions[_defaultHandler] = proportions[_oldDefaultHandler];
-                handlerActive[_defaultHandler] = true;
+                isHandlerActive[_defaultHandler] = true;
                 delete proportions[_oldDefaultHandler];
-                delete handlerActive[_oldDefaultHandler];
+                delete isHandlerActive[_oldDefaultHandler];
                 break;
             }
         }
@@ -222,12 +228,16 @@ contract Dispatcher is DSAuth {
         defaultHandler = _defaultHandler;
     }
 
+    /***********************/
+    /*** User Operations ***/
+    /***********************/
+
     /**
-     * @dev Query the current handler and the corresponding ratio.
-     * @return Return two arrays, one is the current handler,
-     *         and the other is the corresponding ratio.
+     * @dev Query the current handler and the corresponding proportions.
+     * @return Return two arrays, the current handlers,
+     *         and the corresponding proportions.
      */
-    function getHandler()
+    function getHandlers()
         external
         view
         returns (address[] memory, uint256[] memory)
@@ -241,10 +251,10 @@ contract Dispatcher is DSAuth {
     }
 
     /**
-     * @dev According to the `propotion` of the `handlers`, calculate corresponding deposit amount.
+     * @dev According to the proportion, calculate deposit amount for each handler.
      * @param _amount The amount to deposit.
-     * @return Return two arrays, one is the current handler,
-     *         and the other is the corresponding deposit amount.
+     * @return Return two arrays, the current handlers,
+     *         and the corresponding deposit amounts.
      */
     function getDepositStrategy(uint256 _amount)
         external
@@ -258,21 +268,25 @@ contract Dispatcher is DSAuth {
         uint256 _sum = 0;
         uint256 _lastIndex = _amounts.length.sub(1);
         for (uint256 i = 0; ; i++) {
+            // Return empty stratege if any handler is paused for abnormal case,
+            // resulting further failure with mint and burn
             if (IHandler(_handlers[i]).paused()) {
                 delete _handlers;
                 delete _amounts;
                 break;
             }
-            // Calculate deposit amount according to the `propotion` of the `handlers`,
-            // and the last handler gets the remaining quantity directly without calculating.
+
+            // The last handler gets the remaining amount without check proportion.
             if (i == _lastIndex) {
                 _amounts[i] = _amount.sub(_sum);
                 break;
             }
 
+            // Calculate deposit amount according to the proportion,
             _amounts[i] =
                 _amount.mul(proportions[_handlers[i]]) /
                 totalProportion;
+
             _sum = _sum.add(_amounts[i]);
         }
 
@@ -280,19 +294,18 @@ contract Dispatcher is DSAuth {
     }
 
     /**
-     * @dev According to new `handlers` which are sorted in order from small to large base on the APR
-     *      of corresponding asset, provide a best strategy when withdraw asset.
-     * @param _token The asset to withdraw.
-     * @param _amount The amount to withdraw including exchange fees between tokens.
-     * @return Return two arrays, one is the current handler,
-     *         and the other is the corresponding withdraw amount.
+     * @dev Provide a strategy to withdraw, now sort handlers in descending order of the liquidity.
+     * @param _token The token to withdraw.
+     * @param _amount The amount to withdraw, including exchange fees between tokens.
+     * @return Return two arrays, the handlers,
+     *         and the corresponding withdraw amount.
      */
     function getWithdrawStrategy(address _token, uint256 _amount)
         external
         returns (address[] memory, uint256[] memory)
     {
         address[] memory _handlers = handlers;
-        // Sort `handlers` from large to small according to the liquidity of `_token`.
+        // Sort handlers in descending order of the liquidity.
         if (_handlers.length > 2)
             sortByLiquidity(
                 _handlers,
@@ -305,6 +318,8 @@ contract Dispatcher is DSAuth {
         uint256 _balance;
         uint256 _lastIndex = _amounts.length.sub(1);
         for (uint256 i = 0; i < _handlers.length; i++) {
+            // Return empty stratege if any handler is paused for abnormal case,
+            // resulting further failure with mint and burn
             if (IHandler(_handlers[i]).paused()) {
                 delete _handlers;
                 delete _amounts;
@@ -317,7 +332,8 @@ contract Dispatcher is DSAuth {
                 _amounts[i] = _amount;
                 break;
             }
-            // The minimum amount can be withdrew from corresponding market.
+
+            // The maximum amount can be withdrown from market.
             _balance = IHandler(_handlers[i]).getRealLiquidity(_token);
             _amounts[i] = _balance > _amount ? _amount : _balance;
             _amount = _amount.sub(_amounts[i]);

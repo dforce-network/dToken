@@ -230,7 +230,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         for (uint256 i = 0; i < _withdraw.length; i++) {
-            // No need to withdraw from default handler, all withdrawed tokens go to it
+            // No need to withdraw from default handler, all withdrown tokens go to it
             if (_withdrawAmount[i] == 0 || _defaultHandler == _withdraw[i])
                 continue;
 
@@ -245,7 +245,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             require(
                 IHandler(_withdraw[i]).withdraw(_token, _withdrawAmount[i]) ==
                     _realWithdrawAmount[i],
-                "rebalance: actual withdrawed amount does not match the wanted"
+                "rebalance: actual withdrown amount does not match the wanted"
             );
 
             // Transfer to the default handler
@@ -262,7 +262,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
         for (uint256 i = 0; i < _deposit.length; i++) {
             require(
-                IDispatcher(dispatcher).handlerActive(_deposit[i]) &&
+                IDispatcher(dispatcher).isHandlerActive(_deposit[i]) &&
                     IHandler(_deposit[i]).tokenIsEnabled(_token),
                 "rebalance: both handler and token must be enabled"
             );
@@ -319,7 +319,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @dev Current newest exchange rate, scaled by 1e18.
      */
     function getCurrentExchangeRate() internal returns (uint256) {
-        address[] memory _handlers = getHandler();
+        address[] memory _handlers = getHandlers();
         return getCurrentExchangeRateByHandler(_handlers, token);
     }
 
@@ -544,7 +544,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _burnLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
         require(
             _burnLocal.defaultHandler != address(0) &&
-                IDispatcher(dispatcher).handlerActive(
+                IDispatcher(dispatcher).isHandlerActive(
                     _burnLocal.defaultHandler
                 ),
             "redeem: default handler is inactive"
@@ -580,12 +580,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
-        // Market may charge some fee in withdraw, so the actual withdrawed total amount
+        // Market may charge some fee in withdraw, so the actual withdrown total amount
         // could be less than what was intended
         // Use the withdrawTotalAmount as the baseline for further calculation
         require(
             _burnLocal.withdrawTotalAmount <= _burnLocal.consumeAmount,
-            "burn: withdrawed more than intended"
+            "burn: withdrown more than intended"
         );
 
         updateInterest(_src, _burnLocal.exchangeRate);
@@ -700,7 +700,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
         require(
             _redeemLocal.defaultHandler != address(0) &&
-                IDispatcher(dispatcher).handlerActive(
+                IDispatcher(dispatcher).isHandlerActive(
                     _redeemLocal.defaultHandler
                 ),
             "redeem: default handler is inactive"
@@ -742,13 +742,13 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
-        // Make sure enough token has been withdrawed
+        // Make sure enough token has been withdrown
         // If the market charge fee in withdraw, there are 2 cases:
         // 1) redeemed < intended, the check below would fail;
         // 2) redeemed == intended, then fee was covered by consuming more underlying token
         require(
             _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
-            "redeem: withdrawed more than intended"
+            "redeem: withdrown more than intended"
         );
 
         // Calculate amount of the dToken based on current exchange rate.
@@ -916,8 +916,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     /**
      * @dev Get the current list of the handlers.
      */
-    function getHandler() public view returns (address[] memory) {
-        (address[] memory _handlers, ) = IDispatcher(dispatcher).getHandler();
+    function getHandlers() public view returns (address[] memory) {
+        (address[] memory _handlers, ) = IDispatcher(dispatcher).getHandlers();
         return _handlers;
     }
 
@@ -925,7 +925,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @dev Get all deposit token amount including interest.
      */
     function getTotalBalance() external view returns (uint256) {
-        address[] memory _handlers = getHandler();
+        address[] memory _handlers = getHandlers();
         uint256 _tokenTotalBalance = 0;
         for (uint256 i = 0; i < _handlers.length; i++)
             _tokenTotalBalance = _tokenTotalBalance.add(
@@ -938,7 +938,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @dev Get maximum valid token amount in the whole market.
      */
     function getLiquidity() external view returns (uint256) {
-        address[] memory _handlers = getHandler();
+        address[] memory _handlers = getHandlers();
         uint256 _liquidity = 0;
         for (uint256 i = 0; i < _handlers.length; i++)
             _liquidity = _liquidity.add(
@@ -951,7 +951,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @dev Current exchange rate, scaled by 1e18.
      */
     function getExchangeRate() public view returns (uint256) {
-        address[] memory _handlers = getHandler();
+        address[] memory _handlers = getHandlers();
         address _token = token;
         uint256 _totalToken = 0;
         for (uint256 i = 0; i < _handlers.length; i++)

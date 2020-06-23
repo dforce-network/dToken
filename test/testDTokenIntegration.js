@@ -251,7 +251,7 @@ describe("DToken Contract Integration", function () {
 
     it("Case 3: Should not update handler proportion with invalid one", async function () {
       await truffleAssert.reverts(
-        dispatcher.updateProportion([internal_handler.address], [10000]),
+        dispatcher.updateProportions([internal_handler.address], [10000]),
         "the sum of proportions must be 1000000"
       );
     });
@@ -495,7 +495,7 @@ describe("DToken Contract Integration", function () {
 
     // 24. Add compound handler
     it("Case 24: Should add compound handler", async function () {
-      await dispatcher.addHandler([compound_handler.address]);
+      await dispatcher.addHandlers([compound_handler.address]);
     });
 
     // 25. mint some dusdc
@@ -550,7 +550,7 @@ describe("DToken Contract Integration", function () {
 
     // 27. update a valid proportion
     it("Case 27: Should update the proportion to 90/10", async function () {
-      await dispatcher.updateProportion(
+      await dispatcher.updateProportions(
         [internal_handler.address, compound_handler.address],
         [900000, 100000]
       );
@@ -954,7 +954,7 @@ describe("DToken Contract Integration", function () {
 
     it("Case 58: failed to update proportions", async function () {
       await truffleAssert.reverts(
-        dispatcher.updateProportion(
+        dispatcher.updateProportions(
           [
             internal_handler.address,
             compound_handler.address,
@@ -968,7 +968,7 @@ describe("DToken Contract Integration", function () {
 
     it("Case 59: succeed to update proportions", async function () {
       let original_proportions = [700000, 200000, 100000];
-      await dispatcher.updateProportion(
+      await dispatcher.updateProportions(
         [
           internal_handler.address,
           compound_handler.address,
@@ -976,7 +976,7 @@ describe("DToken Contract Integration", function () {
         ],
         original_proportions
       );
-      let actual_proportions = (await dispatcher.getHandler())[1];
+      let actual_proportions = (await dispatcher.getHandlers())[1];
       assert.equal(
         Number(actual_proportions[0]).toString(),
         original_proportions[0],
@@ -1693,7 +1693,7 @@ describe("DToken Contract Integration", function () {
         [internal_handler.address, compound_handler.address],
         new_propotions
       );
-      let actual_propotions = (await dispatcher.getHandler())[1];
+      let actual_propotions = (await dispatcher.getHandlers())[1];
       // console.log('actual_propotions', actual_propotions);
       assert.equal(
         Number(actual_propotions[0]).toString(),
@@ -1735,7 +1735,7 @@ describe("DToken Contract Integration", function () {
         [internal_handler.address],
         new_propotions
       );
-      let actual_propotions = (await dispatcher.getHandler())[1];
+      let actual_propotions = (await dispatcher.getHandlers())[1];
       // console.log('actual_propotions', actual_propotions);
       assert.equal(
         Number(actual_propotions[0]).toString(),

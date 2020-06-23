@@ -1,7 +1,7 @@
 pragma solidity 0.5.12;
 
 interface IDispatcher {
-    function getHandler()
+    function getHandlers()
         external
         view
         returns (address[] memory, uint256[] memory);
@@ -15,7 +15,7 @@ interface IDispatcher {
         external
         returns (address[] memory, uint256[] memory);
 
-    function handlerActive(address _handler) external view returns (bool);
+    function isHandlerActive(address _handler) external view returns (bool);
 
     function defaultHandler() external view returns (address);
 }
