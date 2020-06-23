@@ -574,6 +574,9 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
+        // Market may charge some fee in withdraw, so the actual withdrawed total amount
+        // could be less than what was intended
+        // Use the withdrawTotalAmount as the baseline for further calculation
         require(
             _burnLocal.withdrawTotalAmount <= _burnLocal.consumeAmount,
             "burn: withdrawed more than intended"
@@ -722,8 +725,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
+        // Make sure enough token has been withdrawed
+        // If the market charge fee in withdraw, there are 2 cases:
+        // 1) redeemed < intended, the check below would fail;
+        // 2) redeemed == intended, then fee was covered by consuming more underlying token
         require(
-            _redeemLocal.redeemTotalAmount <= _redeemLocal.consumeAmountWithFee,
+            _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
             "redeem: withdrawed more than intended"
         );
 
