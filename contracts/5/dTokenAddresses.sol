@@ -24,6 +24,9 @@ contract dTokenAddresses is DSAuth {
         initialized = true;
     }
 
+    /**
+     *  @dev Adds new mapping: token => dToken.
+     */
     function setdTokensRelation(
         address[] memory _tokens,
         address[] memory _mappingdTokens
@@ -43,6 +46,21 @@ contract dTokenAddresses is DSAuth {
         require(
             dTokens[_token] == address(0x0),
             "_setdTokenRelation: Has set!"
+        );
+        dTokens[_token] = _mappingdToken;
+        emit NewMappingdToken(_token, _mappingdToken);
+    }
+
+    /**
+     * @dev Updates existing mapping: token => dToken.
+     */
+    function updatedTokenRelation(address _token, address _mappingdToken)
+        external
+        auth
+    {
+        require(
+            dTokens[_token] != address(0x0),
+            "updatedTokenRelation: token does not exist!"
         );
         dTokens[_token] = _mappingdToken;
         emit NewMappingdToken(_token, _mappingdToken);
