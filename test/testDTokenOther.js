@@ -147,8 +147,8 @@ describe("DToken Contract Integration", function () {
     for (const account of accounts) {
       await USDC.allocateTo(account, 100000e6);
       await USDT.allocateTo(account, 100000e6);
-      USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
-      USDT.approve(dUSDT.address, UINT256_MAX, {from: account});
+      USDC.approve(dUSDC.address, UINT256_MAX, { from: account });
+      USDT.approve(dUSDT.address, UINT256_MAX, { from: account });
     }
   }
 
@@ -366,7 +366,7 @@ describe("DToken Contract Integration", function () {
       await resetContracts();
     });
 
-    it("Case 97~99", async function () {
+    it("Case 97~99 (Skipped in coverage)", async function () {
       dispatcher.resetHandlers(
         [
           internal_handler.address,
@@ -378,7 +378,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -393,7 +393,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -409,7 +409,7 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
@@ -429,7 +429,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
@@ -444,7 +444,7 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
@@ -460,18 +460,18 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, {from: account1}],
+        [account1, 1, { from: account1 }],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), {from: account1}],
+        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
         account1
       );
 
@@ -480,7 +480,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -495,25 +495,25 @@ describe("DToken Contract Integration", function () {
             BASE.div(new BN("100")).mul(amount),
             BASE
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, {from: account1}],
+        [account1, 1, { from: account1 }],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), {from: account1}],
+        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
         account1
       );
 
@@ -528,25 +528,25 @@ describe("DToken Contract Integration", function () {
             BASE.div(new BN("100")).mul(amount),
             BASE
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, {from: account1}],
+        [account1, 1, { from: account1 }],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), {from: account1}],
+        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
         account1
       );
 
@@ -584,7 +584,7 @@ describe("DToken Contract Integration", function () {
       await resetContracts();
     });
 
-    it("Case 100~104", async function () {
+    it("Case 100~104 (Skipped in coverage)", async function () {
       await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
       await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE); // Mint
       diff = await calcDiff(
@@ -602,7 +602,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -618,14 +618,14 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
@@ -640,7 +640,7 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
@@ -656,14 +656,14 @@ describe("DToken Contract Integration", function () {
             BASE.div(new BN("100")).mul(amount),
             BASE
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -679,14 +679,14 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
@@ -701,7 +701,7 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
@@ -717,14 +717,14 @@ describe("DToken Contract Integration", function () {
             BASE.div(new BN("100")).mul(amount),
             BASE
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -740,14 +740,14 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
@@ -762,14 +762,14 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(1000e6, 10000e6)), {from: account1}],
+        [account1, new BN(randomNum(1000e6, 10000e6)), { from: account1 }],
         account1
       );
 
@@ -802,7 +802,7 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -818,14 +818,14 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
@@ -840,14 +840,14 @@ describe("DToken Contract Integration", function () {
                 .replace(/,/g, "")
             )
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(1000e6, 10000e6)), {from: account1}],
+        [account1, new BN(randomNum(1000e6, 10000e6)), { from: account1 }],
         account1
       );
 
@@ -877,24 +877,24 @@ describe("DToken Contract Integration", function () {
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, {from: account1}],
+        [account1, 1, { from: account1 }],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), {from: account1}],
+        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
 
@@ -909,25 +909,25 @@ describe("DToken Contract Integration", function () {
             BASE.div(new BN("100")).mul(amount),
             BASE
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, {from: account1}],
+        [account1, 1, { from: account1 }],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), {from: account1}],
+        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
         account1
       );
 
@@ -942,25 +942,25 @@ describe("DToken Contract Integration", function () {
             BASE.div(new BN("100")).mul(amount),
             BASE
           ),
-          {from: account1},
+          { from: account1 },
         ],
         account1
       );
 
       diff = await calcDiff(
         dUSDC.mint,
-        [account1, new BN(randomNum(10, 1000e6)), {from: account1}],
+        [account1, new BN(randomNum(10, 1000e6)), { from: account1 }],
         account1
       );
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, 1, {from: account1}],
+        [account1, 1, { from: account1 }],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
         dUSDC.burn,
-        [account1, await dUSDC.balanceOf(account1), {from: account1}],
+        [account1, await dUSDC.balanceOf(account1), { from: account1 }],
         account1
       );
 
