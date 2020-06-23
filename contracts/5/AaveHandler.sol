@@ -17,7 +17,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     address public aaveLendingPool;
     address public aaveLendingPoolCore;
 
-    mapping(address => bool) public tokensEnable;
+    mapping(address => bool) private tokensEnable;
     mapping(address => uint256) public interestDetails;
 
     event NewdTokenAddresses(

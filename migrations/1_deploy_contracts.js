@@ -15,9 +15,13 @@ var LendingPool = artifacts.require("LendingPool.sol");
 var Proxy = artifacts.require("DTokenProxy.sol");
 
 module.exports = async function (deployer) {
+    // Deploys Guard contract
+    await deployer.deploy(DSGuard);
+    let ds_guard = await DSGuard.deployed();
     // Deploys dToken library contract
     await deployer.deploy(dTokenAddresses);
     let dToken_contract_library = await dTokenAddresses.deployed();
+    await dToken_contract_library.setAuthority(ds_guard.address);
 
     // Compound USDC
     let usdc = await FiatToken.at("0xb7a4F3E9097C08dA09517b5aB877F7a917224ede");
@@ -32,11 +36,6 @@ module.exports = async function (deployer) {
     let lendingPoolCore = await LendingPoolCore.at("0x95D1189Ed88B380E319dF73fF00E479fcc4CFa45");
     // Aave lending pool
     let lendingPool = await LendingPool.at("0x580D4Fdc4BF8f9b5ae2fb9225D584fED4AD5375c");
-
-
-    // Deploys Guard contract
-    await deployer.deploy(DSGuard);
-    let ds_guard = await DSGuard.deployed();
 
     // Deploys Internal contract
     await deployer.deploy(InternalHandler, dToken_contract_library.address);
@@ -121,7 +120,7 @@ module.exports = async function (deployer) {
 
     await dToken_contract_library.setdTokensRelation(
         [usdc.address, usdt.address],
-        [dUSDC.address, dUSDT.address]
+        [dUSDC_proxy.address, dUSDT_proxy.address]
     );
 
     await internal_proxy.approve(usdc.address);
