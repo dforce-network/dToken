@@ -87,7 +87,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev This contract approves to `_dToken` contract with `_underlyingToken`.
+     * @dev The _underlyingToken approves to dToken contract.
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
@@ -106,7 +106,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Deposit token to market, but only for dToken contract.
+     * @dev Deposit token to market, only called by dToken contract.
      * @param _underlyingToken Token to deposit.
      * @return The actual deposited token amount.
      */

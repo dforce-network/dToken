@@ -51,8 +51,8 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Update dToken mapping contract.
-     * @param _newDTokenController The new dToken mapping contact.
+     * @dev Authorized function to update dToken controller contract.
+     * @param _newDTokenController The new dToken controller contact.
      */
     function setdTokens(address _newDTokenController) external auth {
         require(
@@ -133,7 +133,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     // }
 
     /**
-     * @dev This token `_underlyingToken` approves to market and dToken contract.
+     * @dev The _underlyingToken approves to market and dToken contracts.
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
@@ -164,7 +164,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Deposit token to market, but only for dToken contract.
+     * @dev Deposit token to market, only called by dToken contract.
      * @param _underlyingToken Token to deposit.
      * @return The actual deposited token amount.
      */
@@ -187,11 +187,11 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         uint256 _MarketBalanceBefore = getRealBalance(_underlyingToken);
 
         // Update the stored interest with the market balance before the mint
-        InterestDetails storage interest = interestsDetails[_underlyingToken];
-        uint256 _periodInterest = _MarketBalanceBefore.sub(
-            interest.totalUnderlyingBalance
+        InterestDetails storage _details = interestsDetails[_underlyingToken];
+        uint256 _interest = _MarketBalanceBefore.sub(
+            _details.totalUnderlyingBalance
         );
-        interest.interest = interest.interest.add(_periodInterest);
+        _details.interest = _details.interest.add(_interest);
 
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
@@ -208,7 +208,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         uint256 _MarketBalanceAfter = getRealBalance(_underlyingToken);
 
         // Store the latest real balance.
-        interest.totalUnderlyingBalance = _MarketBalanceAfter;
+        _details.totalUnderlyingBalance = _MarketBalanceAfter;
 
         uint256 _changedAmount = _MarketBalanceAfter.sub(_MarketBalanceBefore);
 
@@ -240,11 +240,11 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         uint256 _MarketBalanceBefore = getRealBalance(_underlyingToken);
 
         // Update the stored interest with the market balance before the redeem
-        InterestDetails storage interest = interestsDetails[_underlyingToken];
-        uint256 _periodInterest = _MarketBalanceBefore.sub(
-            interest.totalUnderlyingBalance
+        InterestDetails storage _details = interestsDetails[_underlyingToken];
+        uint256 _interest = _MarketBalanceBefore.sub(
+            _details.totalUnderlyingBalance
         );
-        interest.interest = interest.interest.add(_periodInterest);
+        _details.interest = _details.interest.add(_interest);
 
         uint256 _handlerBalanceBefore = IERC20(_underlyingToken).balanceOf(
             address(this)
@@ -273,7 +273,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
 
         // Store the latest real balance.
-        interest.totalUnderlyingBalance = getRealBalance(_underlyingToken);
+        _details.totalUnderlyingBalance = getRealBalance(_underlyingToken);
 
         uint256 _changedAmount = _handlerBalanceAfter.sub(
             _handlerBalanceBefore
@@ -296,7 +296,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Deposit balance with any accumulated interest for `_underlyingToken` belonging to `handler`
+     * @dev Total balance of handler's _underlyingToken, accumulated interest included
      * @param _underlyingToken Token to get balance.
      */
     function getBalance(address _underlyingToken)
@@ -318,7 +318,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @dev The maximum withdrawable amount of _underlyingToken in the market.
      * @param _underlyingToken Token to get liquidity.
      */
     function getLiquidity(address _underlyingToken)
@@ -342,8 +342,8 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Update exchange rate in cToken and get the latest total balance with any accumulated interest
-     *      for `_underlyingToken` belonging to `handler`.
+     * @dev Update exchange rate in cToken and get the latest total balance for
+     *      handler's _underlyingToken, with all accumulated interest included.
      * @param _underlyingToken Token to get actual balance.
      */
     function getRealBalance(address _underlyingToken) public returns (uint256) {
@@ -353,7 +353,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev The latest maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @dev The latest maximum withdrawable _underlyingToken in the market.
      * @param _underlyingToken Token to get liquidity.
      */
     function getRealLiquidity(address _underlyingToken)
