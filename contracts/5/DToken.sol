@@ -878,12 +878,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @return Actual token balance based on dToken amount.
      */
     function getTokenBalance(address _account) external view returns (uint256) {
-        uint256 _exchangeRate = getExchangeRate();
-        uint256 _pie = rmul(
-            rmul(balances[_account].value, _exchangeRate),
-            BASE.sub(originationFee[0x9dc29fac])
-        );
-        return _pie;
+        return rmul(balances[_account].value, getExchangeRate());
     }
 
     /**
