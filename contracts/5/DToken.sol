@@ -520,10 +520,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _burnLocal.token = token;
 
         // Get current exchange rate.
-        _burnLocal.exchangeRate = getCurrentExchangeRateByHandler(
-            _burnLocal.handlers,
-            _burnLocal.token
-        );
+        _burnLocal.exchangeRate = getCurrentExchangeRate();
 
         _burnLocal.consumeAmount = rmul(_wad, _burnLocal.exchangeRate);
 

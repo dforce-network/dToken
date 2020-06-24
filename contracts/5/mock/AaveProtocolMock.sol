@@ -30,7 +30,7 @@ contract AaveLendingPoolCoreMock {
         aTokens[_token] = _aToken;
         Token(_token).allocateTo(
             address(this),
-            1000000 * 10**IERC20(_token).decimals()
+            1000000000 * 10**IERC20(_token).decimals()
         );
     }
 
@@ -240,6 +240,7 @@ contract aTokenMock is ERC20 {
     function _mint(address _account, uint256 _amount) public {
         uint256 _interestIndex = getInterestIndex();
         _balances[_account].value = balanceOf(_account).add(_amount);
+        _totalSupply = rmul(_totalSupply, BASE.add(percentage)).add(_amount);
         percentage = 0;
         _balances[_account].interestIndex = _interestIndex;
         interestIndex = _interestIndex;
@@ -253,6 +254,7 @@ contract aTokenMock is ERC20 {
             ? balanceOf(msg.sender)
             : _amount;
         _balances[msg.sender].value = balanceOf(msg.sender).sub(_realAmount);
+        _totalSupply = rmul(_totalSupply, BASE.add(percentage)).sub(_realAmount);
         percentage = 0;
         _balances[msg.sender].interestIndex = _interestIndex;
         interestIndex = _interestIndex;
@@ -266,6 +268,10 @@ contract aTokenMock is ERC20 {
     }
 
     function updateBalance(uint256 _percentage) public {
+        Token(token).allocateTo(
+            lendingPoolCore,
+            rmul(rmul(_totalSupply, BASE.add(percentage)), _percentage)
+        );
         percentage = rmul(BASE.add(percentage), BASE.add(_percentage)).sub(
             BASE
         );
