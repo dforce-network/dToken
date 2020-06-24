@@ -250,14 +250,20 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
 
         // Redeem all or just the amount of underlying token
-        uint256 _redeemAmount = _amount == uint256(-1)
-            ? ICompound(_cToken).balanceOf(address(this))
-            : rdivup(_amount, ICompound(_cToken).exchangeRateCurrent());
-
-        require(
-            ICompound(_cToken).redeem(_redeemAmount) == 0,
-            "withdraw: Fail to withdraw from market!"
-        );
+        // uint256 _redeemAmount = _amount == uint256(-1)
+        //     ? ICompound(_cToken).balanceOf(address(this))
+        //     : rdivup(_amount, ICompound(_cToken).exchangeRateCurrent());
+        if (_amount == uint256(-1)) {
+            require(
+                ICompound(_cToken).redeem(ICompound(_cToken).balanceOf(address(this))) == 0,
+                "withdraw: Fail to withdraw from market!"
+            );
+        } else {
+            require(
+                ICompound(_cToken).redeemUnderlying(_amount) == 0,
+                "withdraw: Fail to withdraw from market!"
+            );
+        }
 
         uint256 _handlerBalanceAfter = IERC20(_underlyingToken).balanceOf(
             address(this)

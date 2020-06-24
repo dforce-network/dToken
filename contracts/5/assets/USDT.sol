@@ -90,7 +90,7 @@ contract ERC20Basic {
 
     function totalSupply() public returns (uint256);
 
-    function balanceOf(address who) public returns (uint256);
+    function balanceOf(address who) public view returns (uint256);
 
     function transfer(address to, uint256 value) public;
 
@@ -168,7 +168,7 @@ contract BasicToken is Ownable, ERC20Basic {
      * @param _owner The address to query the the balance of.
      * @return An uint representing the amount owned by the passed address.
      */
-    function balanceOf(address _owner) public returns (uint256 balance) {
+    function balanceOf(address _owner) public view returns (uint256 balance) {
         return balances[_owner];
     }
 }
@@ -418,7 +418,7 @@ contract TetherToken is Pausable, StandardToken, BlackList {
     }
 
     // Forward ERC20 methods to upgraded contract if this one is deprecated
-    function balanceOf(address who) public returns (uint256) {
+    function balanceOf(address who) public view returns (uint256) {
         if (deprecated) {
             return UpgradedStandardToken(upgradedAddress).balanceOf(who);
         } else {

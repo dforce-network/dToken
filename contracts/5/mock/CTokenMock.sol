@@ -75,6 +75,7 @@ contract CTokenMock is ERC20SafeTransfer {
     function updateExchangeRate(uint256 _percentage) public {
         uint256 _balance = IERC20(token).balanceOf(address(this));
         Token(token).allocateTo(address(this), rmul(_balance, _percentage));
+        exchangeRateCurrent();
     }
 
     function exchangeRateCurrent() public returns (uint256) {
@@ -135,6 +136,19 @@ contract CTokenMock is ERC20SafeTransfer {
         totalSupply = totalSupply.sub(_wad);
         require(
             doTransferOut(token, msg.sender, rmul(_wad, exchangeRate)),
+            "CToken redeem: Token redeem of contract failed."
+        );
+        emit Transfer(msg.sender, address(0), _wad);
+        return 0;
+    }
+
+    function redeemUnderlying(uint256 _pie) external returns (uint256) {
+        exchangeRate = exchangeRateCurrent();
+        uint256 _wad = rdiv(_pie, exchangeRate);
+        balanceOf[msg.sender] = balanceOf[msg.sender].sub(_wad);
+        totalSupply = totalSupply.sub(_wad);
+        require(
+            doTransferOut(token, msg.sender, _pie),
             "CToken redeem: Token redeem of contract failed."
         );
         emit Transfer(msg.sender, address(0), _wad);

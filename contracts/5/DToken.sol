@@ -697,6 +697,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             "redeem: default handler is inactive"
         );
 
+        // Get current exchange rate.
+        _redeemLocal.exchangeRate = getCurrentExchangeRateByHandler(
+            _redeemLocal.handlers,
+            _redeemLocal.token
+        );
+
         for (uint256 i = 0; i < _redeemLocal.handlers.length; i++) {
             if (_redeemLocal.amounts[i] == 0) continue;
 
@@ -731,11 +737,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             "redeem: withdrawed more than intended"
         );
 
-        // Get current exchange rate.
-        _redeemLocal.exchangeRate = getCurrentExchangeRateByHandler(
-            _redeemLocal.handlers,
-            _redeemLocal.token
-        );
+        
 
         // Calculate amount of the dToken based on current exchange rate.
         _redeemLocal.wad = rdivup(
