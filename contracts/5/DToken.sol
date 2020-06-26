@@ -308,11 +308,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     }
 
     function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x.mul(BASE) / y;
+        z = x.mul(BASE).div(y);
     }
 
     function rdivup(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x.mul(BASE).add(y.sub(1)) / y;
+        z = x.mul(BASE).add(y.sub(1)).div(y);
     }
 
     /**
@@ -736,8 +736,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
             "redeem: withdrawed more than intended"
         );
-
-        
 
         // Calculate amount of the dToken based on current exchange rate.
         _redeemLocal.wad = rdivup(
