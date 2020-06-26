@@ -85,10 +85,80 @@ describe("DToken Contract", function () {
   }
 
   describe("Deployment", function () {
-    it("Should deployed", async function () {
-      let proportions = [1000000];
-      await resetContracts(1, proportions);
+    it("Should deployed and only initialized once", async function () {
+      await resetContracts(1, [1000000]);
+
+      await truffleAssert.reverts(
+        dUSDC.initialize("dUSDC", "dUSDC", USDC.address, dispatcher.address, {
+          from: owner,
+        }),
+        "initialize: Already initialized!"
+      );
     });
+  });
+
+  describe("updateDispatcher", function () {
+    let new_dispatcher;
+    before(async function () {
+      await resetContracts(1, [1000000]);
+    });
+
+    it("Should only allow auth to update dispatcher", async function () {
+      new_dispatcher = await Dispatcher.new(handler_addresses, [1000000]);
+      await dUSDC.updateDispatcher(new_dispatcher.address);
+
+      await truffleAssert.reverts(
+        dUSDC.updateDispatcher(dispatcher.address, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not allow to update to address 0 or the old one as dispatcher ", async function () {
+      await truffleAssert.reverts(
+        dUSDC.updateDispatcher(ZERO_ADDR),
+        "updateDispatcher: dispatcher can be not set to 0 or the current one."
+      );
+
+      await truffleAssert.reverts(
+        dUSDC.updateDispatcher(new_dispatcher.address),
+        "updateDispatcher: dispatcher can be not set to 0 or the current one."
+      );
+    });
+  });
+
+  describe("setFeeRecipient", function () {
+    beforeEach(async function () {
+      let proportions = [1000000, 0, 0, 0, 0];
+      await resetContracts(5, proportions);
+    });
+
+    it("Should only allow auth to set fee recipient", async function () {});
+
+    it("Should not set address 0 or the old one as fee recipient", async function () {});
+  });
+
+  describe("updateOriginationFee", function () {
+    beforeEach(async function () {
+      let proportions = [1000000, 0, 0, 0, 0];
+      await resetContracts(5, proportions);
+    });
+
+    it("Should only allow auth to set fee", async function () {});
+
+    it("Should not set fee to more than 10% or the old value", async function () {});
+  });
+
+  describe("transferFee", function () {
+    beforeEach(async function () {
+      let proportions = [1000000, 0, 0, 0, 0];
+      await resetContracts(5, proportions);
+    });
+
+    it("Should only allow auth to transfer fee", async function () {});
+
+    it("Should not set fee to more than 10% or the old value", async function () {});
   });
 
   describe("rebalance", function () {
@@ -284,6 +354,42 @@ describe("DToken Contract", function () {
       let total_balance = await dUSDC.getTotalBalance();
 
       assert.equal(total_balance.toString(), expected.toString());
+    });
+  });
+
+  describe("getHandler", function () {
+    beforeEach(async function () {
+      let proportions = [1000000, 0, 0, 0, 0];
+      await resetContracts(5, proportions);
+    });
+
+    it("Should get handlers", async function () {
+      let handlers = await dUSDC.getHandler();
+
+      //console.log(handlers.toString(), handler_addresses.toString());
+      assert.equal(handlers.toString(), handler_addresses.toString());
+    });
+  });
+
+  describe("getTotalBalance", function () {
+    beforeEach(async function () {
+      let proportions = [1000000, 0, 0, 0, 0];
+      await resetContracts(5, proportions);
+    });
+
+    it("Should get 0 as the initial total balance", async function () {
+      assert.equal((await dUSDC.getTotalBalance()).toString(), 0);
+    });
+  });
+
+  describe("getLiquidity", function () {
+    beforeEach(async function () {
+      let proportions = [1000000, 0, 0, 0, 0];
+      await resetContracts(5, proportions);
+    });
+
+    it("Should get 0 as the initial liquidity", async function () {
+      assert.equal((await dUSDC.getLiquidity()).toString(), 0);
     });
   });
 

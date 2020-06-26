@@ -116,7 +116,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address _token,
         address _dispatcher
     ) public {
-        require(!initialized, "initialize: already initialized.");
+        require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
         feeRecipient = address(this);
         name = _name;
@@ -139,7 +139,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address _oldDispatcher = dispatcher;
         require(
             _newDispatcher != address(0) && _newDispatcher != _oldDispatcher,
-            "updateDispatcher: dispatcher can be not set to 0 or the current one.."
+            "updateDispatcher: dispatcher can be not set to 0 or the current one."
         );
 
         dispatcher = _newDispatcher;

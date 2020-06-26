@@ -255,7 +255,9 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         //     : rdivup(_amount, ICompound(_cToken).exchangeRateCurrent());
         if (_amount == uint256(-1)) {
             require(
-                ICompound(_cToken).redeem(ICompound(_cToken).balanceOf(address(this))) == 0,
+                ICompound(_cToken).redeem(
+                    ICompound(_cToken).balanceOf(address(this))
+                ) == 0,
                 "withdraw: Fail to withdraw from market!"
             );
         } else {

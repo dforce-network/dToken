@@ -151,6 +151,40 @@ describe("AaveHandlerMock contract", function () {
     });
   });
 
+  describe("setLendingPoolCore", async function () {
+    before(async function () {
+      await resetContracts();
+    });
+
+    it("Should only allow auth to setLendingPoolCore", async function () {
+      await handler.setLendingPoolCore(lending_pool_core.address);
+
+      await truffleAssert.reverts(
+        handler.setLendingPoolCore(lending_pool_core.address, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
+    });
+  });
+
+  describe("setLendingPool", async function () {
+    before(async function () {
+      await resetContracts();
+    });
+
+    it("Should only allow auth to setLendingPool", async function () {
+      await handler.setLendingPool(lending_pool.address);
+
+      await truffleAssert.reverts(
+        handler.setLendingPool(lending_pool.address, {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
+    });
+  });
+
   describe("approve", async function () {
     before(async function () {
       await resetContracts();
@@ -208,9 +242,16 @@ describe("AaveHandlerMock contract", function () {
       await handler.unpause();
     });
 
+    it("Should not deposit 0 amount", async function () {
+      await truffleAssert.reverts(
+        handler.deposit(USDC.address, 0),
+        "deposit: Deposit amount should be greater than 0!"
+      );
+    });
+
     it("!! TODO: Should not be able to reenter", async function () {});
 
-    it("Check the actual withdraw amount with some interest", async function () {
+    it("Check the actual deposit amount with some interest", async function () {
       let iteration = 20;
       for (let i = 0; i < iteration; i++) {
         let amount = new BN(123456789);
@@ -257,11 +298,25 @@ describe("AaveHandlerMock contract", function () {
       );
     });
 
+    it("Should not withdraw with disabled token", async function () {
+      await truffleAssert.reverts(
+        handler.withdraw(mock_dtoken, 1000e6),
+        "withdraw: Do not support token!"
+      );
+    });
+
     it("Should not withdraw when paused", async function () {
       await handler.pause();
       await truffleAssert.reverts(
         handler.withdraw(USDC.address, 1000e6),
         "whenNotPaused: paused"
+      );
+    });
+
+    it("Should not withdraw 0 amount", async function () {
+      await truffleAssert.reverts(
+        handler.withdraw(USDC.address, 0),
+        "withdraw: Withdraw amount should be greater than 0!"
       );
     });
 
@@ -304,6 +359,24 @@ describe("AaveHandlerMock contract", function () {
     });
   });
 
+  describe("getUnderlyingBalance", function () {
+    beforeEach(async function () {
+      await resetContracts();
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
+    });
+
+    it("Should get underlying balance", async function () {
+      // Mock 10% interest, so the underlying balance would grow
+      await aUSDC.updateBalance(BASE.div(new BN("10")));
+
+      let balance = await handler.getBalance(USDC.address);
+      assert.equal(balance.toString(), 110000e6);
+    });
+  });
+
   describe("getLiquidity", function () {
     beforeEach(async function () {
       await resetContracts();
@@ -331,6 +404,32 @@ describe("AaveHandlerMock contract", function () {
       //TODO: Check returen value from transaction
       //console.log(JSON.stringify(balance));
       //assert.equal(balance.eq(new BN(1000e6)), true);
+    });
+  });
+
+  describe("getRealLiquidity", function () {
+    beforeEach(async function () {
+      await resetContracts();
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
+    });
+
+    it("Should get real liquidity", async function () {
+      let realLiquidity = await handler.getRealLiquidity(USDC.address);
+      assert.equal(realLiquidity.toString(), 100000e6);
+    });
+  });
+
+  describe("getaToken", function () {
+    beforeEach(async function () {
+      await resetContracts();
+    });
+
+    it("Should get the corresponding atoken", async function () {
+      let atoken = await handler.getaToken(USDC.address);
+      assert.equal(atoken, aUSDC.address);
     });
   });
 });
