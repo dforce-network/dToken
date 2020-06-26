@@ -1,15 +1,17 @@
-const CompoundHandler = artifacts.require("CompoundHandler");
-const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
 const dTokenAddresses = artifacts.require("dTokenAddresses");
+const LendingPoolCore = artifacts.require("AaveLendingPoolCoreMock");
+const LendPool = artifacts.require("AaveLendPoolMock");
+const aTokenMock = artifacts.require("aTokenMock");
+const AaveHandler = artifacts.require("AaveHandler");
 const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
 
-describe("CompoundHandlerMock contract", function () {
+describe("AaveHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, cUSDC;
+  let USDC, aUSDC;
   let handler;
   let dtoken_addresses;
   let mock_dtoken = "0x0000000000000000000000000000000000000001";
@@ -26,7 +28,6 @@ describe("CompoundHandlerMock contract", function () {
 
   async function resetContracts() {
     dtoken_addresses = await dTokenAddresses.new();
-    handler = await CompoundHandler.new(dtoken_addresses.address);
     USDC = await FiatToken.new(
       "USDC",
       "USDC",
@@ -41,8 +42,25 @@ describe("CompoundHandlerMock contract", function () {
       }
     );
 
-    cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
-    handler.setcTokensRelation([USDC.address], [cUSDC.address]);
+    // Deploys Aave system
+    lending_pool_core = await LendingPoolCore.new();
+    aUSDC = await aTokenMock.new(
+      "aUSDC",
+      "aUSDC",
+      USDC.address,
+      lending_pool_core.address
+    );
+    await lending_pool_core.setReserveATokenAddress(
+      USDC.address,
+      aUSDC.address
+    );
+    lending_pool = await LendPool.new(lending_pool_core.address);
+
+    handler = await AaveHandler.new(
+      dtoken_addresses.address,
+      lending_pool.address,
+      lending_pool_core.address
+    );
 
     await handler.approve(USDC.address);
 
@@ -55,9 +73,14 @@ describe("CompoundHandlerMock contract", function () {
       await resetContracts();
 
       await truffleAssert.reverts(
-        handler.initialize(dtoken_addresses.address, {
-          from: owner,
-        }),
+        handler.initialize(
+          dtoken_addresses.address,
+          lending_pool.address,
+          lending_pool_core.address,
+          {
+            from: owner,
+          }
+        ),
         "initialize: Already initialized!"
       );
     });
@@ -187,19 +210,15 @@ describe("CompoundHandlerMock contract", function () {
 
     it("!! TODO: Should not be able to reenter", async function () {});
 
-    it("Check the actual withdraw amount with interest and changing exchange rate", async function () {
+    it("Check the actual withdraw amount with some interest", async function () {
       let iteration = 20;
       for (let i = 0; i < iteration; i++) {
-        // Mock some interest, so the exchange rate would change
-        await cUSDC.updateExchangeRate(BASE.div(new BN(3)));
-
         let amount = new BN(123456789);
         await USDC.allocateTo(handler.address, amount);
 
-        let exchangeRate = await cUSDC.exchangeRate();
-        console.log("      Exchange rate: " + exchangeRate);
+        // Mock some interest, so the exchange rate would change
+        await aUSDC.updateBalance(BASE.div(new BN("10")));
 
-        // Get the underlying token balance in Compound
         let balanceBefore = await handler.getBalance(USDC.address);
 
         await handler.deposit(USDC.address, amount);
@@ -208,6 +227,7 @@ describe("CompoundHandlerMock contract", function () {
         let changed = balanceAfter.sub(balanceBefore);
 
         //TODO: Check return value from transaction
+        //console.log(balanceBefore.toString(), balanceAfter.toString());
         assert.equal(changed.toString(), amount.toString());
       }
     });
@@ -247,19 +267,14 @@ describe("CompoundHandlerMock contract", function () {
 
     it("!! TODO: Should not be able to reenter", async function () {});
 
-    it("Check the actual withdraw amount with some interest and changing exchange rate", async function () {
+    it("Check the actual withdraw amount with some interest", async function () {
       let iteration = 20;
       for (let i = 0; i < iteration; i++) {
-        // Mock some interest, so the exchange rate would change
-        await cUSDC.updateExchangeRate(BASE.div(new BN(3)));
-
         let amount = new BN(123456789);
-        await USDC.allocateTo(handler.address, amount);
 
-        let exchangeRate = await cUSDC.exchangeRate();
-        console.log("      Exchange rate: " + exchangeRate);
+        // Mock some interest, so the exchange rate would change
+        await aUSDC.updateBalance(BASE.div(new BN("10")));
 
-        // Get the underlying token balance in Compound
         let balanceBefore = await handler.getBalance(USDC.address);
 
         await handler.withdraw(USDC.address, amount);
@@ -268,7 +283,7 @@ describe("CompoundHandlerMock contract", function () {
         let changed = balanceBefore.sub(balanceAfter);
 
         //TODO: Check return value from transaction
-        //console.log(changed.toString(), amount.toString());
+        //console.log(balanceBefore.toString(), balanceAfter.toString());
         assert.equal(changed.toString(), amount.toString());
       }
     });
