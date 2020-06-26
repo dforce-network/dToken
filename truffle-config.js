@@ -27,6 +27,7 @@ require('dotenv').config();
 const HDWalletProvider = require("truffle-hdwallet-provider");
 var infuraKey = process.env.INFURA_APIKEY;
 var privateKey = process.env.PRIVATE_KEY;
+var privateKeys = JSON.parse(process.env.PRIVATE_KEYS);
 
 
 module.exports = {
@@ -67,7 +68,7 @@ module.exports = {
         },
 
         kovan: {
-            provider: () => new HDWalletProvider(privateKey, `https://kovan.infura.io/v3/${infuraKey}`),
+            provider: () => new HDWalletProvider(privateKeys, `https://kovan.infura.io/v3/${infuraKey}`),
             network_id: 42, // Kovan's id
             gas: 6721975,
             gasPrice: 10000000000, // Gas price used for deploys: 10gwei
