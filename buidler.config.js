@@ -27,7 +27,7 @@ module.exports = {
         },
     },
     paths: {
-        sources: "./contracts/5",
+        sources: "./contracts",
     },
     gasReporter: {
         enabled: (process.env.REPORT_GAS) ? true : false,

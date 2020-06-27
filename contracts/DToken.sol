@@ -116,7 +116,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address _token,
         address _dispatcher
     ) public {
-        require(!initialized, "initialize: already initialized.");
+        require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
         feeRecipient = address(this);
         name = _name;
@@ -139,7 +139,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address _oldDispatcher = dispatcher;
         require(
             _newDispatcher != address(0) && _newDispatcher != _oldDispatcher,
-            "updateDispatcher: dispatcher can be not set to 0 or the current one.."
+            "updateDispatcher: dispatcher can be not set to 0 or the current one."
         );
 
         dispatcher = _newDispatcher;
@@ -308,11 +308,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     }
 
     function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x.mul(BASE) / y;
+        z = x.mul(BASE).div(y);
     }
 
     function rdivup(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x.mul(BASE).add(y.sub(1)) / y;
+        z = x.mul(BASE).add(y.sub(1)).div(y);
     }
 
     /**
@@ -736,8 +736,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
             "redeem: withdrawed more than intended"
         );
-
-        
 
         // Calculate amount of the dToken based on current exchange rate.
         _redeemLocal.wad = rdivup(

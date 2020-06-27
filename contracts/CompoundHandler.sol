@@ -129,9 +129,9 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         emit NewMappingcToken(_underlyingToken, _mappingcToken);
     }
 
-    function rdivup(uint256 x, uint256 y) internal view returns (uint256 z) {
-        z = x.mul(BASE).add(y.sub(1)) / y;
-    }
+    // function rdivup(uint256 x, uint256 y) internal view returns (uint256 z) {
+    //     z = x.mul(BASE).add(y.sub(1)) / y;
+    // }
 
     /**
      * @dev This token `_underlyingToken` approves to market and dToken contract.
@@ -255,7 +255,9 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         //     : rdivup(_amount, ICompound(_cToken).exchangeRateCurrent());
         if (_amount == uint256(-1)) {
             require(
-                ICompound(_cToken).redeem(ICompound(_cToken).balanceOf(address(this))) == 0,
+                ICompound(_cToken).redeem(
+                    ICompound(_cToken).balanceOf(address(this))
+                ) == 0,
                 "withdraw: Fail to withdraw from market!"
             );
         } else {

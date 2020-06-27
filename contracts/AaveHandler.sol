@@ -57,7 +57,10 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _newdTokens The new dToken mapping contact.
      */
     function setdTokens(address _newdTokens) external auth {
-        require(_newdTokens != dTokens, "setdTokens: The same dToken address!");
+        require(
+            _newdTokens != dTokens,
+            "setdTokens: The same dToken mapping contract address!"
+        );
         address _originaldTokens = dTokens;
         dTokens = _newdTokens;
         emit NewdTokenAddresses(_originaldTokens, _newdTokens);

@@ -254,7 +254,9 @@ contract aTokenMock is ERC20 {
             ? balanceOf(msg.sender)
             : _amount;
         _balances[msg.sender].value = balanceOf(msg.sender).sub(_realAmount);
-        _totalSupply = rmul(_totalSupply, BASE.add(percentage)).sub(_realAmount);
+        _totalSupply = rmul(_totalSupply, BASE.add(percentage)).sub(
+            _realAmount
+        );
         percentage = 0;
         _balances[msg.sender].interestIndex = _interestIndex;
         interestIndex = _interestIndex;

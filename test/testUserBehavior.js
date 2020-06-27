@@ -19,10 +19,12 @@ const AaveHandler = artifacts.require("AaveHandler");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
 const FEE = new BN(10).pow(new BN(14));
+const FEE_MAX = BASE.div(new BN(10)).sub(new BN(1));
+const TOTAL_PROPORTION = new BN(1000000);
 
 const MINT_SELECTOR = "0x40c10f19";
 const BURN_SELECTOR = "0x9dc29fac";
-
+const FEE_HASHES_LIST = [MINT_SELECTOR, BURN_SELECTOR];
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
   let USDC, USDT, DF;
@@ -42,9 +44,13 @@ describe("DToken Contract Integration", function () {
   let dtokens = [];
   let atokens = [];
   let ctokens = [];
+
+  let handlers = {};
   
   let user_behavior = [];
-  let admin_behavior = [];
+  let user_behavior_name = [];
+  let dtoken_admin_behavior = [];
+  let dispatcher_admin_behavior = [];
 
   before(async function () {
     [
@@ -141,15 +147,18 @@ describe("DToken Contract Integration", function () {
     await dispatcher.setAuthority(ds_guard.address);
 
     // Initialize all handlers
-    let handlers = [internal_handler, compound_handler, aave_handler, other_handler];
-    for (const handler of handlers) {
-      await handler.setAuthority(ds_guard.address);
-      await handler.approve(USDC.address);
-      await handler.approve(USDT.address);
-      await ds_guard.permitx(dUSDC.address, handler.address);
-      await ds_guard.permitx(dUSDT.address, handler.address);
-
-      await handler.enableTokens([USDC.address, USDT.address]);
+    handlers[internal_handler.address] = internal_handler;
+    handlers[compound_handler.address] = compound_handler;
+    handlers[aave_handler.address] = aave_handler;
+    handlers[other_handler.address] = other_handler;
+    for (const key in handlers) {
+      await handlers[key].setAuthority(ds_guard.address);
+      await handlers[key].approve(USDC.address);
+      await handlers[key].approve(USDT.address);
+      await ds_guard.permitx(dUSDC.address, handlers[key].address);
+      await ds_guard.permitx(dUSDT.address, handlers[key].address);
+      
+      await handlers[key].enableTokens([USDC.address, USDT.address]);
     }
 
     // Allocate some token to all accounts
@@ -169,93 +178,25 @@ describe("DToken Contract Integration", function () {
       dUSDC.mint,
       dUSDC.burn,
       dUSDC.redeem,
-      // dUSDC.transfer,
       dUSDT.mint,
       dUSDT.burn,
       dUSDT.redeem
-      // dUSDT.transfer
     ];
-    admin_behavior = [
+    user_behavior_name = [
+      'mint',
+      'burn',
+      'redeem',
+    ];
+    dtoken_admin_behavior = [
       dUSDC.rebalance,
       dUSDC.updateOriginationFee,
       dUSDT.rebalance,
-      dUSDT.updateOriginationFee,
+      dUSDT.updateOriginationFee
+    ];
+    dispatcher_admin_behavior = [
       dispatcher.resetHandlers,
       dispatcher.updateProportion,
     ];
-  }
-
-  async function checkUserBehavior(asyncFn, args, DToken, account) {
-    let token = await DToken.token();
-    let fee_recipient = await DToken.feeRecipient();
-    let token_contract = token == USDC.address ? USDC : USDT;
-
-    let balances = {};
-    balances.account = await token_contract.balanceOf(account);
-    balances.fee_recipient = await token_contract.balanceOf(fee_recipient);
-    balances.getTotalBalance = await DToken.getTotalBalance();
-
-    let dtoken_balance = await DToken.balanceOf(account);
-    let exchange_rate = await DToken.getExchangeRate();
-    // let exchange_rate_stored = (await DToken.data())['0'];
-    console.log((await DToken.getExchangeRate()).toLocaleString().replace(/,/g, ""));
-    // console.log(exchange_rate.toLocaleString().replace(/,/g, ""));
-    // console.log(exchange_rate_stored.toLocaleString().replace(/,/g, ""));
-
-    await asyncFn(...args);
-
-    let new_balances = {};
-    new_balances.account = await token_contract.balanceOf(account);
-    new_balances.fee_recipient = await token_contract.balanceOf(fee_recipient);
-    new_balances.getTotalBalance = await DToken.getTotalBalance();
-
-    let new_dtoken_balance = await DToken.balanceOf(account);
-    let new_exchange_rate = await DToken.getExchangeRate();
-    let exchange_rate_stored = (await DToken.data())['0'];
-
-    console.log((await DToken.totalSupply()).toLocaleString().replace(/,/g, ""));
-    console.log(exchange_rate.toLocaleString().replace(/,/g, ""));
-    console.log(exchange_rate_stored.toLocaleString().replace(/,/g, ""));
-    console.log(new_exchange_rate.toLocaleString().replace(/,/g, ""));
-
-    assert.equal(exchange_rate.toLocaleString().replace(/,/g, ""), exchange_rate_stored.toLocaleString().replace(/,/g, ""));
-
-    switch (asyncFn) {
-      case DToken.mint:
-        var account_token_decrease = balances.account.sub(new_balances.account);
-        var fee_recipient_increase = new_balances.fee_recipient.sub(balances.fee_recipient);
-        var underlying_increase = account_token_decrease.sub(fee_recipient_increase);
-
-        assert.equal(account_token_decrease.toLocaleString().replace(/,/g, ""), args[1].toLocaleString().replace(/,/g, ""));
-        assert.equal(underlying_increase.toLocaleString().replace(/,/g, ""), (new_balances.getTotalBalance.sub(balances.getTotalBalance)).toLocaleString().replace(/,/g, ""));
-        assert.equal(rdiv(underlying_increase, exchange_rate).toLocaleString().replace(/,/g, ""), (new_dtoken_balance.sub(dtoken_balance)).toLocaleString().replace(/,/g, ""));
-        break;
-      case DToken.burn:
-        var account_dtoken_decrease = dtoken_balance.sub(new_dtoken_balance);
-        // var underlying_decrease = rmul(account_dtoken_decrease, exchange_rate);
-        var underlying_decrease = balances.getTotalBalance.sub(new_balances.getTotalBalance);
-        var account_increase = new_balances.account.sub(balances.account);
-        var fee_recipient_increase = new_balances.fee_recipient.sub(balances.fee_recipient);
-
-        assert.equal(account_dtoken_decrease.toLocaleString().replace(/,/g, ""), args[1].toLocaleString().replace(/,/g, ""));
-        assert.equal(underlying_decrease.toLocaleString().replace(/,/g, ""), account_increase.add(fee_recipient_increase).toLocaleString().replace(/,/g, ""));
-        assert.equal(underlying_decrease.toLocaleString().replace(/,/g, ""), rmul(account_dtoken_decrease, exchange_rate).toLocaleString().replace(/,/g, ""));
-        // assert.equal(account_increase.toLocaleString().replace(/,/g, ""), (underlying_decrease.sub(fee_recipient_increase)).toLocaleString().replace(/,/g, ""));
-        assert.equal(account_increase.add(fee_recipient_increase).toLocaleString().replace(/,/g, ""), rmul(account_dtoken_decrease, exchange_rate).toLocaleString().replace(/,/g, ""));
-        break;
-      case DToken.redeem:
-        var account_dtoken_decrease = dtoken_balance.sub(new_dtoken_balance);
-        var underlying_decrease = balances.getTotalBalance.sub(new_balances.getTotalBalance);
-        var account_increase = new_balances.account.sub(balances.account);
-        var fee_recipient_increase = new_balances.fee_recipient.sub(balances.fee_recipient);
-        
-        assert.equal(account_increase.toLocaleString().replace(/,/g, ""), args[1].toLocaleString().replace(/,/g, ""));
-        assert.equal(underlying_decrease.toLocaleString().replace(/,/g, ""), (account_increase.add(fee_recipient_increase)).toLocaleString().replace(/,/g, ""));
-        assert.equal(account_dtoken_decrease.toLocaleString().replace(/,/g, ""), rdivup(underlying_decrease, exchange_rate).toLocaleString().replace(/,/g, ""));
-        break;
-      default:
-        break;
-    }
   }
 
   function rmul(x, y) {
@@ -284,6 +225,100 @@ describe("DToken Contract Integration", function () {
     }
   }
 
+  function createRandomData(sourceData, lengthMin = 0, lengthMax = sourceData.length){ 
+    let dataList = [];
+
+    lengthMax = sourceData.length > lengthMax ? lengthMax : sourceData.length;
+    lengthMax = lengthMin < lengthMax ? lengthMax : lengthMin;
+    lengthMin = lengthMin < lengthMax ? lengthMin : lengthMax;
+
+    if (lengthMax <= 0)
+        return dataList;
+
+    var indexList = [];
+    var randomIndex = 0;
+    for (let index = 0; index < lengthMax; index++) {
+
+        if(index == randomNum(lengthMin, lengthMax - 1))
+            break;
+        randomIndex = randomNum(0, sourceData.length - 1);
+        if(indexList.indexOf(randomIndex) >=0){
+            index--;
+            continue;
+        }
+        dataList[dataList.length] = sourceData[randomIndex];
+        indexList[indexList.length] = randomIndex;
+
+    }
+    return dataList;
+  }
+
+  async function checkUserBehavior(asyncFn, args, DToken, account) {
+    let token = await DToken.token();
+    let fee_recipient = await DToken.feeRecipient();
+    let token_contract = token == USDC.address ? USDC : USDT;
+
+    let balances = {};
+    balances.account = await token_contract.balanceOf(account);
+    balances.fee_recipient = await token_contract.balanceOf(fee_recipient);
+    balances.getTotalBalance = await DToken.getTotalBalance();
+
+    let dtoken_balance = await DToken.balanceOf(account);
+    let exchange_rate = await DToken.getExchangeRate();
+    // let exchange_rate_stored = (await DToken.data())['0'];
+    // console.log((await DToken.getExchangeRate()).toLocaleString().replace(/,/g, ""));
+    // console.log(exchange_rate.toLocaleString().replace(/,/g, ""));
+    // console.log(exchange_rate_stored.toLocaleString().replace(/,/g, ""));
+    console.log('totalSupply : ' + (await DToken.totalSupply()).toLocaleString().replace(/,/g, ""));
+    console.log('totalBalance :' + balances.getTotalBalance.toLocaleString().replace(/,/g, ""));
+
+    if (asyncFn != DToken.mint && balances.getTotalBalance.eq(new BN(0)) && (await DToken.totalSupply()).gt(new BN(0)))
+      return;
+    await asyncFn(...args);
+
+    let new_balances = {};
+    new_balances.account = await token_contract.balanceOf(account);
+    new_balances.fee_recipient = await token_contract.balanceOf(fee_recipient);
+    new_balances.getTotalBalance = await DToken.getTotalBalance();
+
+    let new_dtoken_balance = await DToken.balanceOf(account);
+    let new_exchange_rate = await DToken.getExchangeRate();
+    let exchange_rate_stored = (await DToken.data())['0'];
+
+    console.log((await DToken.totalSupply()).toLocaleString().replace(/,/g, ""));
+    console.log(exchange_rate.toLocaleString().replace(/,/g, ""));
+    console.log(exchange_rate_stored.toLocaleString().replace(/,/g, ""));
+    console.log(new_exchange_rate.toLocaleString().replace(/,/g, ""));
+
+    assert.equal(exchange_rate.toLocaleString().replace(/,/g, ""), exchange_rate_stored.toLocaleString().replace(/,/g, ""));
+
+    let account_dtoken_change = dtoken_balance.sub(new_dtoken_balance).abs();
+    let account_token_change = balances.account.sub(new_balances.account).abs();
+    let fee_recipient_change = new_balances.fee_recipient.sub(balances.fee_recipient).abs();
+    let underlying_change = balances.getTotalBalance.sub(new_balances.getTotalBalance).abs();
+    switch (asyncFn) {
+      case DToken.mint:
+        assert.equal(account_token_change.toLocaleString().replace(/,/g, ""), args[1].toLocaleString().replace(/,/g, ""));
+        assert.equal(underlying_change.toLocaleString().replace(/,/g, ""), (account_token_change.sub(fee_recipient_change)).toLocaleString().replace(/,/g, ""));
+        assert.equal(rdiv(underlying_change, exchange_rate_stored).toLocaleString().replace(/,/g, ""), account_dtoken_change.toLocaleString().replace(/,/g, ""));
+        break;
+      case DToken.burn:
+        assert.equal(account_dtoken_change.toLocaleString().replace(/,/g, ""), args[1].toLocaleString().replace(/,/g, ""));
+        assert.equal(account_token_change.add(fee_recipient_change).toLocaleString().replace(/,/g, ""), rmul(account_dtoken_change, exchange_rate_stored).toLocaleString().replace(/,/g, ""));
+        assert.equal(underlying_change.toLocaleString().replace(/,/g, ""), (account_token_change.add(fee_recipient_change)).toLocaleString().replace(/,/g, ""));
+        assert.equal(underlying_change.toLocaleString().replace(/,/g, ""), rmul(account_dtoken_change, exchange_rate_stored).toLocaleString().replace(/,/g, ""));
+        break;
+      case DToken.redeem:
+        assert.equal(account_token_change.toLocaleString().replace(/,/g, ""), args[1].toLocaleString().replace(/,/g, ""));
+        assert.equal(account_dtoken_change.toLocaleString().replace(/,/g, ""), rdivup(underlying_change, exchange_rate_stored).toLocaleString().replace(/,/g, ""));
+        assert.equal(underlying_change.toLocaleString().replace(/,/g, ""), (account_token_change.add(fee_recipient_change)).toLocaleString().replace(/,/g, ""));
+        // assert.equal(underlying_change.toLocaleString().replace(/,/g, ""), rmul(account_dtoken_change, exchange_rate_stored).toLocaleString().replace(/,/g, ""));
+        break;
+      default:
+        break;
+    }
+  }
+
   describe("DToken Integration: Random comprehensive test", function () {
     before(async function () {
       await resetContracts();
@@ -296,11 +331,13 @@ describe("DToken Contract Integration", function () {
         [700000, 200000, 100000]
       );
 
-      await dUSDC.updateOriginationFee('0x9dc29fac', FEE); // Burn
-      await dUSDC.updateOriginationFee('0x40c10f19', FEE); // Mint
+      await dUSDC.updateOriginationFee(BURN_SELECTOR, FEE);
+      await dUSDC.updateOriginationFee(MINT_SELECTOR, FEE);
+      await dUSDT.updateOriginationFee(BURN_SELECTOR, FEE);
+      await dUSDT.updateOriginationFee(MINT_SELECTOR, FEE);
     });
 
-    var run_number = 500;
+    var run_number = 1000;
     condition = 0;
     while (condition < run_number) {
       condition++;
@@ -313,13 +350,89 @@ describe("DToken Contract Integration", function () {
         for (let index = 0; index < dtokens.length; index++) {
           account = accounts[randomNum(0, accounts.length - 1)];
           balance = (await dtokens[index].balanceOf(account)).toLocaleString().replace(/,/g, "");
-          amount = new BN(randomNum(0, balance));
+          amount = new BN(randomNum(0, balance).toLocaleString().replace(/,/g, ""));
           await dtokens[index].transfer(accounts[randomNum(0, accounts.length - 1)], amount, {from : account});
-          amount = new BN(randomNum(0, BASE.div(new BN('10')).toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, ""));
-          // console.log(amount);
-          // console.log(amount.toString());
-          await atokens[index].updateBalance(amount);
+          await atokens[index].updateBalance(new BN(randomNum(0, BASE.div(new BN('10')).toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, "")));
           await ctokens[index].updateExchangeRate(new BN(randomNum(0, BASE.div(new BN('10')).toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, "")));
+          
+          if (randomNum(0, 2) == 2) {
+            var args = [];
+            var dtoken_admin_index = randomNum(0, 1);
+            switch (dtoken_admin_index) {
+              case 0:
+                var handler_list = await dtokens[index].getHandler();
+                var withdraw_handlers = createRandomData(handler_list);
+                var liquidity;
+                var amount;
+                var total_amount = await handlers[handler_list[0]].getBalance(tokens[index].address);
+                var withdraw_amounts = [];
+                for (const handler of withdraw_handlers) {
+                  liquidity = await handlers[handler].getLiquidity(tokens[index].address);
+                  amount = new BN(randomNum(0, liquidity.toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, ""));
+                  total_amount = handler == handler_list[0] ? total_amount : total_amount.add(amount);
+                  withdraw_amounts.push(amount.eq(await handlers[handler].getBalance(tokens[index].address)) ? UINT256_MAX : amount);
+                }
+                var deposit_handlers = createRandomData(handler_list);
+                var deposit_amounts = [];
+                for (const handler of deposit_handlers) {
+                  amount = new BN(randomNum(0, total_amount.toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, ""));
+                  total_amount = total_amount.sub(amount);
+                  deposit_amounts.push(amount);
+                }
+                console.log([internal_handler.address, compound_handler.address, aave_handler.address, other_handler.address]);
+                console.log(handler_list);
+                console.log((await handlers[handler_list[0]].getBalance(tokens[index].address)).toLocaleString().replace(/,/g, ""));
+                console.log(await dtokens[index].symbol() + ':rebalance');
+                console.log('withdraw_handlers:' + withdraw_handlers);
+                console.log('withdraw_amounts:' + withdraw_amounts);
+                console.log('deposit_handlers:' + deposit_handlers);
+                console.log('deposit_amounts:' + deposit_amounts);
+                await dtoken_admin_behavior[index * 2 + dtoken_admin_index](withdraw_handlers, withdraw_amounts, deposit_handlers, deposit_amounts);
+                break;
+              case 1:
+                var fee_index = FEE_HASHES_LIST[randomNum(0, FEE_HASHES_LIST.length - 1)];
+                var fee = randomNum(0, FEE_MAX.toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, "");
+                var old_fee = (await dtokens[index].originationFee(fee_index)).toLocaleString().replace(/,/g, "");
+                if (fee != old_fee) {
+
+                  await dtoken_admin_behavior[index * 2 + dtoken_admin_index](fee_index, new BN(fee));
+                  console.log(await dtokens[index].symbol() + ':updateOriginationFee old fee : ' + old_fee + ' fee : ' + fee);
+                }
+                break;
+            }
+          }
+
+          if (randomNum(0, 2) == 1) {
+            var handler_list = [];
+            var args = [];
+            var dispatcher_admin_index = randomNum(0, 1);
+            switch (dispatcher_admin_index) {
+              case 0:
+                handler_list = createRandomData([compound_handler.address, aave_handler.address]);
+                handler_list.unshift(...createRandomData([internal_handler.address, other_handler.address], 1, 2));
+                console.log('resetHandlers:');
+                break;
+              case 1:
+                handler_list = await dtokens[index].getHandler();
+                handler_list = createRandomData(handler_list, handler_list.length, handler_list.length);
+                console.log('updateProportion:');
+                break;
+            }
+            var proportions = [];
+            var proportional_quota = TOTAL_PROPORTION;
+            var proportion;
+            for (let index = 0; index < handler_list.length; index++) {
+              proportion = index == handler_list.length - 1 ? proportional_quota : new BN(randomNum(0, proportional_quota.toLocaleString().replace(/,/g, "")).toLocaleString().replace(/,/g, ""));
+              proportions.push(proportion);
+              proportional_quota = proportional_quota.sub(proportion);
+            }
+            args.push(handler_list);
+            args.push(proportions);
+            // console.log([internal_handler.address, compound_handler.address, aave_handler.address, other_handler.address]);
+            console.log('handlers:' + args[0]);
+            console.log('proportions:' + args[1]);    
+            await dispatcher_admin_behavior[dispatcher_admin_index](...args);
+          }
         }
 
         account = accounts[randomNum(0, accounts.length - 1)];
@@ -329,29 +442,16 @@ describe("DToken Contract Integration", function () {
         switch (user_behavior_index % 3) {
           case 0:
             balance = (await tokens[dtoken_index].balanceOf(account)).toLocaleString().replace(/,/g, "");
-            amount = new BN(randomNum(0, balance).toLocaleString().replace(/,/g, ""));
-            // amount = new BN(randomNum(0, balance));
-            console.log(`mint :: balance : ${balance}   amount : ${amount}`);
             break;
           case 1:
-            // var balance1 = await dtokens[dtoken_index].balanceOf(account);
-            // if (balance1.lte(new BN('100'))) {
-            //   amount = new BN('0');
-            //   break;
-            // }
-            // balance = (await dtokens[dtoken_index].balanceOf(account)).sub(new BN('100')).toLocaleString().replace(/,/g, "");
             balance = (await dtokens[dtoken_index].balanceOf(account)).toLocaleString().replace(/,/g, "");
-            amount = new BN(randomNum(0, balance).toLocaleString().replace(/,/g, ""));
-            // amount = new BN(randomNum(0, balance));
-            console.log(`burn :: balance : ${balance}   amount : ${amount}`);
             break;
           case 2:
             balance = (rmul(await dtokens[dtoken_index].getTokenBalance(account), BASE.sub(await dtokens[dtoken_index].originationFee('0x9dc29fac')))).toLocaleString().replace(/,/g, "");
-            amount = new BN(randomNum(0, balance).toLocaleString().replace(/,/g, ""));
-            // amount = new BN(randomNum(0, balance));
-            console.log(`redeem :: balance : ${balance}   amount : ${amount}`);
             break;
         }
+        amount = new BN(randomNum(0, balance).toLocaleString().replace(/,/g, ""));
+        console.log(`${await dtokens[dtoken_index].symbol()} ${user_behavior_name[user_behavior_index % 3]} :: balance : ${balance}   amount : ${amount}`);
         if (amount.lte(new BN('0')))
           return;
 
@@ -370,17 +470,15 @@ describe("DToken Contract Integration", function () {
           var amount = await dtokens[i].balanceOf(accounts[j]);
           if (amount.lte(new BN('0')))
             continue;
+          if ((await dtokens[i].getTotalBalance()).eq(new BN(0)))
+            continue;
           await dtokens[i].burn(accounts[j], amount, {from: accounts[j]});
-          // await checkUserBehavior(
-          //   dtokens[i].burn,
-          //   [accounts[j], amount, {from: accounts[j]}],
-          //   dtokens[i],
-          //   accounts[j]
-          // )
 
           assert.equal((await dtokens[i].balanceOf(accounts[j])).toLocaleString().replace(/,/g, ""), new BN(0).toLocaleString().replace(/,/g, ""));
         }
-        assert.equal((await dtokens[i].totalSupply()).toLocaleString().replace(/,/g, ""), new BN(0).toLocaleString().replace(/,/g, ""));
+        // if ((await dtokens[i].getTotalBalance()).eq(new BN(0)) && (await dtokens[i].totalSupply()).gt(new BN(0)));
+        // assert.equal((await dtokens[i].totalSupply()).toLocaleString().replace(/,/g, ""), new BN(0).toLocaleString().replace(/,/g, ""));
+        console.log(await dtokens[i].symbol() + " totalSupply: " + (await dtokens[i].totalSupply()).toLocaleString().replace(/,/g, ""));
         console.log(await dtokens[i].symbol() + " underlying balance: " + (await dtokens[i].getTotalBalance()).toLocaleString().replace(/,/g, ""));
       }
     });
