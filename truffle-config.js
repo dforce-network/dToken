@@ -68,7 +68,7 @@ module.exports = {
         },
 
         kovan: {
-            provider: () => new HDWalletProvider(privateKeys, `https://kovan.infura.io/v3/${infuraKey}`, 0, keyLength),
+            provider: () => new HDWalletProvider(privateKeys, `https://kovan.infura.io/v3/${infuraKey}`, 0 , keyLength),
             network_id: 42, // Kovan's id
             gas: 6721975,
             gasPrice: 10000000000, // Gas price used for deploys: 10gwei
