@@ -261,14 +261,18 @@ describe("CompoundHandlerMock contract", function () {
 
         // Get the underlying token balance in Compound
         let balanceBefore = await handler.getBalance(USDC.address);
+        let underlyingBalanceB = await USDC.balanceOf(handler.address);
 
         await handler.withdraw(USDC.address, amount);
 
         let balanceAfter = await handler.getBalance(USDC.address);
+        let underlyingBalanceA = await USDC.balanceOf(handler.address);
+
         let changed = balanceBefore.sub(balanceAfter);
+        let underlyingChanged = underlyingBalanceA.sub(underlyingBalanceB);
 
         //TODO: Check return value from transaction
-        //console.log(changed.toString(), amount.toString());
+        console.log(changed.toString(), underlyingChanged.toString());
         assert.equal(changed.toString(), amount.toString());
       }
     });
