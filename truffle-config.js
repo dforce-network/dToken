@@ -72,7 +72,8 @@ module.exports = {
             gasPrice: 10000000000, // Gas price used for deploys: 10gwei
             confirmations: 2,
             timeoutBlocks: 200,
-            skipDryRun: true
+            skipDryRun: true,
+            networkCheckTimeout: 600000
         },
 
         ropsten: {
