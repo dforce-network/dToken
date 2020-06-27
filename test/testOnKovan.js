@@ -15,7 +15,7 @@ const DTokenProxy = artifacts.require("DTokenProxy");
 
 contract("DToken", (accounts) => {
   console.log("all accounts are: ", accounts);
-  let owner = accounts[0];
+  let owner = accounts[1];
   let usdc, usdt;
   let dsGuard, dTokenContractsLibrary, internalHandler, compoundHandler, aaveHandler;
   let cUSDC, aUSDT;
@@ -45,30 +45,29 @@ contract("DToken", (accounts) => {
     // Aave handler
     aaveHandler = await AaveHandler.at("0x2f19Ed333Fc24ceE69AAB8dE8641afE9b121e902");
   })
-  console.log('=====owner here', owner)
 
-  it('constructor set a token (DAI) address', async function () {
+  it('test case1: normal', async function () {
     // ---------- test deployed contracts ------------
     const previousBalance = await usdc.balanceOf(owner);
-    console.log('before faucet, owner usdc balance: ', previousBalance, previousBalance.toString());
-    await usdc.allocateTo(owner, 500000000);
+    console.log('before faucet, owner usdc balance: ', previousBalance.toString());
+    await usdc.allocateTo(owner, 500000000, {from:owner});
 
     const currentBalance = await usdc.balanceOf(owner);
-    console.log('after faucet, owner usdc balance: ', currentBalance, currentBalance.toString());
-    await usdc.approve(dUSDC.address, 1000000000);
+    console.log('after faucet, owner usdc balance: ', currentBalance.toString());
+    await usdc.approve(dUSDC.address, 1000000000, {from:owner});
 
     const previousDTokenBalance = await dUSDC.balanceOf(owner);
-    console.log('before mint, owner dToekn balance: ', previousDTokenBalance, previousDTokenBalance.toString());
-    await dUSDC.mint(owner, 50000000);
+    console.log('before mint, owner dToekn balance: ', previousDTokenBalance.toString());
+    await dUSDC.mint(owner, 50000000, {from:owner});
 
     const currentDTokenBalance = await dUSDC.balanceOf(owner);
-    console.log('after mint, owner dToekn balance: ', currentDTokenBalance, currentDTokenBalance.toString());
-    await dUSDC.burn(owner, 20000000);
+    console.log('after mint, owner dToekn balance: ', currentDTokenBalance.toString());
+    await dUSDC.burn(owner, 10000000, {from:owner});
 
-    await dUSDC.redeem(owner, 30000000);
+    await dUSDC.redeem(owner, 10000000, {from:owner});
 
     const finalDTokenBalance = await dUSDC.balanceOf(owner);
-    console.log('fianlly, owner dToken balance: ', finalDTokenBalance, finalDTokenBalance.toString());
+    console.log('fianlly, owner dToken balance: ', finalDTokenBalance.toString());
     console.log('test done!');
   });
 });
