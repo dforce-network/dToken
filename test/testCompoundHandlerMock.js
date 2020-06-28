@@ -1,4 +1,5 @@
 const CompoundHandler = artifacts.require("CompoundHandler");
+const TestHandlerMock = artifacts.require("TestHandlerMock");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
 const dTokenAddresses = artifacts.require("dTokenAddresses");
@@ -11,7 +12,7 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC, cUSDC;
-  let handler;
+  let handler, test_handler;
   let dtoken_addresses;
   let mock_dtoken = "0x0000000000000000000000000000000000000001";
 
@@ -28,6 +29,7 @@ describe("CompoundHandlerMock contract", function () {
   async function resetContracts() {
     dtoken_addresses = await dTokenAddresses.new();
     handler = await CompoundHandler.new(dtoken_addresses.address);
+    test_handler = await TestHandlerMock.new();
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
     });
@@ -330,15 +332,32 @@ describe("CompoundHandlerMock contract", function () {
   describe("getRealBalance", function () {
     beforeEach(async function () {
       await resetContracts();
-      await handler.deposit(USDC.address, 1000e6);
     });
 
     it("Should get some real balance", async function () {
-      let balance = await handler.getRealBalance(USDC.address);
+      await USDC.allocateTo(handler.address, 1000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 1000e6);
+      await test_handler.getRealBalance(handler.address, USDC.address);
+      
+      assert.equal((await test_handler.returnValue()).toString(), 1000e6);
+    });
+  });
 
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(balance));
-      //assert.equal(balance.eq(new BN(1000e6)), true);
+  describe("getRealLiquidity", function () {
+    beforeEach(async function () {
+      await resetContracts();
+    });
+
+    it("Should get some real liquidity", async function () {
+      await USDC.allocateTo(handler.address, 1000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 1000e6);
+      await test_handler.getRealLiquidity(handler.address, USDC.address);
+      
+      assert.equal((await test_handler.returnValue()).toString(), 1000e6);
     });
   });
 

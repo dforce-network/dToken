@@ -144,7 +144,7 @@ contract CTokenMock is ERC20SafeTransfer {
 
     function redeemUnderlying(uint256 _pie) external returns (uint256) {
         exchangeRate = exchangeRateCurrent();
-        uint256 _wad = rdiv(_pie, exchangeRate);
+        uint256 _wad = rdiv(_pie.mul(BASE), exchangeRate) / BASE;
         balanceOf[msg.sender] = balanceOf[msg.sender].sub(_wad);
         totalSupply = totalSupply.sub(_wad);
         require(
