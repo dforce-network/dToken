@@ -207,13 +207,22 @@ describe("CompoundHandlerMock contract", function () {
 
         // Get the underlying token balance in Compound
         let balanceBefore = await handler.getBalance(USDC.address);
+        let underlyingBalanceB = await USDC.balanceOf(handler.address);
 
         await handler.deposit(USDC.address, amount);
 
         let balanceAfter = await handler.getBalance(USDC.address);
-        let changed = balanceAfter.sub(balanceBefore);
+        let underlyingBalanceA = await USDC.balanceOf(handler.address);
 
-        assert.equal(changed.toString(), amount.toString());
+        let changed = balanceAfter.sub(balanceBefore);
+        let underlyingChanged = underlyingBalanceB.sub(underlyingBalanceA);
+
+        //console.log(changed.toString(), underlyingChanged.toString());
+        // assert.equal(changed.toString(), underlyingChanged.toString());
+
+        // The diff could be 1 due to accuracy loss
+        let diff = changed.sub(underlyingChanged).abs();
+        assert.equal(diff.lte(new BN(1)), true);
       }
     });
   });
@@ -229,10 +238,6 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should only allow auth to withdraw", async function () {
       let amount = await handler.withdraw(USDC.address, 10000e6);
-
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(amount));
-      //assert.equal(amount.eq(new BN(1000e6)), true);
 
       await truffleAssert.reverts(
         handler.withdraw(USDC.address, 1000e6, {
@@ -268,9 +273,9 @@ describe("CompoundHandlerMock contract", function () {
       let iteration = 20;
       for (let i = 0; i < iteration; i++) {
         // Mock some interest, so the exchange rate would change
-        await cUSDC.updateExchangeRate(BASE.div(new BN(153)));
+        await cUSDC.updateExchangeRate(BASE.div(new BN(3)));
 
-        let amount = new BN(1);
+        let amount = new BN(123456789);
         await USDC.allocateTo(handler.address, amount);
 
         let exchangeRate = await cUSDC.exchangeRate();
@@ -288,8 +293,12 @@ describe("CompoundHandlerMock contract", function () {
         let changed = balanceBefore.sub(balanceAfter);
         let underlyingChanged = underlyingBalanceA.sub(underlyingBalanceB);
 
-        console.log(changed.toString(), underlyingChanged.toString());
-        //assert.equal(changed.toString(), amount.toString());
+        //console.log(changed.toString(), underlyingChanged.toString());
+        //assert.equal(changed.toString(), underlyingChanged.toString());
+
+        // The diff could be 1 due to accuracy loss
+        let diff = changed.sub(underlyingChanged).abs();
+        assert.equal(diff.lte(new BN(1)), true);
       }
     });
   });
