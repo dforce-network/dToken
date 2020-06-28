@@ -8,6 +8,7 @@ const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
+const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 describe("AaveHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
@@ -239,7 +240,13 @@ describe("AaveHandlerMock contract", function () {
       );
     });
 
-    it("!! TODO: Should not be able to reenter", async function () {});
+    it("Should deposit all balance regardless of amount", async function () {
+      await USDC.allocateTo(handler.address, 1000e6);
+      await handler.deposit(USDC.address, 1e6);
+
+      let balance = await USDC.balanceOf(USDC.address);
+      assert.equal(balance.toString(), 0);
+    });
 
     it("Check the actual deposit amount with some interest", async function () {
       let iteration = 20;
@@ -257,8 +264,6 @@ describe("AaveHandlerMock contract", function () {
         let balanceAfter = await handler.getBalance(USDC.address);
         let changed = balanceAfter.sub(balanceBefore);
 
-        //TODO: Check return value from transaction
-        //console.log(balanceBefore.toString(), balanceAfter.toString());
         assert.equal(changed.toString(), amount.toString());
       }
     });
@@ -310,8 +315,6 @@ describe("AaveHandlerMock contract", function () {
       );
     });
 
-    it("!! TODO: Should not be able to reenter", async function () {});
-
     it("Check the actual withdraw amount with some interest", async function () {
       let iteration = 20;
       for (let i = 0; i < iteration; i++) {
@@ -327,8 +330,6 @@ describe("AaveHandlerMock contract", function () {
         let balanceAfter = await handler.getBalance(USDC.address);
         let changed = balanceBefore.sub(balanceAfter);
 
-        //TODO: Check return value from transaction
-        //console.log(balanceBefore.toString(), balanceAfter.toString());
         assert.equal(changed.toString(), amount.toString());
       }
     });
@@ -385,28 +386,28 @@ describe("AaveHandlerMock contract", function () {
   describe("getRealBalance", function () {
     beforeEach(async function () {
       await resetContracts();
-      await handler.deposit(USDC.address, 1000e6);
     });
 
     it("Should get some real balance", async function () {
-      let balance = await handler.getRealBalance(USDC.address);
-
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(balance));
-      //assert.equal(balance.eq(new BN(1000e6)), true);
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
+      let realBalance = await handler.getRealBalance(USDC.address);
+      assert.equal(realBalance.toString(), 100000e6);
     });
   });
 
   describe("getRealLiquidity", function () {
     beforeEach(async function () {
       await resetContracts();
+    });
+
+    it("Should get real liquidity", async function () {
       await USDC.allocateTo(handler.address, 100000e6, {
         from: owner,
       });
       await handler.deposit(USDC.address, 100000e6);
-    });
-
-    it("Should get real liquidity", async function () {
       let realLiquidity = await handler.getRealLiquidity(USDC.address);
       assert.equal(realLiquidity.toString(), 100000e6);
     });
@@ -420,6 +421,9 @@ describe("AaveHandlerMock contract", function () {
     it("Should get the corresponding atoken", async function () {
       let atoken = await handler.getaToken(USDC.address);
       assert.equal(atoken, aUSDC.address);
+
+      let unknownaToken = await handler.getaToken(mock_dtoken);
+      assert.equal(unknownaToken, ZERO_ADDR);
     });
   });
 });

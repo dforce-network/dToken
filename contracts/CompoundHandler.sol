@@ -230,7 +230,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     {
         require(
             _amount > 0,
-            "withdraw: Redeem amount should be greater than 0!"
+            "withdraw: Withdraw amount should be greater than 0!"
         );
 
         address _cToken = cTokens[_underlyingToken];

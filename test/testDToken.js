@@ -462,6 +462,17 @@ describe("DToken Contract", function () {
       assert.equal(diff2.toString(), "-" + amount.toString());
     });
 
+    it("Should not burn more than balance", async function () {
+      // Need to make sure the handler has enough liquidity
+      await dUSDC.mint(account2, 10e6, {from: account2});
+
+      let balance = await dUSDC.balanceOf(account1);
+      await truffleAssert.reverts(
+        dUSDC.burn(account1, balance.add(new BN(1)), {from: account1}),
+        "burn: insufficient balance"
+      );
+    });
+
     it("Should burn the smallest unit of dtoken when exchange rate >= 1", async function () {
       await dUSDC.mint(account1, 10e6, {from: account1});
 
@@ -564,6 +575,19 @@ describe("DToken Contract", function () {
       assert.equal(diff2.toString(), "-" + amount.toString());
     });
 
+    it("Should not redeem more than balance", async function () {
+      // Need to make sure the handler has enough liquidity
+      await dUSDC.mint(account2, 10e6, {from: account2});
+
+      let balance = await dUSDC.balanceOf(account1);
+
+      // The exchange rate is 1 here, use the dUSDC balance where it should be a usdc amount
+      await truffleAssert.reverts(
+        dUSDC.redeem(account1, balance.add(new BN(1)), {from: account1}),
+        "redeem: insufficient balance"
+      );
+    });
+
     it("Should redeem the smallest unit of underlying token when exchange rate > 1", async function () {
       await dUSDC.mint(account1, 10e6, {from: account1});
 
@@ -583,6 +607,38 @@ describe("DToken Contract", function () {
       // The dusdc_diff should be about -0.5, but we round up
       assert.equal(dusdc_diff.toString(), "-1");
       assert.equal(usdc_diff.toString(), "1");
+    });
+
+    it("Check redeem the smallest unit of underlying token when exchange rate < 1", async function () {
+      let proportions = [200000, 200000, 200000, 200000, 200000];
+      await resetContracts(5, proportions);
+      await dUSDC.mint(account1, 500e6, {from: account1});
+
+      // Remove a handler so the exchange rate would drop to 0.8
+      await dispatcher.resetHandlers(
+        [
+          handler_addresses[0],
+          handler_addresses[1],
+          handler_addresses[2],
+          handler_addresses[3],
+        ],
+        [250000, 250000, 250000, 250000]
+      );
+
+      let orig_usdc = await USDC.balanceOf(account1);
+      let orig_dusdc = await dUSDC.balanceOf(account1);
+
+      // Now try to redeem 1 underlying token whose value is > 1 dtoken
+      await dUSDC.redeem(account1, 1, {from: account1});
+
+      let usdc = await USDC.balanceOf(account1);
+      let dusdc = await dUSDC.balanceOf(account1);
+      let usdc_diff = usdc.sub(orig_usdc);
+      let dusdc_diff = dusdc.sub(orig_dusdc);
+
+      // User would get 1 underlying token while 2 dToken was burned
+      assert.equal(usdc_diff.toString(), 1);
+      assert.equal(dusdc_diff.toString(), -2);
     });
   });
 
@@ -820,6 +876,30 @@ describe("DToken Contract", function () {
 
     it("Should get 1 as the initial exchange rate", async function () {
       let expected = BASE;
+      let exchange_rate = await dUSDC.getExchangeRate();
+
+      assert.equal(exchange_rate.toString(), expected.toString());
+    });
+
+    it("Should get default exchange rate when there is some initial token in handlers", async function () {
+      let expected = BASE;
+
+      await USDC.allocateTo(handler_addresses[0], 1000e6);
+      let exchange_rate = await dUSDC.getExchangeRate();
+
+      assert.equal(exchange_rate.toString(), expected.toString());
+    });
+
+    it("Should get last exchange rate when there is no token in handlers", async function () {
+      // Mint some dtoken and mock some interest to make the exchange rate go up to 2
+      await dUSDC.mint(account1, 1000e6, {from: account1});
+      await USDC.allocateTo(handler_addresses[0], 1000e6);
+      await dUSDC.burn(account1, 100e6, {from: account1});
+
+      let expected = BASE.mul(new BN(2));
+
+      // Reset handlers, handler1 does not have any token yet so there would be no token
+      await dispatcher.resetHandlers([handler_addresses[1]], [1000000]);
       let exchange_rate = await dUSDC.getExchangeRate();
 
       assert.equal(exchange_rate.toString(), expected.toString());
