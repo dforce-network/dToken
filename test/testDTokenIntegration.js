@@ -48,16 +48,7 @@ describe("DToken Contract Integration", function () {
   });
 
   async function resetContracts() {
-    USDC = await FiatToken.new(
-      "USDC",
-      "USDC",
-      "USD",
-      6,
-      owner,
-      owner,
-      owner,
-      owner
-    );
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner);
 
     USDT = await TetherToken.new("0", "USDT", "USDT", 6);
 

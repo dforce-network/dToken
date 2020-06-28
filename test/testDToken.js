@@ -38,19 +38,9 @@ describe("DToken Contract", function () {
   });
 
   async function resetContracts(handler_num, proportions) {
-    USDC = await FiatToken.new(
-      "USDC",
-      "USDC",
-      "USD",
-      6,
-      owner,
-      owner,
-      owner,
-      owner,
-      {
-        from: owner,
-      }
-    );
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
+      from: owner,
+    });
 
     dtoken_addresses = await dTokenAddresses.new();
     ds_guard = await DSGuard.new();
@@ -549,6 +539,31 @@ describe("DToken Contract", function () {
       assert.equal(total_balance.toString(), "0");
     });
 
+    it("Should redeem for account other than sender", async function () {
+      let amount = new BN(10e6);
+      await dUSDC.mint(account2, amount, {from: account2});
+
+      let original1 = await dUSDC.balanceOf(account1);
+      let original2 = await dUSDC.balanceOf(account2);
+
+      // account2 has not approve account1 yet
+      await truffleAssert.reverts(
+        dUSDC.redeem(account2, amount, {from: account1}),
+        "redeem: insufficient allowance"
+      );
+
+      await dUSDC.approve(account1, amount, {from: account2});
+      await dUSDC.redeem(account2, amount, {from: account1});
+
+      let current1 = await dUSDC.balanceOf(account1);
+      let current2 = await dUSDC.balanceOf(account2);
+      let diff1 = current1.sub(original1);
+      let diff2 = current2.sub(original2);
+
+      assert.equal(diff1.toString(), "0");
+      assert.equal(diff2.toString(), "-" + amount.toString());
+    });
+
     it("Should redeem the smallest unit of underlying token when exchange rate > 1", async function () {
       await dUSDC.mint(account1, 10e6, {from: account1});
 
@@ -646,6 +661,22 @@ describe("DToken Contract", function () {
         "transferFrom: insufficient allowance"
       );
     });
+
+    it("Should not be able to decrease allowance to < 0", async function () {
+      await dUSDC.approve(account2, 100e6, {from: account1});
+
+      await truffleAssert.reverts(
+        dUSDC.decreaseAllowance(account2, 101e6, {from: account1})
+      );
+    });
+
+    it("Should be able to approve allowance to maximum", async function () {
+      await dUSDC.approve(account2, UINT256_MAX, {from: account1});
+
+      // Should have the allowance to transfer all balance
+      let balance = await dUSDC.balanceOf(account1);
+      await dUSDC.transferFrom(account1, account3, balance, {from: account2});
+    });
   });
 
   describe("balanceOf", function () {
@@ -654,7 +685,17 @@ describe("DToken Contract", function () {
       await resetContracts(5, proportions);
     });
 
-    it("Should be able to get dToken balance of account", async function () {});
+    it("Should get 0 as the initial dToken balance of account", async function () {
+      assert.equal((await dUSDC.balanceOf(account1)).toString(), 0);
+    });
+
+    it("Should be able to get dToken balance of account", async function () {
+      await dUSDC.mint(account1, 1000e6, {from: account1});
+      await dUSDC.burn(account1, 10e6, {from: account1});
+      await dUSDC.transfer(account2, 1e6, {from: account1});
+
+      assert.equal((await dUSDC.balanceOf(account1)).toString(), 989e6);
+    });
   });
 
   describe("getTokenBalance", function () {
@@ -663,7 +704,29 @@ describe("DToken Contract", function () {
       await resetContracts(5, proportions);
     });
 
-    it("Should be able to get token balance", async function () {});
+    it("Should get 0 as initial token balance", async function () {
+      assert.equal((await dUSDC.getTokenBalance(account1)).toString(), 0);
+    });
+
+    it("Should get token balance with difference exchange rate", async function () {
+      let amount = new BN(1000e6);
+      await dUSDC.mint(account1, amount, {from: account1});
+
+      let iteration = 20;
+      for (let i = 0; i < iteration; i++) {
+        // Mock some interest
+        let interest = new BN(1234567);
+        await USDC.allocateTo(handler_addresses[0], interest);
+
+        assert.equal(
+          (await dUSDC.getTokenBalance(account1)).toString(),
+          amount
+            .mul(await dUSDC.getExchangeRate())
+            .div(BASE)
+            .toString()
+        );
+      }
+    });
   });
 
   describe("getCurrentInterest", function () {
@@ -672,7 +735,28 @@ describe("DToken Contract", function () {
       await resetContracts(5, proportions);
     });
 
-    it("Should be able to get current interest", async function () {});
+    it("Should get 0 as initial interest", async function () {
+      assert.equal((await dUSDC.getCurrentInterest(account1)).toString(), 0);
+    });
+
+    it("Should get correct interest", async function () {
+      let amount = new BN(1000e6);
+      let totalInterest = new BN(0);
+      await dUSDC.mint(account1, amount, {from: account1});
+
+      let iteration = 20;
+      for (let i = 0; i < iteration; i++) {
+        // Some mock interest to make the exchange rate go up
+        let interest = new BN(12345);
+        await USDC.allocateTo(handler_addresses[0], interest);
+
+        totalInterest = totalInterest.add(interest);
+        assert.equal(
+          (await dUSDC.getCurrentInterest(account1)).toString(),
+          totalInterest.toString()
+        );
+      }
+    });
   });
 
   describe("getHandler", function () {
@@ -742,15 +826,22 @@ describe("DToken Contract", function () {
     });
 
     it("Should update the exchange rate", async function () {
-      await dUSDC.mint(account1, 10e6, {from: account1});
+      let amount = new BN(1000e6);
+      let totalSupply = new BN(1000e6);
+      await dUSDC.mint(account1, amount, {from: account1});
 
-      // Some mockup interest to make the exchange rate go up to 2
-      await USDC.allocateTo(handlers[0].address, 10e6);
+      let iteration = 20;
+      for (let i = 0; i < iteration; i++) {
+        // Some mock interest to make the exchange rate go up
+        let interest = new BN(123);
+        await USDC.allocateTo(handler_addresses[0], interest);
 
-      let exchange_rate = await dUSDC.getExchangeRate();
-      let expected = BASE.mul(new BN(2));
+        amount = amount.add(interest);
+        let exchange_rate = await dUSDC.getExchangeRate();
+        let expected = BASE.mul(amount).div(totalSupply);
 
-      assert.equal(exchange_rate.toString(), expected.toString());
+        assert.equal(exchange_rate.toString(), expected.toString());
+      }
     });
   });
 });

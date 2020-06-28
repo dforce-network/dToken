@@ -27,19 +27,9 @@ describe("CompoundHandlerMock contract", function () {
   async function resetContracts() {
     dtoken_addresses = await dTokenAddresses.new();
     handler = await CompoundHandler.new(dtoken_addresses.address);
-    USDC = await FiatToken.new(
-      "USDC",
-      "USDC",
-      "USD",
-      6,
-      owner,
-      owner,
-      owner,
-      owner,
-      {
-        from: owner,
-      }
-    );
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
+      from: owner,
+    });
 
     cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
     handler.setcTokensRelation([USDC.address], [cUSDC.address]);

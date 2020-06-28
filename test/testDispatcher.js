@@ -40,19 +40,9 @@ describe("Dispatcher Contract", function () {
   });
 
   async function resetContracts(handler_num, proportions) {
-    USDC = await FiatToken.new(
-      "USDC",
-      "USDC",
-      "USD",
-      6,
-      owner,
-      owner,
-      owner,
-      owner,
-      {
-        from: owner,
-      }
-    );
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
+      from: owner,
+    });
 
     dtoken_addresses = await dTokenAddresses.new();
     await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);

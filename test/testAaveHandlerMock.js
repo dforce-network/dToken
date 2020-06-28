@@ -28,19 +28,9 @@ describe("AaveHandlerMock contract", function () {
 
   async function resetContracts() {
     dtoken_addresses = await dTokenAddresses.new();
-    USDC = await FiatToken.new(
-      "USDC",
-      "USDC",
-      "USD",
-      6,
-      owner,
-      owner,
-      owner,
-      owner,
-      {
-        from: owner,
-      }
-    );
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
+      from: owner,
+    });
 
     // Deploys Aave system
     lending_pool_core = await LendingPoolCore.new();

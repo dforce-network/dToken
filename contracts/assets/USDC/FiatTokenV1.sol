@@ -434,7 +434,8 @@ contract FiatTokenV1 is Ownable, ERC20, Pausable, Blacklistable {
             _masterMinter,
             _pauser,
             _blacklister,
-            msg.sender);
+            msg.sender
+        );
     }
 
     function initialize(

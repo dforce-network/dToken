@@ -21,7 +21,15 @@ describe("Aave handler contract", function () {
     accounts = await web3.eth.getAccounts();
 
     // Deploys underlying assets
-    usdc = await FiatToken.new();
+    usdc = await FiatToken.new(
+      "USDC", // _name
+      "USDC", // _symbol
+      "USD", // _currency
+      6, // _decimals
+      accounts[0], // _masterMinter
+      accounts[1], // _pauser
+      accounts[0] // _blacklister
+    );
 
     // Deploys dToken mapping contract
     dTokenMappingContract = await dTokenAddresses.new();
@@ -51,16 +59,6 @@ describe("Aave handler contract", function () {
     );
 
     // Faucets assets:
-    await usdc.initialize(
-      "USDC", // _name
-      "USDC", // _symbol
-      "USD", // _currency
-      6, // _decimals
-      accounts[0], // _masterMinter
-      accounts[1], // _pauser
-      accounts[0], // _blacklister
-      accounts[0] // _owner
-    );
     console.log(
       "Before faucet, usdc balance: ",
       (await usdc.balanceOf(accounts[0])).toString()

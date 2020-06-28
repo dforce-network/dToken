@@ -25,19 +25,9 @@ describe("InternalHandler contract", function () {
   async function resetContracts() {
     dtoken_addresses = await dTokenAddresses.new();
     handler = await InternalHandler.new(dtoken_addresses.address);
-    USDC = await FiatToken.new(
-      "USDC",
-      "USDC",
-      "USD",
-      6,
-      owner,
-      owner,
-      owner,
-      owner,
-      {
-        from: owner,
-      }
-    );
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
+      from: owner,
+    });
     await USDC.allocateTo(handler.address, 1000e6, {
       from: owner,
     });
@@ -140,6 +130,9 @@ describe("InternalHandler contract", function () {
         }),
         "ds-auth-unauthorized"
       );
+
+      // Approve again should do nothing
+      await handler.approve(USDC.address);
     });
   });
 
@@ -182,17 +175,14 @@ describe("InternalHandler contract", function () {
   });
 
   describe("withdraw", function () {
-    beforeEach(async function () {
+    before(async function () {
       await resetContracts();
       await handler.deposit(USDC.address, 1000e6);
     });
 
     it("Should only allow auth to withdraw", async function () {
-      let amount = await handler.withdraw(USDC.address, 100e6);
-
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(amount));
-      //assert.equal(amount.eq(new BN(1000e6)), true);
+      // The internal handler will do nothing
+      await handler.withdraw(USDC.address, 100e6);
 
       await truffleAssert.reverts(
         handler.withdraw(USDC.address, 1000e6, {
@@ -208,9 +198,14 @@ describe("InternalHandler contract", function () {
         handler.withdraw(USDC.address, 1000e6),
         "whenNotPaused: paused"
       );
+
+      await handler.unpause();
     });
 
-    it("!! TODO: Should not be able to reenter", async function () {});
+    it("Should be able to withdraw all", async function () {
+      // The internal handler just do nothing
+      await handler.withdraw(USDC.address, UINT256_MAX);
+    });
   });
 
   describe("getBalance", function () {
