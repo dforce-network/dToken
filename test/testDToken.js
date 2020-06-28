@@ -914,14 +914,14 @@ describe("DToken Contract", function () {
     });
   });
 
-  describe("getHandler", function () {
+  describe("getHandlers", function () {
     beforeEach(async function () {
       let proportions = [1000000, 0, 0, 0, 0];
       await resetContracts(5, proportions);
     });
 
     it("Should get handlers", async function () {
-      let handlers = await dUSDC.getHandler();
+      let handlers = await dUSDC.getHandlers();
 
       //console.log(handlers.toString(), handler_addresses.toString());
       assert.equal(handlers.toString(), handler_addresses.toString());

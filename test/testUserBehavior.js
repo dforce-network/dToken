@@ -160,8 +160,8 @@ describe("DToken Contract Integration", function () {
     for (const account of accounts) {
       await USDC.allocateTo(account, 1000000e6);
       await USDT.allocateTo(account, 1000000e6);
-      USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
-      USDT.approve(dUSDT.address, UINT256_MAX, {from: account});
+      USDC.approve(dUSDC.address, UINT256_MAX, { from: account });
+      USDT.approve(dUSDT.address, UINT256_MAX, { from: account });
     }
 
     tokens = [USDC, USDT];
@@ -185,7 +185,7 @@ describe("DToken Contract Integration", function () {
     ];
     dispatcher_admin_behavior = [
       dispatcher.resetHandlers,
-      dispatcher.updateProportion,
+      dispatcher.updateProportions,
     ];
   }
 
@@ -435,7 +435,7 @@ describe("DToken Contract Integration", function () {
           await dtokens[index].transfer(
             accounts[randomNum(0, accounts.length - 1)],
             amount,
-            {from: account}
+            { from: account }
           );
           await atokens[index].updateBalance(
             new BN(
@@ -464,7 +464,7 @@ describe("DToken Contract Integration", function () {
             var dtoken_admin_index = randomNum(0, 1);
             switch (dtoken_admin_index) {
               case 0:
-                var handler_list = await dtokens[index].getHandler();
+                var handler_list = await dtokens[index].getHandlers();
                 var withdraw_handlers = createRandomData(handler_list);
                 var liquidity;
                 var amount;
@@ -585,7 +585,7 @@ describe("DToken Contract Integration", function () {
                 console.log("resetHandlers:");
                 break;
               case 1:
-                handler_list = await dtokens[index].getHandler();
+                handler_list = await dtokens[index].getHandlers();
                 handler_list = createRandomData(
                   handler_list,
                   handler_list.length,
@@ -657,7 +657,7 @@ describe("DToken Contract Integration", function () {
 
         await checkUserBehavior(
           user_behavior[user_behavior_index],
-          [account, amount, {from: account}],
+          [account, amount, { from: account }],
           dtokens[dtoken_index],
           account
         );
