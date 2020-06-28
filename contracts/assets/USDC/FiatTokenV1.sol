@@ -417,6 +417,26 @@ contract FiatTokenV1 is Ownable, ERC20, Pausable, Blacklistable {
     event MinterRemoved(address indexed oldMinter);
     event MasterMinterChanged(address indexed newMasterMinter);
 
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        string memory _currency,
+        uint8 _decimals,
+        address _masterMinter,
+        address _pauser,
+        address _blacklister
+    ) public {
+        initialize(
+            _name,
+            _symbol,
+            _currency,
+            _decimals,
+            _masterMinter,
+            _pauser,
+            _blacklister,
+            msg.sender);
+    }
+
     function initialize(
         string memory _name,
         string memory _symbol,

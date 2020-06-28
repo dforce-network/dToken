@@ -438,6 +438,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _mintLocal.token
         );
 
+        require(
+            _mintLocal.exchangeRate > 0,
+            "mint: the exchange rate cannot be zero"
+        );
+
         for (uint256 i = 0; i < _mintLocal.handlers.length; i++) {
             // If deposit amount is 0 by this handler, then pass.
             if (_mintLocal.amounts[i] == 0) continue;
@@ -521,6 +526,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
         // Get current exchange rate.
         _burnLocal.exchangeRate = getCurrentExchangeRate();
+        require(
+            _burnLocal.exchangeRate > 0,
+            "burn: the exchange rate cannot be zero"
+        );
 
         _burnLocal.consumeAmount = rmul(_wad, _burnLocal.exchangeRate);
 
@@ -701,6 +710,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _redeemLocal.exchangeRate = getCurrentExchangeRateByHandler(
             _redeemLocal.handlers,
             _redeemLocal.token
+        );
+
+        require(
+            _redeemLocal.exchangeRate > 0,
+            "redeem: the exchange rate cannot be zero"
         );
 
         for (uint256 i = 0; i < _redeemLocal.handlers.length; i++) {

@@ -181,6 +181,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      */
     function getRealBalance(address _underlyingToken)
         external
+        view
         returns (uint256)
     {
         return getBalance(_underlyingToken);
@@ -191,7 +192,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to get liquidity.
      */
     function getRealLiquidity(address _underlyingToken)
-        public
+        external
         view
         returns (uint256)
     {
