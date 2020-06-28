@@ -59,11 +59,20 @@ describe("DToken Contract Integration", function () {
       account2,
       account3,
       account4,
+      account5,
     ] = await web3.eth.getAccounts();
   });
 
   async function resetContracts() {
-    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner);
+    USDC = await FiatToken.new(
+      "USDC",
+      "USDC",
+      "USD",
+      6,
+      owner,
+      owner,
+      owner
+    );
 
     USDT = await TetherToken.new("0", "USDT", "USDT", 6);
     DF = await TetherToken.new("0", "DF", "DF", 18);
@@ -135,6 +144,8 @@ describe("DToken Contract Integration", function () {
 
     await dUSDC.setAuthority(ds_guard.address);
     await dUSDT.setAuthority(ds_guard.address);
+    await dUSDC.setFeeRecipient(account5);
+    await dUSDT.setFeeRecipient(account5);
     await dispatcher.setAuthority(ds_guard.address);
 
     // Initialize all handlers
@@ -148,7 +159,7 @@ describe("DToken Contract Integration", function () {
       await handlers[key].approve(USDT.address);
       await ds_guard.permitx(dUSDC.address, handlers[key].address);
       await ds_guard.permitx(dUSDT.address, handlers[key].address);
-
+      
       await handlers[key].enableTokens([USDC.address, USDT.address]);
     }
 
@@ -269,11 +280,24 @@ describe("DToken Contract Integration", function () {
     );
 
     if (
+      asyncFn == DToken.mint &&
+      rdiv(args[1], exchange_rate).eq(new BN(0))
+    ) {
+      await truffleAssert.reverts(
+        asyncFn(...args),
+        "mint: can not mint the smallest unit with the given amount"
+      );
+      console.log("mint: can not mint the smallest unit with the given amount");
+      return;
+    }
+
+    if (
       asyncFn != DToken.mint &&
       balances.getTotalBalance.eq(new BN(0)) &&
       (await DToken.totalSupply()).gt(new BN(0))
     )
       return;
+    
     await asyncFn(...args);
 
     let new_balances = {};
@@ -285,12 +309,11 @@ describe("DToken Contract Integration", function () {
     let new_exchange_rate = await DToken.getExchangeRate();
     let exchange_rate_stored = (await DToken.data())["0"];
 
-    console.log(
-      (await DToken.totalSupply()).toLocaleString().replace(/,/g, "")
-    );
+    // console.log((await DToken.totalSupply()).toLocaleString().replace(/,/g, ""));
+    console.log(await token_contract.symbol() + ' balanceOf : ' + (await token_contract.balanceOf(DToken.address)).toLocaleString().replace(/,/g, ""));
     console.log(exchange_rate.toLocaleString().replace(/,/g, ""));
     console.log(exchange_rate_stored.toLocaleString().replace(/,/g, ""));
-    console.log(new_exchange_rate.toLocaleString().replace(/,/g, ""));
+    console.log(new_exchange_rate.toLocaleString().replace(/,/g, "") + '\n');
 
     assert.equal(
       exchange_rate.toLocaleString().replace(/,/g, ""),
@@ -387,6 +410,7 @@ describe("DToken Contract Integration", function () {
           compound_handler.address,
           aave_handler.address,
         ],
+        // [700000, 300000]
         [700000, 200000, 100000]
       );
 
@@ -422,7 +446,7 @@ describe("DToken Contract Integration", function () {
             new BN(
               randomNum(
                 0,
-                BASE.div(new BN("10")).toLocaleString().replace(/,/g, "")
+                BASE.div(new BN("1000")).toLocaleString().replace(/,/g, "")
               )
                 .toLocaleString()
                 .replace(/,/g, "")
@@ -432,14 +456,15 @@ describe("DToken Contract Integration", function () {
             new BN(
               randomNum(
                 0,
-                BASE.div(new BN("10")).toLocaleString().replace(/,/g, "")
+                BASE.div(new BN("1000")).toLocaleString().replace(/,/g, "")
               )
                 .toLocaleString()
                 .replace(/,/g, "")
             )
           );
 
-          if (randomNum(0, 2) == 2) {
+          if (randomNum(0, 12) == 2) {
+            console.log('\n');
             var args = [];
             var dtoken_admin_index = randomNum(0, 1);
             switch (dtoken_admin_index) {
@@ -544,7 +569,8 @@ describe("DToken Contract Integration", function () {
             }
           }
 
-          if (randomNum(0, 2) == 1) {
+          if (randomNum(0, 50) == 1) {
+            console.log('\n');
             var handler_list = [];
             var args = [];
             var dispatcher_admin_index = randomNum(0, 1);
