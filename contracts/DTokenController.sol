@@ -5,7 +5,7 @@ import "./library/DSAuth.sol";
 contract DTokenController is DSAuth {
     bool private initialized; // Flags for initializing data
 
-    mapping(address => address) internal dTokenController;
+    mapping(address => address) internal dTokens;
 
     event NewMappingdToken(
         address indexed token,
@@ -44,10 +44,10 @@ contract DTokenController is DSAuth {
         internal
     {
         require(
-            dTokenController[_token] == address(0x0),
+            dTokens[_token] == address(0x0),
             "_setdTokenRelation: Has set!"
         );
-        dTokenController[_token] = _mappingdToken;
+        dTokens[_token] = _mappingdToken;
         emit NewMappingdToken(_token, _mappingdToken);
     }
 
@@ -59,14 +59,14 @@ contract DTokenController is DSAuth {
         auth
     {
         require(
-            dTokenController[_token] != address(0x0),
+            dTokens[_token] != address(0x0),
             "updatedTokenRelation: token does not exist!"
         );
-        dTokenController[_token] = _mappingdToken;
+        dTokens[_token] = _mappingdToken;
         emit NewMappingdToken(_token, _mappingdToken);
     }
 
     function getdToken(address _token) external view returns (address) {
-        return dTokenController[_token];
+        return dTokens[_token];
     }
 }

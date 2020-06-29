@@ -1,6 +1,6 @@
 pragma solidity 0.5.12;
 
-import "./DTokenController.sol";
+import "./interface/IDTokenController.sol";
 import "./library/ReentrancyGuard.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/Pausable.sol";
@@ -91,7 +91,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
-        address _dToken = DTokenController(dTokenController).getdToken(
+        address _dToken = IDTokenController(dTokenController).getdToken(
             _underlyingToken
         );
         if (

@@ -4,8 +4,8 @@ import "./interface/ILendFMe.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/DSAuth.sol";
 import "./library/SafeMath.sol";
-import "./DTokenController.sol";
 import "./library/Pausable.sol";
+import "./interface/IDTokenController.sol";
 
 contract Handler is ERC20SafeTransfer, Pausable {
     using SafeMath for uint256;
@@ -83,7 +83,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @param _token Token address to approve.
      */
     function approve(address _token) public {
-        address _dToken = DTokenController(dTokenController).getdToken(_token);
+        address _dToken = IDTokenController(dTokenController).getdToken(_token);
         if (IERC20(_token).allowance(address(this), targetAddr) != uint256(-1))
             require(
                 doApprove(_token, targetAddr, uint256(-1)),

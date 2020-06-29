@@ -5,7 +5,7 @@ import "./interface/IAave.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/Pausable.sol";
 import "./library/SafeMath.sol";
-import "./DTokenController.sol";
+import "./interface/IDTokenController.sol";
 
 contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
@@ -117,7 +117,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
-        address _dToken = DTokenController(dTokenController).getdToken(
+        address _dToken = IDTokenController(dTokenController).getdToken(
             _underlyingToken
         );
 

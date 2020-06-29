@@ -1,6 +1,6 @@
 pragma solidity 0.5.12;
 
-import "./DTokenController.sol";
+import "./interface/IDTokenController.sol";
 import "./library/ReentrancyGuard.sol";
 import "./interface/ICompound.sol";
 import "./library/ERC20SafeTransfer.sol";
@@ -139,7 +139,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      */
     function approve(address _underlyingToken) external auth {
         address _cToken = cTokens[_underlyingToken];
-        address _dToken = DTokenController(dTokenController).getdToken(
+        address _dToken = IDTokenController(dTokenController).getdToken(
             _underlyingToken
         );
 
