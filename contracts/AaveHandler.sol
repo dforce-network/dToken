@@ -11,7 +11,6 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
 
     bool private initialized; // Flags for initializing data
-    uint256 internal BASE;
 
     address public dTokenController;
     address public aaveLendingPool;
@@ -44,7 +43,6 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     ) public {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
-        BASE = 1e18;
         dTokenController = _dTokenController;
         notEntered = true;
         aaveLendingPool = _lendingPool;

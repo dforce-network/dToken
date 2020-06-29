@@ -11,7 +11,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
 
     bool private initialized; // Flags for initializing data
-    uint256 internal BASE;
+    uint256 constant BASE = 10**18;
     address public dTokenController; // dToken mapping contract
 
     struct InterestDetails {
@@ -47,7 +47,6 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         owner = msg.sender;
         dTokenController = _dTokenController;
         notEntered = true;
-        BASE = 1e18;
         initialized = true;
     }
 
