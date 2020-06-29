@@ -2,10 +2,10 @@ pragma solidity 0.5.12;
 
 import "./library/DSAuth.sol";
 
-contract dTokenAddresses is DSAuth {
+contract DTokenController is DSAuth {
     bool private initialized; // Flags for initializing data
 
-    mapping(address => address) internal dTokens;
+    mapping(address => address) internal dTokenController;
 
     event NewMappingdToken(
         address indexed token,
@@ -44,10 +44,10 @@ contract dTokenAddresses is DSAuth {
         internal
     {
         require(
-            dTokens[_token] == address(0x0),
+            dTokenController[_token] == address(0x0),
             "_setdTokenRelation: Has set!"
         );
-        dTokens[_token] = _mappingdToken;
+        dTokenController[_token] = _mappingdToken;
         emit NewMappingdToken(_token, _mappingdToken);
     }
 
@@ -59,14 +59,14 @@ contract dTokenAddresses is DSAuth {
         auth
     {
         require(
-            dTokens[_token] != address(0x0),
+            dTokenController[_token] != address(0x0),
             "updatedTokenRelation: token does not exist!"
         );
-        dTokens[_token] = _mappingdToken;
+        dTokenController[_token] = _mappingdToken;
         emit NewMappingdToken(_token, _mappingdToken);
     }
 
     function getdToken(address _token) external view returns (address) {
-        return dTokens[_token];
+        return dTokenController[_token];
     }
 }

@@ -3,7 +3,7 @@ const LendingPoolCore = artifacts.require("AaveLendingPoolCoreMock");
 const LendPool = artifacts.require("AaveLendPoolMock");
 const aTokenMock = artifacts.require("aTokenMock");
 const AaveHandler = artifacts.require("AaveHandler");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 const Dispatcher = artifacts.require("Dispatcher");
 const DToken = artifacts.require("DToken");
 
@@ -14,7 +14,7 @@ describe("Aave handler contract", function () {
   let lendingPoolCore;
   let lendingPool;
   let aaveHandler;
-  let dTokenMappingContract;
+  let dTokenController;
 
   before(async function () {
     // Gets accounts
@@ -32,7 +32,7 @@ describe("Aave handler contract", function () {
     );
 
     // Deploys dToken mapping contract
-    dTokenMappingContract = await dTokenAddresses.new();
+    dTokenController = await DTokenController.new();
 
     // Deploys Aave system
     lendingPoolCore = await LendingPoolCore.new();
@@ -45,7 +45,7 @@ describe("Aave handler contract", function () {
     await lendingPoolCore.setReserveATokenAddress(usdc.address, aUSDC.address);
     lendingPool = await LendPool.new(lendingPoolCore.address);
     aaveHandler = await AaveHandler.new(
-      dTokenMappingContract.address,
+      dTokenController.address,
       lendingPool.address,
       lendingPoolCore.address
     );
@@ -83,7 +83,7 @@ describe("Aave handler contract", function () {
         await aaveHandler.tokenIsEnabled(usdc.address)
       );
 
-      await dTokenMappingContract.setdTokensRelation(
+      await dTokenController.setdTokensRelation(
         [usdc.address],
         [dUSDC.address]
       );

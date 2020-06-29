@@ -1,13 +1,13 @@
 const truffleAssert = require("truffle-assertions");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 
 const MOCK_TOKEN = "0x0000000000000000000000000000000000000001";
 const MOCK_DTOKEN = "0x0000000000000000000000000000000000000002";
 const MOCK_DTOKEN_NEW = "0x0000000000000000000000000000000000000003";
 const UNKNOWN_TOKEN = "0x0000000000000000000000000000000000000004";
 
-describe("dTokenAddresses Contract", function () {
-  let dtoken_addresses;
+describe("DTokenController Contract", function () {
+  let dtoken_controller;
   let owner, account1, account2, account3, account4;
 
   before(async function () {
@@ -21,7 +21,7 @@ describe("dTokenAddresses Contract", function () {
   });
 
   async function resetContracts(handler_num, proportions) {
-    dtoken_addresses = await dTokenAddresses.new();
+    dtoken_controller = await DTokenController.new();
   }
 
   describe("Deployment", function () {
@@ -29,74 +29,74 @@ describe("dTokenAddresses Contract", function () {
       await resetContracts();
 
       await truffleAssert.reverts(
-        dtoken_addresses.initialize(),
+        dtoken_controller.initialize(),
         "initialize: Already initialized!"
       );
     });
   });
 
   describe("setdTokensRelation", function () {
-    it("Should allow only owner to set dTokens relation", async function () {
+    it("Should allow only owner to set dTokenController relation", async function () {
       let tokens = [MOCK_TOKEN];
-      let dTokens = [MOCK_DTOKEN];
-      await dtoken_addresses.setdTokensRelation(tokens, dTokens);
+      let dTokenController = [MOCK_DTOKEN];
+      await dtoken_controller.setdTokensRelation(tokens, dTokenController);
 
       await truffleAssert.reverts(
-        dtoken_addresses.setdTokensRelation(tokens, dTokens, {
+        dtoken_controller.setdTokensRelation(tokens, dTokenController, {
           from: account1,
         }),
         "ds-auth-unauthorized"
       );
     });
 
-    it("Should not set dTokens relation with mismatched length mappings", async function () {
+    it("Should not set dTokenController relation with mismatched length mappings", async function () {
       let tokens = [MOCK_TOKEN];
-      let dTokens = [];
+      let dTokenController = [];
 
       await truffleAssert.reverts(
-        dtoken_addresses.setdTokensRelation(tokens, dTokens),
+        dtoken_controller.setdTokensRelation(tokens, dTokenController),
         "setdTokensRelation: Array length do not match!"
       );
     });
 
-    it("Should not set dTokens relation which has been set", async function () {
+    it("Should not set dTokenController relation which has been set", async function () {
       let tokens = [MOCK_TOKEN];
-      let dTokens = [MOCK_DTOKEN];
+      let dTokenController = [MOCK_DTOKEN];
 
       await truffleAssert.reverts(
-        dtoken_addresses.setdTokensRelation(tokens, dTokens),
+        dtoken_controller.setdTokensRelation(tokens, dTokenController),
         "_setdTokenRelation: Has set!"
       );
     });
   });
 
   describe("updatedTokenRelation", function () {
-    it("Should allow only owner to update dTokens relation", async function () {
-      await dtoken_addresses.updatedTokenRelation(MOCK_TOKEN, MOCK_DTOKEN_NEW);
+    it("Should allow only owner to update dTokenController relation", async function () {
+      await dtoken_controller.updatedTokenRelation(MOCK_TOKEN, MOCK_DTOKEN_NEW);
 
       await truffleAssert.reverts(
-        dtoken_addresses.updatedTokenRelation(MOCK_TOKEN, MOCK_DTOKEN_NEW, {
+        dtoken_controller.updatedTokenRelation(MOCK_TOKEN, MOCK_DTOKEN_NEW, {
           from: account1,
         }),
         "ds-auth-unauthorized"
       );
     });
 
-    it("Should not update dTokens relation with unknown token", async function () {
+    it("Should not update dTokenController relation with unknown token", async function () {
       await truffleAssert.reverts(
-        dtoken_addresses.updatedTokenRelation(UNKNOWN_TOKEN, MOCK_DTOKEN),
+        dtoken_controller.updatedTokenRelation(UNKNOWN_TOKEN, MOCK_DTOKEN),
         "updatedTokenRelation: token does not exist!"
       );
     });
   });
 
   describe("getdToken", function () {
-    it("Should get dTokens relation and 0 by default", async function () {
+    it("Should get dTokenController relation and 0 by default", async function () {
       assert.equal(
         MOCK_DTOKEN_NEW,
-        await dtoken_addresses.getdToken(MOCK_TOKEN)
+        await dtoken_controller.getdToken(MOCK_TOKEN)
       );
-      assert.equal(0, await dtoken_addresses.getdToken(UNKNOWN_TOKEN));
+      assert.equal(0, await dtoken_controller.getdToken(UNKNOWN_TOKEN));
     });
   });
 });

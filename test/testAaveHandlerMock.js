@@ -1,5 +1,5 @@
 const FiatToken = artifacts.require("FiatTokenV1");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 const LendingPoolCore = artifacts.require("AaveLendingPoolCoreMock");
 const LendPool = artifacts.require("AaveLendPoolMock");
 const aTokenMock = artifacts.require("aTokenMock");
@@ -14,7 +14,7 @@ describe("AaveHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC, aUSDC;
   let handler;
-  let dtoken_addresses;
+  let dtoken_controller;
   let mock_dtoken = "0x0000000000000000000000000000000000000001";
 
   before(async function () {
@@ -28,7 +28,7 @@ describe("AaveHandlerMock contract", function () {
   });
 
   async function resetContracts() {
-    dtoken_addresses = await dTokenAddresses.new();
+    dtoken_controller = await DTokenController.new();
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
     });
@@ -48,14 +48,14 @@ describe("AaveHandlerMock contract", function () {
     lending_pool = await LendPool.new(lending_pool_core.address);
 
     handler = await AaveHandler.new(
-      dtoken_addresses.address,
+      dtoken_controller.address,
       lending_pool.address,
       lending_pool_core.address
     );
 
     await handler.approve(USDC.address);
 
-    await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);
+    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
     await handler.enableTokens([USDC.address]);
   }
 
@@ -65,7 +65,7 @@ describe("AaveHandlerMock contract", function () {
 
       await truffleAssert.reverts(
         handler.initialize(
-          dtoken_addresses.address,
+          dtoken_controller.address,
           lending_pool.address,
           lending_pool_core.address,
           {
@@ -78,8 +78,8 @@ describe("AaveHandlerMock contract", function () {
   });
 
   describe("setdTokens", function () {
-    it("Should only allow auth to set dTokens", async function () {
-      let new_dtoken_addresses = await dTokenAddresses.new();
+    it("Should only allow auth to set dTokenController", async function () {
+      let new_dtoken_addresses = await DTokenController.new();
       await handler.setdTokens(new_dtoken_addresses.address);
 
       await truffleAssert.reverts(
@@ -90,9 +90,9 @@ describe("AaveHandlerMock contract", function () {
       );
     });
 
-    it("Should not allow set dTokens with the same address", async function () {
+    it("Should not allow set dTokenController with the same address", async function () {
       await truffleAssert.reverts(
-        handler.setdTokens(await handler.dTokens()),
+        handler.setdTokens(await handler.dTokenController()),
         "setdTokens: The same dToken mapping contract address!"
       );
     });

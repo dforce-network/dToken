@@ -1,6 +1,6 @@
 const InternalHandler = artifacts.require("InternalHandler");
 const FiatToken = artifacts.require("FiatTokenV1");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
@@ -9,7 +9,7 @@ describe("InternalHandler contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC;
   let handler;
-  let dtoken_addresses;
+  let dtoken_controller;
   let mock_dtoken = "0x0000000000000000000000000000000000000001";
 
   before(async function () {
@@ -23,8 +23,8 @@ describe("InternalHandler contract", function () {
   });
 
   async function resetContracts() {
-    dtoken_addresses = await dTokenAddresses.new();
-    handler = await InternalHandler.new(dtoken_addresses.address);
+    dtoken_controller = await DTokenController.new();
+    handler = await InternalHandler.new(dtoken_controller.address);
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
     });
@@ -32,7 +32,7 @@ describe("InternalHandler contract", function () {
       from: owner,
     });
 
-    await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);
+    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
     await handler.enableTokens([USDC.address]);
   }
 
@@ -41,7 +41,7 @@ describe("InternalHandler contract", function () {
       await resetContracts();
 
       await truffleAssert.reverts(
-        handler.initialize(dtoken_addresses.address, {
+        handler.initialize(dtoken_controller.address, {
           from: owner,
         }),
         "initialize: Already initialized!"
@@ -50,8 +50,8 @@ describe("InternalHandler contract", function () {
   });
 
   describe("setdTokens", function () {
-    it("Should only allow auth to set dTokens", async function () {
-      let new_dtoken_addresses = await dTokenAddresses.new();
+    it("Should only allow auth to set dTokenController", async function () {
+      let new_dtoken_addresses = await DTokenController.new();
       await handler.setdTokens(new_dtoken_addresses.address);
 
       await truffleAssert.reverts(
@@ -62,9 +62,9 @@ describe("InternalHandler contract", function () {
       );
     });
 
-    it("Should not allow set dTokens with the same address", async function () {
+    it("Should not allow set dTokenController with the same address", async function () {
       await truffleAssert.reverts(
-        handler.setdTokens(await handler.dTokens()),
+        handler.setdTokens(await handler.dTokenController()),
         "setdTokens: The same dToken mapping contract address!"
       );
     });

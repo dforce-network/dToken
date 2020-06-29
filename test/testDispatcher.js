@@ -2,7 +2,7 @@ const truffleAssert = require("truffle-assertions");
 const FiatToken = artifacts.require("FiatTokenV1");
 const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 
 const mock_dtoken = "0x0000000000000000000000000000000000000001";
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
@@ -13,7 +13,7 @@ describe("Dispatcher Contract", function () {
   let dispatcher;
   let handlers;
   let handler_addresses;
-  let dtoken_addresses;
+  let dtoken_controller;
 
   function assert_handlers_equal(
     addresses1,
@@ -44,13 +44,13 @@ describe("Dispatcher Contract", function () {
       from: owner,
     });
 
-    dtoken_addresses = await dTokenAddresses.new();
-    await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);
+    dtoken_controller = await DTokenController.new();
+    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
 
     handlers = new Array();
     handler_addresses = new Array();
     for (i = 0; i < handler_num; i++) {
-      let h = await InternalHandler.new(dtoken_addresses.address);
+      let h = await InternalHandler.new(dtoken_controller.address);
       await h.enableTokens([USDC.address]);
       await USDC.allocateTo(h.address, 1000e6);
 
@@ -155,14 +155,14 @@ describe("Dispatcher Contract", function () {
 
     it("Should only allow auth to add handler", async function () {
       let new_handlers = [
-        (await InternalHandler.new(dtoken_addresses.address)).address,
+        (await InternalHandler.new(dtoken_controller.address)).address,
       ];
       await dispatcher.addHandler(new_handlers);
 
       //TODO: Check new handlers are retrievable
 
       new_handlers = [
-        (await InternalHandler.new(dtoken_addresses.address)).address,
+        (await InternalHandler.new(dtoken_controller.address)).address,
       ];
       await truffleAssert.reverts(
         dispatcher.addHandler(new_handlers, {from: account1}),

@@ -5,7 +5,7 @@ import "./interface/IAave.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/Pausable.sol";
 import "./library/SafeMath.sol";
-import "./dTokenAddresses.sol";
+import "./DTokenController.sol";
 
 contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
@@ -13,7 +13,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     bool private initialized; // Flags for initializing data
     uint256 internal BASE;
 
-    address public dTokens;
+    address public dTokenController;
     address public aaveLendingPool;
     address public aaveLendingPoolCore;
 
@@ -28,24 +28,24 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     event EnableToken(address indexed underlyingToken);
 
     constructor(
-        address _dTokens,
+        address _dTokenController,
         address _lendingPool,
         address _lendingPoolCore
     ) public {
-        initialize(_dTokens, _lendingPool, _lendingPoolCore);
+        initialize(_dTokenController, _lendingPool, _lendingPoolCore);
     }
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
     function initialize(
-        address _dTokens,
+        address _dTokenController,
         address _lendingPool,
         address _lendingPoolCore
     ) public {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
         BASE = 1e18;
-        dTokens = _dTokens;
+        dTokenController = _dTokenController;
         notEntered = true;
         aaveLendingPool = _lendingPool;
         aaveLendingPoolCore = _lendingPoolCore;
@@ -54,16 +54,16 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
     /**
      * @dev Update dToken mapping contract.
-     * @param _newdTokens The new dToken mapping contact.
+     * @param _newDTokenController The new dToken mapping contact.
      */
-    function setdTokens(address _newdTokens) external auth {
+    function setdTokens(address _newDTokenController) external auth {
         require(
-            _newdTokens != dTokens,
+            _newDTokenController != dTokenController,
             "setdTokens: The same dToken mapping contract address!"
         );
-        address _originaldTokens = dTokens;
-        dTokens = _newdTokens;
-        emit NewdTokenAddresses(_originaldTokens, _newdTokens);
+        address _originaldTokens = dTokenController;
+        dTokenController = _newDTokenController;
+        emit NewdTokenAddresses(_originaldTokens, _newDTokenController);
     }
 
     /**
@@ -117,7 +117,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
-        address _dToken = dTokenAddresses(dTokens).getdToken(_underlyingToken);
+        address _dToken = DTokenController(dTokenController).getdToken(
+            _underlyingToken
+        );
 
         if (
             IERC20(_underlyingToken).allowance(

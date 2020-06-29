@@ -5,7 +5,7 @@ const CTokenMock = artifacts.require("CTokenMock");
 const CompoundHandler = artifacts.require("CompoundHandler");
 const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 const DToken = artifacts.require("DToken");
 const DSGuard = artifacts.require("DSGuard");
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
@@ -29,7 +29,7 @@ describe("DToken Contract Integration", function () {
   let USDC, USDT;
   let ds_guard;
   let dispatcher;
-  let dtoken_addresses;
+  let dtoken_controller;
   let internal_handler, compound_handler, aave_handler;
   let dUSDC, dUSDT;
   let cUSDT, cUSDC;
@@ -52,15 +52,15 @@ describe("DToken Contract Integration", function () {
 
     USDT = await TetherToken.new("0", "USDT", "USDT", 6);
 
-    dtoken_addresses = await dTokenAddresses.new();
+    dtoken_controller = await DTokenController.new();
     ds_guard = await DSGuard.new();
 
-    internal_handler = await InternalHandler.new(dtoken_addresses.address);
+    internal_handler = await InternalHandler.new(dtoken_controller.address);
 
     cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
     cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
-    compound_handler = await CompoundHandler.new(dtoken_addresses.address);
+    compound_handler = await CompoundHandler.new(dtoken_controller.address);
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]
@@ -91,7 +91,7 @@ describe("DToken Contract Integration", function () {
     lending_pool = await LendPool.new(lending_pool_core.address);
 
     aave_handler = await AaveHandler.new(
-      dtoken_addresses.address,
+      dtoken_controller.address,
       lending_pool.address,
       lending_pool_core.address
     );
@@ -111,7 +111,7 @@ describe("DToken Contract Integration", function () {
       dispatcher.address
     );
 
-    await dtoken_addresses.setdTokensRelation(
+    await dtoken_controller.setdTokensRelation(
       [USDC.address, USDT.address],
       [dUSDC.address, dUSDT.address]
     );
@@ -1326,7 +1326,7 @@ describe("DToken Contract Integration", function () {
       assert.equal(await dUSDT.paused(), true, "dUSDT should be paused");
     });
 
-    it("Case 73: When pause the dTokens, mint-burn-redeem will fail", async function () {
+    it("Case 73: When pause the dTokenController, mint-burn-redeem will fail", async function () {
       let mint_amount = new BN(10 ** 9);
 
       // when paused, mint will fail
@@ -1346,7 +1346,7 @@ describe("DToken Contract Integration", function () {
       );
     });
 
-    it("Case 74: When pause the dTokens, transfer dToken will fail", async function () {
+    it("Case 74: When pause the dTokenController, transfer dToken will fail", async function () {
       await truffleAssert.reverts(
         dUSDC.transfer(account2, "100", {from: account1}),
         "revert whenNotPaused: paused"

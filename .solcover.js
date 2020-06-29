@@ -10,8 +10,8 @@ module.exports = {
     "MoneyMarketHandler.sol",
   ],
 
-  // mocha: {
-  //   grep: "(Skipped in coverage)", // We have some cases need to be skipped
-  //   invert: true, // Run the grep's inverse set.
-  // },
+  mocha: {
+    grep: "(Skipped in coverage)", // We have some cases need to be skipped
+    invert: true, // Run the grep's inverse set.
+  },
 };

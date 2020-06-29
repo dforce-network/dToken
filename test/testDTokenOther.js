@@ -5,7 +5,7 @@ const CTokenMock = artifacts.require("CTokenMock");
 const CompoundHandler = artifacts.require("CompoundHandler");
 const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 const DToken = artifacts.require("DToken");
 const DSGuard = artifacts.require("DSGuard");
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
@@ -28,7 +28,7 @@ describe("DToken Contract Integration", function () {
   let USDC, USDT, DF;
   let ds_guard;
   let dispatcher;
-  let dtoken_addresses;
+  let dtoken_controller;
   let internal_handler, compound_handler, aave_handler;
   let dUSDC, dUSDT;
   let cUSDT, cUSDC;
@@ -53,15 +53,15 @@ describe("DToken Contract Integration", function () {
 
     DF = await TetherToken.new("0", "DF", "DF", 18);
 
-    dtoken_addresses = await dTokenAddresses.new();
+    dtoken_controller = await DTokenController.new();
     ds_guard = await DSGuard.new();
 
-    internal_handler = await InternalHandler.new(dtoken_addresses.address);
+    internal_handler = await InternalHandler.new(dtoken_controller.address);
 
     cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
     cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
-    compound_handler = await CompoundHandler.new(dtoken_addresses.address);
+    compound_handler = await CompoundHandler.new(dtoken_controller.address);
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]
@@ -92,7 +92,7 @@ describe("DToken Contract Integration", function () {
     lending_pool = await LendPool.new(lending_pool_core.address);
 
     aave_handler = await AaveHandler.new(
-      dtoken_addresses.address,
+      dtoken_controller.address,
       lending_pool.address,
       lending_pool_core.address
     );
@@ -112,7 +112,7 @@ describe("DToken Contract Integration", function () {
       dispatcher.address
     );
 
-    await dtoken_addresses.setdTokensRelation(
+    await dtoken_controller.setdTokensRelation(
       [USDC.address, USDT.address],
       [dUSDC.address, dUSDT.address]
     );

@@ -1,6 +1,6 @@
 pragma solidity 0.5.12;
 
-import "./dTokenAddresses.sol";
+import "./DTokenController.sol";
 import "./library/ReentrancyGuard.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/Pausable.sol";
@@ -9,7 +9,7 @@ import "./library/SafeMath.sol";
 contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     using SafeMath for uint256;
     bool private initialized; // Flags for initializing data
-    address public dTokens; // dToken mapping contract
+    address public dTokenController; // dToken mapping contract
 
     mapping(address => bool) private tokensEnable; // Supports token or not
 
@@ -20,32 +20,32 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
-    constructor(address _dTokens) public {
-        initialize(_dTokens);
+    constructor(address _dTokenController) public {
+        initialize(_dTokenController);
     }
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
-    function initialize(address _dTokens) public {
+    function initialize(address _dTokenController) public {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
-        dTokens = _dTokens;
+        dTokenController = _dTokenController;
         notEntered = true;
         initialized = true;
     }
 
     /**
      * @dev Update dToken mapping contract.
-     * @param _newdTokens The new dToken mapping contact.
+     * @param _newDTokenController The new dToken mapping contact.
      */
-    function setdTokens(address _newdTokens) external auth {
+    function setdTokens(address _newDTokenController) external auth {
         require(
-            _newdTokens != dTokens,
+            _newDTokenController != dTokenController,
             "setdTokens: The same dToken mapping contract address!"
         );
-        address _originaldTokens = dTokens;
-        dTokens = _newdTokens;
-        emit NewdTokenAddresses(_originaldTokens, _newdTokens);
+        address _originaldTokens = dTokenController;
+        dTokenController = _newDTokenController;
+        emit NewdTokenAddresses(_originaldTokens, _newDTokenController);
     }
 
     /**
@@ -91,7 +91,9 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
-        address _dToken = dTokenAddresses(dTokens).getdToken(_underlyingToken);
+        address _dToken = DTokenController(dTokenController).getdToken(
+            _underlyingToken
+        );
         if (
             IERC20(_underlyingToken).allowance(address(this), _dToken) !=
             uint256(-1)

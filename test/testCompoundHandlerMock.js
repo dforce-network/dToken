@@ -2,7 +2,7 @@ const CompoundHandler = artifacts.require("CompoundHandler");
 const TestHandlerMock = artifacts.require("TestHandlerMock");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
-const dTokenAddresses = artifacts.require("dTokenAddresses");
+const DTokenController = artifacts.require("DTokenController");
 const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
@@ -13,7 +13,7 @@ describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC, cUSDC;
   let handler, test_handler;
-  let dtoken_addresses;
+  let dtoken_controller;
   let mock_dtoken = "0x0000000000000000000000000000000000000001";
 
   before(async function () {
@@ -27,8 +27,8 @@ describe("CompoundHandlerMock contract", function () {
   });
 
   async function resetContracts() {
-    dtoken_addresses = await dTokenAddresses.new();
-    handler = await CompoundHandler.new(dtoken_addresses.address);
+    dtoken_controller = await DTokenController.new();
+    handler = await CompoundHandler.new(dtoken_controller.address);
     test_handler = await TestHandlerMock.new();
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
@@ -39,7 +39,7 @@ describe("CompoundHandlerMock contract", function () {
 
     await handler.approve(USDC.address);
 
-    await dtoken_addresses.setdTokensRelation([USDC.address], [mock_dtoken]);
+    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
     await handler.enableTokens([USDC.address]);
   }
 
@@ -48,7 +48,7 @@ describe("CompoundHandlerMock contract", function () {
       await resetContracts();
 
       await truffleAssert.reverts(
-        handler.initialize(dtoken_addresses.address, {
+        handler.initialize(dtoken_controller.address, {
           from: owner,
         }),
         "initialize: Already initialized!"
@@ -57,8 +57,8 @@ describe("CompoundHandlerMock contract", function () {
   });
 
   describe("setdTokens", function () {
-    it("Should only allow auth to set dTokens", async function () {
-      let new_dtoken_addresses = await dTokenAddresses.new();
+    it("Should only allow auth to set dTokenController", async function () {
+      let new_dtoken_addresses = await DTokenController.new();
       await handler.setdTokens(new_dtoken_addresses.address);
 
       await truffleAssert.reverts(
@@ -69,9 +69,9 @@ describe("CompoundHandlerMock contract", function () {
       );
     });
 
-    it("Should not allow set dTokens with the same address", async function () {
+    it("Should not allow set dTokenController with the same address", async function () {
       await truffleAssert.reverts(
-        handler.setdTokens(await handler.dTokens()),
+        handler.setdTokens(await handler.dTokenController()),
         "setdTokens: The same dToken mapping contract address!"
       );
     });
@@ -349,7 +349,7 @@ describe("CompoundHandlerMock contract", function () {
       });
       await handler.deposit(USDC.address, 1000e6);
       await test_handler.getRealBalance(handler.address, USDC.address);
-      
+
       assert.equal((await test_handler.returnValue()).toString(), 1000e6);
     });
   });
@@ -365,7 +365,7 @@ describe("CompoundHandlerMock contract", function () {
       });
       await handler.deposit(USDC.address, 1000e6);
       await test_handler.getRealLiquidity(handler.address, USDC.address);
-      
+
       assert.equal((await test_handler.returnValue()).toString(), 1000e6);
     });
   });

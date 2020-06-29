@@ -4,7 +4,7 @@ import "./interface/ILendFMe.sol";
 import "./library/ERC20SafeTransfer.sol";
 import "./library/DSAuth.sol";
 import "./library/SafeMath.sol";
-import "./dTokenAddresses.sol";
+import "./DTokenController.sol";
 import "./library/Pausable.sol";
 
 contract Handler is ERC20SafeTransfer, Pausable {
@@ -12,7 +12,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
 
     bool private initialized; // Flags for initializing data
     address public targetAddr; // market address
-    address public dTokens; // dToken address
+    address public dTokenController; // dToken address
 
     mapping(address => bool) private tokensEnable;
     mapping(address => uint256) public interestDetails;
@@ -24,17 +24,17 @@ contract Handler is ERC20SafeTransfer, Pausable {
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
-    constructor(address _targetAddr, address _dTokens) public {
-        initialize(_targetAddr, _dTokens);
+    constructor(address _targetAddr, address _dTokenController) public {
+        initialize(_targetAddr, _dTokenController);
     }
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
-    function initialize(address _targetAddr, address _dTokens) public {
+    function initialize(address _targetAddr, address _dTokenController) public {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
         targetAddr = _targetAddr;
-        dTokens = _dTokens;
+        dTokenController = _dTokenController;
         initialized = true;
     }
 
@@ -83,7 +83,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @param _token Token address to approve.
      */
     function approve(address _token) public {
-        address _dToken = dTokenAddresses(dTokens).getdToken(_token);
+        address _dToken = DTokenController(dTokenController).getdToken(_token);
         if (IERC20(_token).allowance(address(this), targetAddr) != uint256(-1))
             require(
                 doApprove(_token, targetAddr, uint256(-1)),
