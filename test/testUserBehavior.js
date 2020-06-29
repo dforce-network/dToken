@@ -41,7 +41,7 @@ describe("DToken Contract Integration", function () {
   let accounts = [];
 
   let tokens = [];
-  let dTokenController = [];
+  let dtokens = [];
   let atokens = [];
   let ctokens = [];
 
@@ -165,7 +165,7 @@ describe("DToken Contract Integration", function () {
     }
 
     tokens = [USDC, USDT];
-    dTokenController = [dUSDC, dUSDT];
+    dtokens = [dUSDC, dUSDT];
     atokens = [aUSDC, aUSDT];
     ctokens = [cUSDC, cUSDT];
     user_behavior = [
@@ -424,15 +424,15 @@ describe("DToken Contract Integration", function () {
         var account;
         var balance;
         var amount;
-        for (let index = 0; index < dTokenController.length; index++) {
+        for (let index = 0; index < dtokens.length; index++) {
           account = accounts[randomNum(0, accounts.length - 1)];
-          balance = (await dTokenController[index].balanceOf(account))
+          balance = (await dtokens[index].balanceOf(account))
             .toLocaleString()
             .replace(/,/g, "");
           amount = new BN(
             randomNum(0, balance).toLocaleString().replace(/,/g, "")
           );
-          await dTokenController[index].transfer(
+          await dtokens[index].transfer(
             accounts[randomNum(0, accounts.length - 1)],
             amount,
             {from: account}
@@ -464,7 +464,7 @@ describe("DToken Contract Integration", function () {
             var dtoken_admin_index = randomNum(0, 1);
             switch (dtoken_admin_index) {
               case 0:
-                var handler_list = await dTokenController[index].getHandler();
+                var handler_list = await dtokens[index].getHandler();
                 var withdraw_handlers = createRandomData(handler_list);
                 var liquidity;
                 var amount;
@@ -523,9 +523,7 @@ describe("DToken Contract Integration", function () {
                     .toLocaleString()
                     .replace(/,/g, "")
                 );
-                console.log(
-                  (await dTokenController[index].symbol()) + ":rebalance"
-                );
+                console.log((await dtokens[index].symbol()) + ":rebalance");
                 console.log("withdraw_handlers:" + withdraw_handlers);
                 console.log("withdraw_amounts:" + withdraw_amounts);
                 console.log("deposit_handlers:" + deposit_handlers);
@@ -546,9 +544,7 @@ describe("DToken Contract Integration", function () {
                 )
                   .toLocaleString()
                   .replace(/,/g, "");
-                var old_fee = (
-                  await dTokenController[index].originationFee(fee_index)
-                )
+                var old_fee = (await dtokens[index].originationFee(fee_index))
                   .toLocaleString()
                   .replace(/,/g, "");
                 if (fee != old_fee) {
@@ -557,7 +553,7 @@ describe("DToken Contract Integration", function () {
                     new BN(fee)
                   );
                   console.log(
-                    (await dTokenController[index].symbol()) +
+                    (await dtokens[index].symbol()) +
                       ":updateOriginationFee old fee : " +
                       old_fee +
                       " fee : " +
@@ -589,7 +585,7 @@ describe("DToken Contract Integration", function () {
                 console.log("resetHandlers:");
                 break;
               case 1:
-                handler_list = await dTokenController[index].getHandler();
+                handler_list = await dtokens[index].getHandler();
                 handler_list = createRandomData(
                   handler_list,
                   handler_list.length,
@@ -636,18 +632,14 @@ describe("DToken Contract Integration", function () {
               .replace(/,/g, "");
             break;
           case 1:
-            balance = (await dTokenController[dtoken_index].balanceOf(account))
+            balance = (await dtokens[dtoken_index].balanceOf(account))
               .toLocaleString()
               .replace(/,/g, "");
             break;
           case 2:
             balance = rmul(
-              await dTokenController[dtoken_index].getTokenBalance(account),
-              BASE.sub(
-                await dTokenController[dtoken_index].originationFee(
-                  "0x9dc29fac"
-                )
-              )
+              await dtokens[dtoken_index].getTokenBalance(account),
+              BASE.sub(await dtokens[dtoken_index].originationFee("0x9dc29fac"))
             )
               .toLocaleString()
               .replace(/,/g, "");
@@ -657,7 +649,7 @@ describe("DToken Contract Integration", function () {
           randomNum(0, balance).toLocaleString().replace(/,/g, "")
         );
         console.log(
-          `${await dTokenController[dtoken_index].symbol()} ${
+          `${await dtokens[dtoken_index].symbol()} ${
             user_behavior_name[user_behavior_index % 3]
           } :: balance : ${balance}   amount : ${amount}`
         );
@@ -666,43 +658,40 @@ describe("DToken Contract Integration", function () {
         await checkUserBehavior(
           user_behavior[user_behavior_index],
           [account, amount, {from: account}],
-          dTokenController[dtoken_index],
+          dtokens[dtoken_index],
           account
         );
       });
     }
 
     it("Empty the end test", async function () {
-      for (let i = 0; i < dTokenController.length; i++) {
+      for (let i = 0; i < dtokens.length; i++) {
         for (let j = 0; j < accounts.length; j++) {
-          var amount = await dTokenController[i].balanceOf(accounts[j]);
+          var amount = await dtokens[i].balanceOf(accounts[j]);
           if (amount.lte(new BN("0"))) continue;
-          if ((await dTokenController[i].getTotalBalance()).eq(new BN(0)))
-            continue;
-          await dTokenController[i].burn(accounts[j], amount, {
+          if ((await dtokens[i].getTotalBalance()).eq(new BN(0))) continue;
+          await dtokens[i].burn(accounts[j], amount, {
             from: accounts[j],
           });
 
           assert.equal(
-            (await dTokenController[i].balanceOf(accounts[j]))
+            (await dtokens[i].balanceOf(accounts[j]))
               .toLocaleString()
               .replace(/,/g, ""),
             new BN(0).toLocaleString().replace(/,/g, "")
           );
         }
-        // if ((await dTokenController[i].getTotalBalance()).eq(new BN(0)) && (await dTokenController[i].totalSupply()).gt(new BN(0)));
-        // assert.equal((await dTokenController[i].totalSupply()).toLocaleString().replace(/,/g, ""), new BN(0).toLocaleString().replace(/,/g, ""));
+        // if ((await dtokens[i].getTotalBalance()).eq(new BN(0)) && (await dtokens[i].totalSupply()).gt(new BN(0)));
+        // assert.equal((await dtokens[i].totalSupply()).toLocaleString().replace(/,/g, ""), new BN(0).toLocaleString().replace(/,/g, ""));
         console.log(
-          (await dTokenController[i].symbol()) +
+          (await dtokens[i].symbol()) +
             " totalSupply: " +
-            (await dTokenController[i].totalSupply())
-              .toLocaleString()
-              .replace(/,/g, "")
+            (await dtokens[i].totalSupply()).toLocaleString().replace(/,/g, "")
         );
         console.log(
-          (await dTokenController[i].symbol()) +
+          (await dtokens[i].symbol()) +
             " underlying balance: " +
-            (await dTokenController[i].getTotalBalance())
+            (await dtokens[i].getTotalBalance())
               .toLocaleString()
               .replace(/,/g, "")
         );
