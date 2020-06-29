@@ -8,39 +8,42 @@ Install buidler and plugins
 
 ```
 npm install
+mv .example.env .env
 ```
 
-Separately run the following commands to compile different versions of the contracts
+Run the following commands to compile all contracts:
 
 ```
-npx buidler compile --config buidler.config.4.js
 npx buidler compile
 ```
 
-To run the tests
+To run the tests:
 
 ```
 npx buidler test
 ```
 
-Run a local develop network with buidler EVM
+To deploy contracts, need to set basic config parameters in `.env`:
+
+```
+INFURA_APIKEY: Infura key.
+PRIVATE_KEY: Private key of deployer account.
+```
+
+Deploy contracts at the local:
+
+```
+truffle migrate
+```
+
+Deploy contracts at the testnet: Kovan.
+
+```
+truffle migrate --network kovan
+```
+
+Run a local develop network with buidler EVM:
 
 ```
 npx buidler node
 ```
-
-And then you can run the test case to get a gas report
-
-```
-npx buidler test --network localhost
-```
-
-Solidity code coverage plugin: `solidity-coverage`, install:
-
-`npm install --save-dev solidity-coverage`
-
-This plugin implements a coverage task
-
-`npx buidler coverage`
-
-For more information please check [Buidler's doc](https://buidler.dev/getting-started)

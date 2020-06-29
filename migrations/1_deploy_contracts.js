@@ -1,20 +1,22 @@
-var Migrations = artifacts.require("./Migrations.sol");
-var FiatToken = artifacts.require("FiatTokenV1.sol");
-var TetherToken = artifacts.require("TetherToken.sol");
-var CErc20 = artifacts.require("CErc20.sol");
-var AToken = artifacts.require("AToken.sol");
-var CompoundHandler = artifacts.require("CompoundHandler.sol");
-var AaveHandler = artifacts.require("AaveHandler.sol");
-var InternalHandler = artifacts.require("InternalHandler.sol");
-var Dispatcher = artifacts.require("Dispatcher.sol");
-var DTokenController = artifacts.require("DTokenController.sol");
-var DToken = artifacts.require("DToken.sol");
-var DSGuard = artifacts.require("DSGuard.sol");
-var LendingPoolCore = artifacts.require("LendingPoolCore.sol");
-var LendingPool = artifacts.require("LendingPool.sol");
-var Proxy = artifacts.require("DTokenProxy.sol");
+var FiatToken = artifacts.require("FiatTokenV1");
+var TetherToken = artifacts.require("TetherToken");
+var CTokenMock = artifacts.require("CTokenMock");
+var aTokenMock = artifacts.require("aTokenMock");
+var LendingPoolCoreMock = artifacts.require("AaveLendingPoolCoreMock");
+var LendPoolMock = artifacts.require("AaveLendPoolMock");
+var CompoundHandler = artifacts.require("CompoundHandler");
+var AaveHandler = artifacts.require("AaveHandler");
+var InternalHandler = artifacts.require("InternalHandler");
+var Dispatcher = artifacts.require("Dispatcher");
+var DTokenController = artifacts.require("DTokenController");
+var DToken = artifacts.require("DToken");
+var DSGuard = artifacts.require("DSGuard");
+var Proxy = artifacts.require("DTokenProxy");
 
-module.exports = async function (deployer) {
+var usdc, cUSDC, usdt, aUSDT, lendingPoolCore, lendingPool
+
+module.exports = async function (deployer, network, accounts) {
+  let owner = accounts[0];
   // Deploys Guard contract
   await deployer.deploy(DSGuard);
   let ds_guard = await DSGuard.deployed();
@@ -23,23 +25,46 @@ module.exports = async function (deployer) {
   let dToken_contract_library = await DTokenController.deployed();
   await dToken_contract_library.setAuthority(ds_guard.address);
 
-  // Compound USDC
-  let usdc = await FiatToken.at("0xb7a4F3E9097C08dA09517b5aB877F7a917224ede");
-  // Compound cUSDC
-  let cUSDC = await CErc20.at("0x4a92E71227D294F041BD82dd8f78591B75140d63");
-  // Aave USDT
-  let usdt = await TetherToken.at("0x13512979ade267ab5100878e2e0f485b568328a4");
-  // Aave aUSDT
-  let aUSDT = await AToken.at("0xA01bA9fB493b851F4Ac5093A324CB081A909C34B");
+  if (network != "development") {
+    // Compound USDC
+    usdc = await FiatToken.at("0xb7a4F3E9097C08dA09517b5aB877F7a917224ede");
+    // Compound cUSDC
+    cUSDC = await CTokenMock.at("0x4a92E71227D294F041BD82dd8f78591B75140d63");
+    // Aave USDT
+    usdt = await TetherToken.at("0x13512979ade267ab5100878e2e0f485b568328a4");
+    // Aave aUSDT
+    aUSDT = await aTokenMock.at("0xA01bA9fB493b851F4Ac5093A324CB081A909C34B");
+    // Aave lending pool core
+    lendingPoolCore = await LendingPoolCoreMock.at(
+      "0x95D1189Ed88B380E319dF73fF00E479fcc4CFa45"
+    );
+    // Aave lending pool
+    lendingPool = await LendPoolMock.at(
+      "0x580D4Fdc4BF8f9b5ae2fb9225D584fED4AD5375c"
+    );
+  } else {
+    await deployer.deploy(FiatToken, "USDC", "USDC", "USD", 6, owner, owner, owner);
+    usdc = await FiatToken.deployed();
 
-  // Aave lending pool core
-  let lendingPoolCore = await LendingPoolCore.at(
-    "0x95D1189Ed88B380E319dF73fF00E479fcc4CFa45"
-  );
-  // Aave lending pool
-  let lendingPool = await LendingPool.at(
-    "0x580D4Fdc4BF8f9b5ae2fb9225D584fED4AD5375c"
-  );
+    await deployer.deploy(CTokenMock, "cUSDC", "cUSDC", usdc.address);
+    cUSDC = await CTokenMock.deployed();
+
+    await deployer.deploy(TetherToken, "1000000000", "USDT", "USDT", 6);
+    usdt = await TetherToken.deployed();
+
+    await deployer.deploy(LendingPoolCoreMock);
+    lendingPoolCore = await LendingPoolCoreMock.deployed();
+
+    await deployer.deploy(LendPoolMock, lendingPoolCore.address);
+    lendingPool = await LendPoolMock.deployed();
+
+    await deployer.deploy(aTokenMock, "aUSDT", "aUSDT", usdt.address, lendingPoolCore.address);
+    aUSDT = await aTokenMock.deployed();
+    await lendingPoolCore.setReserveATokenAddress(
+      usdt.address,
+      aUSDT.address
+    );
+  }
 
   // Deploys Internal contract
   await deployer.deploy(InternalHandler, dToken_contract_library.address);
