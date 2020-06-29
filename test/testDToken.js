@@ -170,10 +170,10 @@ describe("DToken Contract", function () {
       );
     });
 
-    it("Should not set fee to more than 10%", async function () {
+    it("Should not set fee to more than 100%", async function () {
       await truffleAssert.reverts(
-        dUSDC.updateOriginationFee(BURN_SELECTOR, FEE.mul(new BN(1000))),
-        "updateOriginationFee: fee should be less than ten percent."
+        dUSDC.updateOriginationFee(BURN_SELECTOR, BASE),
+        "updateOriginationFee: incorrect fee."
       );
     });
 
@@ -989,13 +989,13 @@ describe("DToken Contract", function () {
       assert.equal(exchange_rate.toString(), expected.toString());
     });
 
-    it("Should get last exchange rate when there is no token in handlers", async function () {
+    it("Should get 0 when there is no token in handlers", async function () {
       // Mint some dtoken and mock some interest to make the exchange rate go up to 2
       await dUSDC.mint(account1, 1000e6, {from: account1});
       await USDC.allocateTo(handler_addresses[0], 1000e6);
       await dUSDC.burn(account1, 100e6, {from: account1});
 
-      let expected = BASE.mul(new BN(2));
+      let expected = 0;
 
       // Reset handlers, handler1 does not have any token yet so there would be no token
       await dispatcher.resetHandlers([handler_addresses[1]], [1000000]);

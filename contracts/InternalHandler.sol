@@ -38,14 +38,17 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Update dToken mapping contract.
      * @param _newDTokenController The new dToken mapping contact.
      */
-    function setdTokens(address _newDTokenController) external auth {
+    function setDTokenController(address _newDTokenController) external auth {
         require(
             _newDTokenController != dTokenController,
-            "setdTokens: The same dToken mapping contract address!"
+            "setDTokenController: The same dToken mapping contract address!"
         );
-        address _originaldTokens = dTokenController;
+        address _originalDTokenController = dTokenController;
         dTokenController = _newDTokenController;
-        emit NewdTokenAddresses(_originaldTokens, _newDTokenController);
+        emit NewdTokenAddresses(
+            _originalDTokenController,
+            _newDTokenController
+        );
     }
 
     /**
@@ -145,7 +148,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to check.
      */
     function tokenIsEnabled(address _underlyingToken)
-        public
+        external
         view
         returns (bool)
     {
@@ -169,7 +172,7 @@ contract InternalHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to get liquidity.
      */
     function getLiquidity(address _underlyingToken)
-        public
+        external
         view
         returns (uint256)
     {

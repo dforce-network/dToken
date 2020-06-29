@@ -104,10 +104,7 @@ contract Dispatcher is DSAuth {
                 _handlers[i] != address(0),
                 "setHandlers: handlerAddr contract address invalid"
             );
-            require(
-                !isHandlerActive[_handlers[i]],
-                "setHandlers: handler contract address already exists"
-            );
+
             _sum = _sum.add(_proportions[i]);
 
             handlers.push(_handlers[i]);
@@ -213,17 +210,12 @@ contract Dispatcher is DSAuth {
             "updateDefaultHandler: Old and new address cannot be the same."
         );
 
-        address[] memory _handlers = handlers;
-        for (uint256 i = 0; i < _handlers.length; i++) {
-            if (_oldDefaultHandler == _handlers[i]) {
-                _handlers[i] = _defaultHandler;
-                proportions[_defaultHandler] = proportions[_oldDefaultHandler];
-                isHandlerActive[_defaultHandler] = true;
-                delete proportions[_oldDefaultHandler];
-                delete isHandlerActive[_oldDefaultHandler];
-                break;
-            }
-        }
+        handlers[0] = _defaultHandler;
+        proportions[_defaultHandler] = proportions[_oldDefaultHandler];
+        isHandlerActive[_defaultHandler] = true;
+
+        delete proportions[_oldDefaultHandler];
+        delete isHandlerActive[_oldDefaultHandler];
 
         defaultHandler = _defaultHandler;
     }
@@ -233,7 +225,7 @@ contract Dispatcher is DSAuth {
     /***********************/
 
     /**
-     * @dev Query the current handler and the corresponding proportions.
+     * @dev Query the current handlers and the corresponding proportions.
      * @return Return two arrays, the current handlers,
      *         and the corresponding proportions.
      */
@@ -326,6 +318,7 @@ contract Dispatcher is DSAuth {
                 break;
             }
 
+            // Continue to check whether all handlers are unpaused
             if (_amount == 0) continue;
 
             if (i == _lastIndex) {

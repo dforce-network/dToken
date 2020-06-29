@@ -449,6 +449,8 @@ describe("DToken Contract Integration", function () {
         account1
       );
 
+      await USDC.allocateTo(internal_handler.address, 1000e6);
+
       diff = await calcDiff(
         dUSDC.mint,
         [account1, new BN(randomNum(10, 1000e6)), {from: account1}],

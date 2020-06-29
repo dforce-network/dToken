@@ -473,17 +473,11 @@ describe("DToken Contract Integration", function () {
       assert.equal(diff.dusdc_rate, 0);
     });
 
-    it("Case 23: Should not be able to set fee > 10%", async function () {
-      // Try to set fee to 10%, 1/10000 by default
+    it("Case 23: Should not be able to set fee >= 100%", async function () {
+      // Try to set fee to 100%, 1/10000 by default
       await truffleAssert.reverts(
-        dUSDC.updateOriginationFee(BURN_SELECTOR, FEE.mul(new BN(1000))),
-        "updateOriginationFee: fee should be less than ten percent."
-      );
-
-      // 20%
-      await truffleAssert.reverts(
-        dUSDC.updateOriginationFee(MINT_SELECTOR, FEE.mul(new BN(2000))),
-        "updateOriginationFee: fee should be less than ten percent."
+        dUSDC.updateOriginationFee(BURN_SELECTOR, FEE.mul(new BN(10000))),
+        "updateOriginationFee: incorrect fee."
       );
     });
   });
@@ -1708,7 +1702,7 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 92: Should execute normally and change the exchange rate", async function () {
-      let mint_amount = new BN(2 * 10 ** 9);
+      let mint_amount = new BN(100 * 10 ** 9);
       let burn_amount = new BN(10 ** 9);
       let redeem_amount = new BN(10 ** 9);
 
@@ -1745,7 +1739,7 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 94: Should execute normally and change the exchange rate", async function () {
-      let mint_amount = new BN(2 * 10 ** 9);
+      let mint_amount = new BN(3 * 10 ** 9);
       let burn_amount = new BN(10 ** 9);
       let redeem_amount = new BN(10 ** 9);
 

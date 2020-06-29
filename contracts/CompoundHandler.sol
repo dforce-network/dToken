@@ -54,14 +54,17 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Authorized function to update dToken controller contract.
      * @param _newDTokenController The new dToken controller contact.
      */
-    function setdTokens(address _newDTokenController) external auth {
+    function setDTokenController(address _newDTokenController) external auth {
         require(
             _newDTokenController != dTokenController,
-            "setdTokens: The same dToken mapping contract address!"
+            "setDTokenController: The same dToken mapping contract address!"
         );
-        address _originaldTokens = dTokenController;
+        address _originalDTokenController = dTokenController;
         dTokenController = _newDTokenController;
-        emit NewdTokenAddresses(_originaldTokens, _newDTokenController);
+        emit NewdTokenAddresses(
+            _originalDTokenController,
+            _newDTokenController
+        );
     }
 
     /**
@@ -128,12 +131,8 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         emit NewMappingcToken(_underlyingToken, _mappingcToken);
     }
 
-    // function rdivup(uint256 x, uint256 y) internal view returns (uint256 z) {
-    //     z = x.mul(BASE).add(y.sub(1)) / y;
-    // }
-
     /**
-     * @dev The _underlyingToken approves to market and dToken contracts.
+     * @dev Authorized function to approves market and dToken to transfer handler's underlying token.
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
@@ -251,9 +250,6 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
 
         // Redeem all or just the amount of underlying token
-        // uint256 _redeemAmount = _amount == uint256(-1)
-        //     ? ICompound(_cToken).balanceOf(address(this))
-        //     : rdivup(_amount, ICompound(_cToken).exchangeRateCurrent());
         if (_amount == uint256(-1)) {
             require(
                 ICompound(_cToken).redeem(
@@ -288,7 +284,7 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to check.
      */
     function tokenIsEnabled(address _underlyingToken)
-        public
+        external
         view
         returns (bool)
     {
@@ -322,23 +318,15 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to get liquidity.
      */
     function getLiquidity(address _underlyingToken)
-        public
+        external
         view
         returns (uint256)
     {
         address _cToken = cTokens[_underlyingToken];
         uint256 _underlyingBalance = getBalance(_underlyingToken);
-        if (_underlyingBalance == 0) {
-            return 0;
-        }
-
         uint256 _cash = ICompound(_cToken).getCash();
 
-        if (_underlyingBalance > _cash) {
-            return _cash;
-        }
-
-        return _underlyingBalance;
+        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }
 
     /**
@@ -357,22 +345,14 @@ contract CompoundHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to get liquidity.
      */
     function getRealLiquidity(address _underlyingToken)
-        public
+        external
         returns (uint256)
     {
         address _cToken = cTokens[_underlyingToken];
         uint256 _underlyingBalance = getRealBalance(_underlyingToken);
-        if (_underlyingBalance == 0) {
-            return 0;
-        }
-
         uint256 _cash = ICompound(_cToken).getCash();
 
-        if (_underlyingBalance > _cash) {
-            return _cash;
-        }
-
-        return _underlyingBalance;
+        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }
 
     /**

@@ -160,8 +160,8 @@ describe("DToken Contract Integration", function () {
     for (const account of accounts) {
       await USDC.allocateTo(account, 1000000e6);
       await USDT.allocateTo(account, 1000000e6);
-      USDC.approve(dUSDC.address, UINT256_MAX, { from: account });
-      USDT.approve(dUSDT.address, UINT256_MAX, { from: account });
+      USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
+      USDT.approve(dUSDT.address, UINT256_MAX, {from: account});
     }
 
     tokens = [USDC, USDT];
@@ -415,7 +415,7 @@ describe("DToken Contract Integration", function () {
       await dUSDT.updateOriginationFee(MINT_SELECTOR, FEE);
     });
 
-    var run_number = 1000;
+    var run_number = 300;
     condition = 0;
     while (condition < run_number) {
       condition++;
@@ -435,7 +435,7 @@ describe("DToken Contract Integration", function () {
           await dtokens[index].transfer(
             accounts[randomNum(0, accounts.length - 1)],
             amount,
-            { from: account }
+            {from: account}
           );
           await atokens[index].updateBalance(
             new BN(
@@ -564,7 +564,7 @@ describe("DToken Contract Integration", function () {
             }
           }
 
-          if (randomNum(0, 50) == 1) {
+          if (randomNum(0, 0) == 1) {
             console.log("\n");
             var handler_list = [];
             var args = [];
@@ -657,7 +657,7 @@ describe("DToken Contract Integration", function () {
 
         await checkUserBehavior(
           user_behavior[user_behavior_index],
-          [account, amount, { from: account }],
+          [account, amount, {from: account}],
           dtokens[dtoken_index],
           account
         );

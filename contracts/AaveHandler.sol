@@ -44,9 +44,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
         dTokenController = _dTokenController;
-        notEntered = true;
         aaveLendingPool = _lendingPool;
         aaveLendingPoolCore = _lendingPoolCore;
+        notEntered = true;
         initialized = true;
     }
 
@@ -54,14 +54,17 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Authorized function to update dToken controller contract.
      * @param _newDTokenController The new dToken controller contact.
      */
-    function setdTokens(address _newDTokenController) external auth {
+    function setDTokenController(address _newDTokenController) external auth {
         require(
             _newDTokenController != dTokenController,
-            "setdTokens: The same dToken mapping contract address!"
+            "setDTokenController: The same dToken mapping contract address!"
         );
-        address _originaldTokens = dTokenController;
+        address _originalDTokenController = dTokenController;
         dTokenController = _newDTokenController;
-        emit NewdTokenAddresses(_originaldTokens, _newDTokenController);
+        emit NewdTokenAddresses(
+            _originalDTokenController,
+            _newDTokenController
+        );
     }
 
     /**
@@ -111,7 +114,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev The _underlyingToken approves to market and dToken contracts.
+     * @dev Authorized function to approves market and dToken to transfer handler's underlying token.
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) external auth {
@@ -256,7 +259,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Support token or not.
      */
     function tokenIsEnabled(address _underlyingToken)
-        public
+        external
         view
         returns (bool)
     {
@@ -300,18 +303,10 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         returns (uint256)
     {
         uint256 _underlyingBalance = getBalance(_underlyingToken);
-        if (_underlyingBalance == 0) {
-            return 0;
-        }
-
         uint256 _cash = LendingPoolCore(aaveLendingPoolCore)
             .getReserveAvailableLiquidity(_underlyingToken);
 
-        if (_underlyingBalance > _cash) {
-            return _cash;
-        }
-
-        return _underlyingBalance;
+        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }
 
     /**

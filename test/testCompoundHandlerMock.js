@@ -56,13 +56,13 @@ describe("CompoundHandlerMock contract", function () {
     });
   });
 
-  describe("setdTokens", function () {
+  describe("setDTokenController", function () {
     it("Should only allow auth to set dTokenController", async function () {
       let new_dtoken_addresses = await DTokenController.new();
-      await handler.setdTokens(new_dtoken_addresses.address);
+      await handler.setDTokenController(new_dtoken_addresses.address);
 
       await truffleAssert.reverts(
-        handler.setdTokens(new_dtoken_addresses.address, {
+        handler.setDTokenController(new_dtoken_addresses.address, {
           from: account1,
         }),
         "ds-auth-unauthorized"
@@ -71,8 +71,8 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should not allow set dTokenController with the same address", async function () {
       await truffleAssert.reverts(
-        handler.setdTokens(await handler.dTokenController()),
-        "setdTokens: The same dToken mapping contract address!"
+        handler.setDTokenController(await handler.dTokenController()),
+        "setDTokenController: The same dToken mapping contract address!"
       );
     });
   });
