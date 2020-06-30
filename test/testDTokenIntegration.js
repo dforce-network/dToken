@@ -1702,6 +1702,7 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 92: Should execute normally and change the exchange rate", async function () {
+      await USDC.allocateTo(account1, 100000e6);
       let mint_amount = new BN(100 * 10 ** 9);
       let burn_amount = new BN(10 ** 9);
       let redeem_amount = new BN(10 ** 9);
