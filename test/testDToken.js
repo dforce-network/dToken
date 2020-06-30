@@ -1,5 +1,6 @@
 const truffleAssert = require("truffle-assertions");
 const FiatToken = artifacts.require("FiatTokenV1");
+const TestERC20 = artifacts.require("TestERC20");
 const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
 const DTokenController = artifacts.require("DTokenController");
@@ -19,12 +20,12 @@ const BURN_SELECTOR = "0x9dc29fac";
 
 describe("DToken Contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC;
+  let USDC, ERC20;
   let dispatcher;
   let handlers;
   let handler_addresses;
   let dtoken_controller;
-  let dUSDC;
+  let dUSDC, dERC20;
   let ds_guard;
 
   before(async function () {
@@ -42,6 +43,8 @@ describe("DToken Contract", function () {
       from: owner,
     });
 
+    ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
+
     dtoken_controller = await DTokenController.new();
     ds_guard = await DSGuard.new();
 
@@ -50,6 +53,7 @@ describe("DToken Contract", function () {
     for (i = 0; i < handler_num; i++) {
       let h = await InternalHandler.new(dtoken_controller.address);
       await h.enableTokens([USDC.address]);
+      await h.enableTokens([ERC20.address]);
       await h.setAuthority(ds_guard.address);
 
       handler_addresses.push(h.address);
@@ -64,19 +68,35 @@ describe("DToken Contract", function () {
       dispatcher.address
     );
 
+    dERC20 = await DToken.new(
+      "dERC20",
+      "dERC20",
+      ERC20.address,
+      dispatcher.address
+    );
+
     await dtoken_controller.setdTokensRelation([USDC.address], [dUSDC.address]);
+    await dtoken_controller.setdTokensRelation([ERC20.address], [dERC20.address]);
     await dUSDC.setAuthority(ds_guard.address);
+    await dERC20.setAuthority(ds_guard.address);
     await dispatcher.setAuthority(ds_guard.address);
 
     for (i = 0; i < handler_num; i++) {
       await handlers[i].approve(USDC.address);
+      await handlers[i].approve(ERC20.address);
       await ds_guard.permitx(dUSDC.address, handler_addresses[i]);
+      await ds_guard.permitx(dERC20.address, handler_addresses[i]);
     }
 
     await USDC.allocateTo(account1, 1000e6);
     await USDC.allocateTo(account2, 1000e6);
     USDC.approve(dUSDC.address, UINT256_MAX, {from: account1});
     USDC.approve(dUSDC.address, UINT256_MAX, {from: account2});
+
+    await ERC20.allocateTo(account1, 1000e6);
+    await ERC20.allocateTo(account2, 1000e6);
+    ERC20.approve(dERC20.address, UINT256_MAX, {from: account1});
+    ERC20.approve(dERC20.address, UINT256_MAX, {from: account2});
   }
 
   describe("Deployment", function () {
@@ -220,6 +240,30 @@ describe("DToken Contract", function () {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+    });
+
+    it("Transfer fee : abnormal when transferring the underlying currency", async function () {
+
+      await dERC20.updateOriginationFee(MINT_SELECTOR, FEE);
+      await dERC20.updateOriginationFee(BURN_SELECTOR, FEE);
+
+      await dERC20.mint(account1, 1000e6, {from: account1});
+      await dERC20.burn(account1, 50e6, {from: account1});
+      
+      await dERC20.setFeeRecipient(account2);
+      let balance = await ERC20.balanceOf(account2);
+
+      console.log((await ERC20.balanceOf(dERC20.address)).toString());
+      await dERC20.transferFee(ERC20.address, 100);
+
+      let new_balance = await ERC20.balanceOf(account2);
+      assert.equal(new_balance.sub(balance).toString(), 100);
+
+      console.log((await ERC20.balanceOf(dERC20.address)).toString());
+      await truffleAssert.reverts(
+        dERC20.transferFee(ERC20.address, 105000),
+        "transferFee: Token transfer out of contract failed."
       );
     });
   });
