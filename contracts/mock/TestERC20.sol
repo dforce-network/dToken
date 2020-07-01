@@ -3,20 +3,20 @@ pragma solidity 0.5.12;
 import "../library/SafeMath.sol";
 
 contract TestERC20 {
-    using SafeMath for uint;
+    using SafeMath for uint256;
     // --- Data ---
     // --- ERC20 Data ---
-    string  public name;
-    string  public symbol;
-    uint8   public decimals;
+    string public name;
+    string public symbol;
+    uint8 public decimals;
     uint256 public totalSupply;
 
-    mapping (address => uint)                      public balanceOf;
-    mapping (address => mapping (address => uint)) public allowance;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
 
     // --- Event ---
-    event Approval(address indexed src, address indexed guy, uint wad);
-    event Transfer(address indexed src, address indexed dst, uint wad);
+    event Approval(address indexed src, address indexed guy, uint256 wad);
+    event Transfer(address indexed src, address indexed dst, uint256 wad);
 
     /**
      * The constructor is used here to ensure that the implementation
@@ -24,22 +24,32 @@ contract TestERC20 {
      * contract might lead to misleading state
      * for users who accidentally interact with it.
      */
-    constructor(string memory _name, string memory _symbol, uint8 _decimals) public {
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals
+    ) public {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
     }
 
     // --- Token ---
-    function transfer(address _dst, uint _wad) external returns (bool) {
+    function transfer(address _dst, uint256 _wad) external returns (bool) {
         return transferFrom(msg.sender, _dst, _wad);
     }
 
-    function transferFrom(address _src, address _dst, uint _wad) public returns (bool) {
-        if (balanceOf[_src] < _wad)
-            return false;
-        if (_src != msg.sender && allowance[_src][msg.sender] != uint(-1)) {
-            require(allowance[_src][msg.sender] >= _wad, "transferFrom: insufficient allowance");
+    function transferFrom(
+        address _src,
+        address _dst,
+        uint256 _wad
+    ) public returns (bool) {
+        if (balanceOf[_src] < _wad) return false;
+        if (_src != msg.sender && allowance[_src][msg.sender] != uint256(-1)) {
+            require(
+                allowance[_src][msg.sender] >= _wad,
+                "transferFrom: insufficient allowance"
+            );
             allowance[_src][msg.sender] = allowance[_src][msg.sender].sub(_wad);
         }
 
@@ -49,9 +59,8 @@ contract TestERC20 {
         return true;
     }
 
-    function approve(address _spender, uint _wad) external returns (bool) {
-        if (allowance[msg.sender][_spender] > 0)
-            return false;
+    function approve(address _spender, uint256 _wad) external returns (bool) {
+        if (allowance[msg.sender][_spender] > 0) return false;
         allowance[msg.sender][_spender] = _wad;
         emit Approval(msg.sender, _spender, _wad);
         return true;

@@ -5,6 +5,9 @@ import "./library/ReentrancyGuard.sol";
 import "./interface/ICompound.sol";
 
 contract CompoundHandler is Handler, ReentrancyGuard {
+    uint256 constant BASE = 10**18;
+
+    constructor(address _dTokenController) public Handler(_dTokenController) {}
 
     struct InterestDetails {
         uint256 totalUnderlyingBalance; // Total underlying balance including interest
@@ -78,7 +81,10 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         nonReentrant
         returns (uint256)
     {
-        require(tokenIsEnabled(_underlyingToken), "deposit: Token is disabled!");
+        require(
+            tokenIsEnabled(_underlyingToken),
+            "deposit: Token is disabled!"
+        );
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
@@ -87,7 +93,9 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         address _cToken = cTokens[_underlyingToken];
         require(_cToken != address(0x0), "deposit: Do not support token!");
 
-        uint256 _MarketBalanceBefore = ICompound(_cToken).balanceOfUnderlying(address(this));
+        uint256 _MarketBalanceBefore = ICompound(_cToken).balanceOfUnderlying(
+            address(this)
+        );
 
         // Update the stored interest with the market balance before the mint
         InterestDetails storage _details = interestDetails[_underlyingToken];
@@ -108,7 +116,9 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         );
 
         // including unexpected transfers.
-        uint256 _MarketBalanceAfter = ICompound(_cToken).balanceOfUnderlying(address(this));
+        uint256 _MarketBalanceAfter = ICompound(_cToken).balanceOfUnderlying(
+            address(this)
+        );
 
         // Store the latest real balance.
         _details.totalUnderlyingBalance = _MarketBalanceAfter;
@@ -140,7 +150,9 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         address _cToken = cTokens[_underlyingToken];
         require(_cToken != address(0x0), "withdraw: Do not support token!");
 
-        uint256 _MarketBalanceBefore = ICompound(_cToken).balanceOfUnderlying(address(this));
+        uint256 _MarketBalanceBefore = ICompound(_cToken).balanceOfUnderlying(
+            address(this)
+        );
 
         // Update the stored interest with the market balance before the redeem
         InterestDetails storage _details = interestDetails[_underlyingToken];
@@ -173,7 +185,8 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         );
 
         // Store the latest real balance.
-        _details.totalUnderlyingBalance = ICompound(_cToken).balanceOfUnderlying(address(this));
+        _details.totalUnderlyingBalance = ICompound(_cToken)
+            .balanceOfUnderlying(address(this));
 
         uint256 _changedAmount = _handlerBalanceAfter.sub(
             _handlerBalanceBefore
@@ -188,20 +201,70 @@ contract CompoundHandler is Handler, ReentrancyGuard {
      *      handler's _underlyingToken, with all accumulated interest included.
      * @param _underlyingToken Token to get actual balance.
      */
-    function getBalance(address _underlyingToken) external returns (uint256) {
-        return ICompound(cTokens[_underlyingToken]).balanceOfUnderlying(address(this));
+    function getRealBalance(address _underlyingToken)
+        external
+        returns (uint256)
+    {
+        return
+            ICompound(cTokens[_underlyingToken]).balanceOfUnderlying(
+                address(this)
+            );
     }
 
     /**
      * @dev The latest maximum withdrawable _underlyingToken in the market.
      * @param _underlyingToken Token to get liquidity.
      */
-    function getLiquidity(address _underlyingToken)
+    function getRealLiquidity(address _underlyingToken)
         external
         returns (uint256)
     {
         address _cToken = cTokens[_underlyingToken];
-        uint256 _underlyingBalance = ICompound(_cToken).balanceOfUnderlying(address(this));
+        uint256 _underlyingBalance = ICompound(_cToken).balanceOfUnderlying(
+            address(this)
+        );
+        uint256 _cash = ICompound(_cToken).getCash();
+
+        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
+    }
+
+    /**************************************************/
+    /*** View Interfaces For Backwards compatbility ***/
+    /**************************************************/
+
+    /**
+     * @dev Total balance of handler's _underlyingToken, accumulated interest included
+     * @param _underlyingToken Token to get balance.
+     */
+    function getBalance(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        address _cToken = cTokens[_underlyingToken];
+        uint256 _cTokenBalance;
+        uint256 _exchangeRate;
+        uint256 _error;
+        (_error, _cTokenBalance, , _exchangeRate) = ICompound(_cToken)
+            .getAccountSnapshot(address(this));
+        if (_error != 0) {
+            return 0;
+        }
+
+        return _cTokenBalance.mul(_exchangeRate) / BASE;
+    }
+
+    /**
+     * @dev The maximum withdrawable amount of _underlyingToken in the market.
+     * @param _underlyingToken Token to get liquidity.
+     */
+    function getLiquidity(address _underlyingToken)
+        external
+        view
+        returns (uint256)
+    {
+        address _cToken = cTokens[_underlyingToken];
+        uint256 _underlyingBalance = getBalance(_underlyingToken);
         uint256 _cash = ICompound(_cToken).getCash();
 
         return _underlyingBalance > _cash ? _cash : _underlyingBalance;

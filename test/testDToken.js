@@ -76,7 +76,10 @@ describe("DToken Contract", function () {
     );
 
     await dtoken_controller.setdTokensRelation([USDC.address], [dUSDC.address]);
-    await dtoken_controller.setdTokensRelation([ERC20.address], [dERC20.address]);
+    await dtoken_controller.setdTokensRelation(
+      [ERC20.address],
+      [dERC20.address]
+    );
     await dUSDC.setAuthority(ds_guard.address);
     await dERC20.setAuthority(ds_guard.address);
     await dispatcher.setAuthority(ds_guard.address);
@@ -244,13 +247,12 @@ describe("DToken Contract", function () {
     });
 
     it("Transfer fee : abnormal when transferring the underlying currency", async function () {
-
       await dERC20.updateOriginationFee(MINT_SELECTOR, FEE);
       await dERC20.updateOriginationFee(BURN_SELECTOR, FEE);
 
       await dERC20.mint(account1, 1000e6, {from: account1});
       await dERC20.burn(account1, 50e6, {from: account1});
-      
+
       await dERC20.setFeeRecipient(account2);
       let balance = await ERC20.balanceOf(account2);
 

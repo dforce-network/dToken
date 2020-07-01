@@ -9,6 +9,17 @@ interface ICompound {
 
     function redeem(uint256 redeemTokens) external returns (uint256);
 
+    // uint(Error.NO_ERROR), cTokenBalance, borrowBalance, exchangeRateMantissa
+    function getAccountSnapshot(address account)
+        external
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        );
+
     function balanceOfUnderlying(address owner) external returns (uint256);
 
     function getCash() external view returns (uint256);

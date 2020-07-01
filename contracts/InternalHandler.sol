@@ -3,6 +3,7 @@ pragma solidity 0.5.12;
 import "./Handler.sol";
 
 contract InternalHandler is Handler {
+    constructor(address _dTokenController) public Handler(_dTokenController) {}
 
     /**
      * @dev Deposit token to market, only called by dToken contract.
@@ -16,7 +17,10 @@ contract InternalHandler is Handler {
         auth
         returns (uint256)
     {
-        require(tokenIsEnabled(_underlyingToken), "deposit: Token is disabled!");
+        require(
+            tokenIsEnabled(_underlyingToken),
+            "deposit: Token is disabled!"
+        );
         return _amount;
     }
 
@@ -43,12 +47,40 @@ contract InternalHandler is Handler {
      * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
      * @param _underlyingToken Token to get balance.
      */
+    function getRealBalance(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        return IERC20(_underlyingToken).balanceOf(address(this));
+    }
+
+    /**
+     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get liquidity.
+     */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        return IERC20(_underlyingToken).balanceOf(address(this));
+    }
+
+    /**************************************************/
+    /*** View Interfaces For Backwards compatbility ***/
+    /**************************************************/
+
+    /**
+     * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
+     * @param _underlyingToken Token to get balance.
+     */
     function getBalance(address _underlyingToken)
         external
         view
         returns (uint256)
     {
-        return IERC20(_underlyingToken).balanceOf(address(this));
+        return getRealBalance(_underlyingToken);
     }
 
     /**
@@ -60,6 +92,6 @@ contract InternalHandler is Handler {
         view
         returns (uint256)
     {
-        return IERC20(_underlyingToken).balanceOf(address(this));
+        return getRealLiquidity(_underlyingToken);
     }
 }

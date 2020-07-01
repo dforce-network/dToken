@@ -60,10 +60,12 @@ contract Dispatcher is DSAuth {
         uint256 _pivot = IHandler(_data[uint256(_left + (_right - _left) / 2)])
             .getRealLiquidity(_token);
         while (i <= j) {
-            while (IHandler(_data[uint256(i)]).getRealLiquidity(_token) > _pivot)
-                i++;
-            while (_pivot > IHandler(_data[uint256(j)]).getRealLiquidity(_token))
-                j--;
+            while (
+                IHandler(_data[uint256(i)]).getRealLiquidity(_token) > _pivot
+            ) i++;
+            while (
+                _pivot > IHandler(_data[uint256(j)]).getRealLiquidity(_token)
+            ) j--;
             if (i <= j) {
                 (_data[uint256(i)], _data[uint256(j)]) = (
                     _data[uint256(j)],
@@ -276,9 +278,7 @@ contract Dispatcher is DSAuth {
             }
 
             // Calculate deposit amount according to the proportion,
-            _amounts[i] =
-                _res.mul(proportions[_handlers[i]]) /
-                totalProportion;
+            _amounts[i] = _res.mul(proportions[_handlers[i]]) / totalProportion;
 
             _sum = _sum.add(_amounts[i]);
         }

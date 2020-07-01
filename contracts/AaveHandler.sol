@@ -5,7 +5,6 @@ import "./library/ReentrancyGuard.sol";
 import "./interface/IAave.sol";
 
 contract AaveHandler is Handler, ReentrancyGuard {
-
     address public aaveLendingPool;
     address public aaveLendingPoolCore;
 
@@ -15,8 +14,9 @@ contract AaveHandler is Handler, ReentrancyGuard {
         address _dTokenController,
         address _lendingPool,
         address _lendingPoolCore
-    ) public {
-        initialize(_dTokenController, _lendingPool, _lendingPoolCore);
+    ) public Handler(_dTokenController) {
+        aaveLendingPool = _lendingPool;
+        aaveLendingPoolCore = _lendingPoolCore;
     }
 
     // --- Init ---
@@ -71,7 +71,10 @@ contract AaveHandler is Handler, ReentrancyGuard {
         nonReentrant
         returns (uint256)
     {
-        require(tokenIsEnabled(_underlyingToken), "deposit: Token is disabled!");
+        require(
+            tokenIsEnabled(_underlyingToken),
+            "deposit: Token is disabled!"
+        );
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
@@ -81,7 +84,10 @@ contract AaveHandler is Handler, ReentrancyGuard {
         require(_aToken != address(0x0), "deposit: Do not support token!");
 
         // Update the stored interest with the market balance before the deposit
-        uint256 _MarketBalanceBefore = _updateInterest(_aToken, _underlyingToken);
+        uint256 _MarketBalanceBefore = _updateInterest(
+            _aToken,
+            _underlyingToken
+        );
 
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
@@ -179,14 +185,21 @@ contract AaveHandler is Handler, ReentrancyGuard {
         view
         returns (uint256)
     {
-        return AToken(getAToken(_underlyingToken)).principalBalanceOf(address(this));
+        return
+            AToken(getAToken(_underlyingToken)).principalBalanceOf(
+                address(this)
+            );
     }
 
     /**
      * @dev The corrsponding AToken address of the _underlyingToken.
      * @param _underlyingToken Token to query the AToken.
      */
-    function getAToken(address _underlyingToken) public view returns (address) {
+    function getAToken(address _underlyingToken)
+        internal
+        view
+        returns (address)
+    {
         return
             LendingPoolCore(aaveLendingPoolCore).getReserveATokenAddress(
                 _underlyingToken
@@ -197,8 +210,8 @@ contract AaveHandler is Handler, ReentrancyGuard {
      * @dev Total balance with any accumulated interest for _underlyingToken belonging to handler
      * @param _underlyingToken Token to get balance.
      */
-    function getBalance(address _underlyingToken)
-        external
+    function getRealBalance(address _underlyingToken)
+        public
         view
         returns (uint256)
     {
@@ -209,15 +222,44 @@ contract AaveHandler is Handler, ReentrancyGuard {
      * @dev The maximum withdrawable _underlyingToken in the market.
      * @param _underlyingToken Token to get liquidity.
      */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 _underlyingBalance = IERC20(getAToken(_underlyingToken))
+            .balanceOf(address(this));
+        uint256 _cash = LendingPoolCore(aaveLendingPoolCore)
+            .getReserveAvailableLiquidity(_underlyingToken);
+
+        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
+    }
+
+    /**************************************************/
+    /*** View Interfaces For Backwards compatbility ***/
+    /**************************************************/
+
+    /**
+     * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
+     * @param _underlyingToken Token to get balance.
+     */
+    function getBalance(address _underlyingToken)
+        external
+        view
+        returns (uint256)
+    {
+        return getRealBalance(_underlyingToken);
+    }
+
+    /**
+     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
+     * @param _underlyingToken Token to get liquidity.
+     */
     function getLiquidity(address _underlyingToken)
         external
         view
         returns (uint256)
     {
-        uint256 _underlyingBalance = IERC20(getAToken(_underlyingToken)).balanceOf(address(this));
-        uint256 _cash = LendingPoolCore(aaveLendingPoolCore)
-            .getReserveAvailableLiquidity(_underlyingToken);
-
-        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
+        return getRealLiquidity(_underlyingToken);
     }
 }
