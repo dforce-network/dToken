@@ -132,7 +132,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         dispatcher = _dispatcher;
         decimals = IERC20(_token).decimals();
         data.exchangeRate = BASE;
-        notEntered = true;
         initialized = true;
 
         emit NewDispatcher(_dispatcher, address(0));
@@ -244,7 +243,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
             // Check whether we want to withdraw all
             _realWithdrawAmount[i] = _withdrawAmount[i] == uint256(-1)
-                ? IHandler(_withdraw[i]).getRealBalance(_token)
+                ? IHandler(_withdraw[i]).getBalance(_token)
                 : _withdrawAmount[i];
 
             // Ensure we get the exact amount we wanted
@@ -347,7 +346,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         // Get the total underlying token amount from handlers
         for (uint256 i = 0; i < _handlers.length; i++)
             _totalToken = _totalToken.add(
-                IHandler(_handlers[i]).getRealBalance(_token)
+                IHandler(_handlers[i]).getBalance(_token)
             );
 
         // Reset exchange rate to 1 when there is no dToken left
@@ -897,8 +896,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @param _account Account to query token balance.
      * @return Actual token balance based on dToken amount.
      */
-    function getTokenBalance(address _account) external view returns (uint256) {
-        return rmul(balances[_account].value, getExchangeRate());
+    function getTokenBalance(address _account) external returns (uint256) {
+        return rmul(balances[_account].value, getCurrentExchangeRate());
     }
 
     /**
@@ -910,13 +909,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
    */
     function getCurrentInterest(address _account)
         external
-        view
         returns (uint256)
     {
         return
             balances[_account].interest.add(
                 rmul(
-                    getExchangeRate().sub(balances[_account].exchangeRate),
+                    getCurrentExchangeRate().sub(balances[_account].exchangeRate),
                     balances[_account].value
                 )
             );
@@ -933,7 +931,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     /**
      * @dev Get all deposit token amount including interest.
      */
-    function getTotalBalance() external view returns (uint256) {
+    function getTotalBalance() external returns (uint256) {
         address[] memory _handlers = getHandlers();
         uint256 _tokenTotalBalance = 0;
         for (uint256 i = 0; i < _handlers.length; i++)
@@ -946,7 +944,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     /**
      * @dev Get maximum valid token amount in the whole market.
      */
-    function getLiquidity() external view returns (uint256) {
+    function getLiquidity() external returns (uint256) {
         address[] memory _handlers = getHandlers();
         uint256 _liquidity = 0;
         for (uint256 i = 0; i < _handlers.length; i++)
@@ -959,15 +957,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     /**
      * @dev Current exchange rate, scaled by 1e18.
      */
-    function getExchangeRate() public view returns (uint256) {
-        address[] memory _handlers = getHandlers();
-        address _token = token;
-        uint256 _totalToken = 0;
-        for (uint256 i = 0; i < _handlers.length; i++)
-            _totalToken = _totalToken.add(
-                IHandler(_handlers[i]).getBalance(_token)
-            );
-
-        return totalSupply == 0 ? BASE : rdiv(_totalToken, totalSupply);
+    function getExchangeRate() external returns (uint256) {
+        return getCurrentExchangeRate();
     }
 }
