@@ -3,7 +3,9 @@ pragma solidity 0.5.12;
 import "./Handler.sol";
 
 contract InternalHandler is Handler {
-    constructor(address _dTokenController) public Handler(_dTokenController) {}
+    constructor(address _dTokenController) public {
+        super.initialize(_dTokenController);
+    }
 
     /**
      * @dev Deposit token to market, only called by dToken contract.

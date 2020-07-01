@@ -19,10 +19,6 @@ contract Handler is ERC20SafeTransfer, Pausable {
     event DisableToken(address indexed underlyingToken);
     event EnableToken(address indexed underlyingToken);
 
-    constructor(address _dTokenController) public {
-        initialize(_dTokenController);
-    }
-
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
     function initialize(address _dTokenController) public {
