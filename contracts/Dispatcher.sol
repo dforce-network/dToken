@@ -58,11 +58,11 @@ contract Dispatcher is DSAuth {
         if (i == j) return;
 
         uint256 _pivot = IHandler(_data[uint256(_left + (_right - _left) / 2)])
-            .getLiquidity(_token);
+            .getRealLiquidity(_token);
         while (i <= j) {
-            while (IHandler(_data[uint256(i)]).getLiquidity(_token) > _pivot)
+            while (IHandler(_data[uint256(i)]).getRealLiquidity(_token) > _pivot)
                 i++;
-            while (_pivot > IHandler(_data[uint256(j)]).getLiquidity(_token))
+            while (_pivot > IHandler(_data[uint256(j)]).getRealLiquidity(_token))
                 j--;
             if (i <= j) {
                 (_data[uint256(i)], _data[uint256(j)]) = (
@@ -258,6 +258,7 @@ contract Dispatcher is DSAuth {
         uint256[] memory _amounts = new uint256[](_handlers.length);
 
         uint256 _sum = 0;
+        uint256 _res = _amount;
         uint256 _lastIndex = _amounts.length.sub(1);
         for (uint256 i = 0; ; i++) {
             // Return empty stratege if any handler is paused for abnormal case,
@@ -270,13 +271,13 @@ contract Dispatcher is DSAuth {
 
             // The last handler gets the remaining amount without check proportion.
             if (i == _lastIndex) {
-                _amounts[i] = _amount.sub(_sum);
+                _amounts[i] = _res.sub(_sum);
                 break;
             }
 
             // Calculate deposit amount according to the proportion,
             _amounts[i] =
-                _amount.mul(proportions[_handlers[i]]) /
+                _res.mul(proportions[_handlers[i]]) /
                 totalProportion;
 
             _sum = _sum.add(_amounts[i]);
@@ -328,7 +329,7 @@ contract Dispatcher is DSAuth {
             }
 
             // The maximum amount can be withdrown from market.
-            _balance = IHandler(_handlers[i]).getLiquidity(_token);
+            _balance = IHandler(_handlers[i]).getRealLiquidity(_token);
             _amounts[i] = _balance > _res ? _res : _balance;
             _res = _res.sub(_amounts[i]);
         }
