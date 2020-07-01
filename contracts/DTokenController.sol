@@ -66,7 +66,7 @@ contract DTokenController is DSAuth {
         emit NewMappingdToken(_token, _mappingdToken);
     }
 
-    function getdToken(address _token) external view returns (address) {
+    function getDToken(address _token) external view returns (address) {
         return dTokens[_token];
     }
 }

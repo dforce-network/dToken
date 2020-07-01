@@ -132,7 +132,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         dispatcher = _dispatcher;
         decimals = IERC20(_token).decimals();
         data.exchangeRate = BASE;
-        notEntered = true;
         initialized = true;
 
         emit NewDispatcher(_dispatcher, address(0));
