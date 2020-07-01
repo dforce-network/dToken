@@ -7,8 +7,6 @@ import "./interface/ICompound.sol";
 contract CompoundHandler is Handler, ReentrancyGuard {
     uint256 constant BASE = 10**18;
 
-    constructor(address _dTokenController) public Handler(_dTokenController) {}
-
     struct InterestDetails {
         uint256 totalUnderlyingBalance; // Total underlying balance including interest
         uint256 interest; // Total interest
@@ -22,6 +20,10 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         address indexed token,
         address indexed mappingcToken
     );
+
+    constructor(address _dTokenController) public {
+        super.initialize(_dTokenController);
+    }
 
     /**
      * @dev Authorized function to set cToken address base on underlying token.

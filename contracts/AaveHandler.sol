@@ -14,9 +14,8 @@ contract AaveHandler is Handler, ReentrancyGuard {
         address _dTokenController,
         address _lendingPool,
         address _lendingPoolCore
-    ) public Handler(_dTokenController) {
-        aaveLendingPool = _lendingPool;
-        aaveLendingPoolCore = _lendingPoolCore;
+    ) public {
+        initialize(_dTokenController, _lendingPool, _lendingPoolCore);
     }
 
     // --- Init ---
