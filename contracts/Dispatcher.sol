@@ -52,7 +52,7 @@ contract Dispatcher is DSAuth {
         int256 _left,
         int256 _right,
         address _token
-    ) internal view {
+    ) internal {
         int256 i = _left;
         int256 j = _right;
         if (i == j) return;
@@ -308,6 +308,7 @@ contract Dispatcher is DSAuth {
 
         uint256[] memory _amounts = new uint256[](_handlers.length);
         uint256 _balance;
+        uint256 _res = _amount;
         uint256 _lastIndex = _amounts.length.sub(1);
         for (uint256 i = 0; i < _handlers.length; i++) {
             // Return empty stratege if any handler is paused for abnormal case,
@@ -319,17 +320,17 @@ contract Dispatcher is DSAuth {
             }
 
             // Continue to check whether all handlers are unpaused
-            if (_amount == 0) continue;
+            if (_res == 0) continue;
 
             if (i == _lastIndex) {
-                _amounts[i] = _amount;
+                _amounts[i] = _res;
                 break;
             }
 
             // The maximum amount can be withdrown from market.
-            _balance = IHandler(_handlers[i]).getRealLiquidity(_token);
-            _amounts[i] = _balance > _amount ? _amount : _balance;
-            _amount = _amount.sub(_amounts[i]);
+            _balance = IHandler(_handlers[i]).getLiquidity(_token);
+            _amounts[i] = _balance > _res ? _res : _balance;
+            _res = _res.sub(_amounts[i]);
         }
 
         return (_handlers, _amounts);

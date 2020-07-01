@@ -1,30 +1,15 @@
 pragma solidity 0.5.12;
 
+import "./Handler.sol";
 import "./library/ReentrancyGuard.sol";
 import "./interface/IAave.sol";
-import "./library/ERC20SafeTransfer.sol";
-import "./library/Pausable.sol";
-import "./library/SafeMath.sol";
-import "./interface/IDTokenController.sol";
 
-contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
-    using SafeMath for uint256;
+contract AaveHandler is Handler, ReentrancyGuard {
 
-    bool private initialized; // Flags for initializing data
-
-    address public dTokenController;
     address public aaveLendingPool;
     address public aaveLendingPoolCore;
 
-    mapping(address => bool) private tokensEnable;
     mapping(address => uint256) public interestDetails;
-
-    event NewdTokenAddresses(
-        address indexed originaldToken,
-        address indexed newdToken
-    );
-    event DisableToken(address indexed underlyingToken);
-    event EnableToken(address indexed underlyingToken);
 
     constructor(
         address _dTokenController,
@@ -41,68 +26,9 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         address _lendingPool,
         address _lendingPoolCore
     ) public {
-        require(!initialized, "initialize: Already initialized!");
-        owner = msg.sender;
-        dTokenController = _dTokenController;
+        super.initialize(_dTokenController);
         aaveLendingPool = _lendingPool;
         aaveLendingPoolCore = _lendingPoolCore;
-        notEntered = true;
-        initialized = true;
-    }
-
-    /**
-     * @dev Authorized function to update dToken controller contract.
-     * @param _newDTokenController The new dToken controller contact.
-     */
-    function setDTokenController(address _newDTokenController) external auth {
-        require(
-            _newDTokenController != dTokenController,
-            "setDTokenController: The same dToken mapping contract address!"
-        );
-        address _originalDTokenController = dTokenController;
-        dTokenController = _newDTokenController;
-        emit NewdTokenAddresses(
-            _originalDTokenController,
-            _newDTokenController
-        );
-    }
-
-    /**
-     * @dev Authorized function to disable some underlying tokens.
-     * @param _underlyingTokens Tokens to disable.
-     */
-    function disableTokens(address[] calldata _underlyingTokens) external auth {
-        for (uint256 i = 0; i < _underlyingTokens.length; i++) {
-            _disableToken(_underlyingTokens[i]);
-        }
-    }
-
-    /**
-     * @dev Authorized function to enable some underlying tokens.
-     * @param _underlyingTokens Tokens to enable.
-     */
-    function enableTokens(address[] calldata _underlyingTokens) external auth {
-        for (uint256 i = 0; i < _underlyingTokens.length; i++) {
-            _enableToken(_underlyingTokens[i]);
-        }
-    }
-
-    function _disableToken(address _underlyingToken) internal {
-        require(
-            tokensEnable[_underlyingToken],
-            "disableToken: Has been disabled!"
-        );
-        tokensEnable[_underlyingToken] = false;
-        emit DisableToken(_underlyingToken);
-    }
-
-    function _enableToken(address _underlyingToken) internal {
-        require(
-            !tokensEnable[_underlyingToken],
-            "enableToken: Has been enabled!"
-        );
-        tokensEnable[_underlyingToken] = true;
-        emit EnableToken(_underlyingToken);
     }
 
     function setLendingPoolCore(address _newLendingPoolCore) external auth {
@@ -117,11 +43,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @dev Authorized function to approves market and dToken to transfer handler's underlying token.
      * @param _underlyingToken Token address to approve.
      */
-    function approve(address _underlyingToken) external auth {
-        address _dToken = IDTokenController(dTokenController).getdToken(
-            _underlyingToken
-        );
-
+    function approve(address _underlyingToken) public auth {
         if (
             IERC20(_underlyingToken).allowance(
                 address(this),
@@ -134,15 +56,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             );
         }
 
-        if (
-            IERC20(_underlyingToken).allowance(address(this), _dToken) !=
-            uint256(-1)
-        ) {
-            require(
-                doApprove(_underlyingToken, _dToken, uint256(-1)),
-                "approve: Approve dToken failed!"
-            );
-        }
+        super.approve(_underlyingToken);
     }
 
     /**
@@ -157,17 +71,17 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         nonReentrant
         returns (uint256)
     {
-        require(tokensEnable[_underlyingToken], "deposit: Token is disabled!");
+        require(tokenIsEnabled(_underlyingToken), "deposit: Token is disabled!");
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
         );
 
-        address _aToken = getaToken(_underlyingToken);
+        address _aToken = getAToken(_underlyingToken);
         require(_aToken != address(0x0), "deposit: Do not support token!");
 
         // Update the stored interest with the market balance before the deposit
-        uint256 _MarketBalanceBefore = _updateInterest(_underlyingToken);
+        uint256 _MarketBalanceBefore = _updateInterest(_aToken, _underlyingToken);
 
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
@@ -182,7 +96,7 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
         );
 
         // including unexpected transfers.
-        uint256 _MarketBalanceAfter = getBalance(_underlyingToken);
+        uint256 _MarketBalanceAfter = IERC20(_aToken).balanceOf(address(this));
 
         uint256 _changedAmount = _MarketBalanceAfter.sub(_MarketBalanceBefore);
 
@@ -208,10 +122,10 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
             "withdraw: Withdraw amount should be greater than 0!"
         );
 
-        address _aToken = getaToken(_underlyingToken);
+        address _aToken = getAToken(_underlyingToken);
         require(_aToken != address(0x0), "withdraw: Do not support token!");
 
-        _updateInterest(_underlyingToken);
+        _updateInterest(_aToken, _underlyingToken);
 
         uint256 _handlerBalanceBefore = IERC20(_underlyingToken).balanceOf(
             address(this)
@@ -234,14 +148,15 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
 
     /**
      * @dev Update the handler deposit interest based on the underlying token.
+     * @param _aToken The underlying token to check interest with.
      * @param _underlyingToken The underlying token to check interest with.
      * @return The current balance in market.
      */
-    function _updateInterest(address _underlyingToken)
+    function _updateInterest(address _aToken, address _underlyingToken)
         internal
         returns (uint256)
     {
-        uint256 _balance = getBalance(_underlyingToken);
+        uint256 _balance = IERC20(_aToken).balanceOf(address(this));
 
         // Interest = Balance - UnderlyingBalance.
         uint256 _interest = _balance.sub(
@@ -256,14 +171,26 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
     }
 
     /**
-     * @dev Support token or not.
+     * @dev The principal balance.
+     * @param _underlyingToken Token to get balance.
      */
-    function tokenIsEnabled(address _underlyingToken)
-        external
+    function getUnderlyingBalance(address _underlyingToken)
+        internal
         view
-        returns (bool)
+        returns (uint256)
     {
-        return tokensEnable[_underlyingToken];
+        return AToken(getAToken(_underlyingToken)).principalBalanceOf(address(this));
+    }
+
+    /**
+     * @dev The corrsponding AToken address of the _underlyingToken.
+     * @param _underlyingToken Token to query the AToken.
+     */
+    function getAToken(address _underlyingToken) public view returns (address) {
+        return
+            LendingPoolCore(aaveLendingPoolCore).getReserveATokenAddress(
+                _underlyingToken
+            );
     }
 
     /**
@@ -271,26 +198,11 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to get balance.
      */
     function getBalance(address _underlyingToken)
-        public
+        external
         view
         returns (uint256)
     {
-        address _aToken = getaToken(_underlyingToken);
-
-        return AToken(_aToken).balanceOf(address(this));
-    }
-
-    /**
-     * @dev The principal balance.
-     * @param _underlyingToken Token to get balance.
-     */
-    function getUnderlyingBalance(address _underlyingToken)
-        public
-        view
-        returns (uint256)
-    {
-        address _aToken = getaToken(_underlyingToken);
-        return AToken(_aToken).principalBalanceOf(address(this));
+        return IERC20(getAToken(_underlyingToken)).balanceOf(address(this));
     }
 
     /**
@@ -298,49 +210,14 @@ contract AaveHandler is ERC20SafeTransfer, ReentrancyGuard, Pausable {
      * @param _underlyingToken Token to get liquidity.
      */
     function getLiquidity(address _underlyingToken)
-        public
+        external
         view
         returns (uint256)
     {
-        uint256 _underlyingBalance = getBalance(_underlyingToken);
+        uint256 _underlyingBalance = IERC20(getAToken(_underlyingToken)).balanceOf(address(this));
         uint256 _cash = LendingPoolCore(aaveLendingPoolCore)
             .getReserveAvailableLiquidity(_underlyingToken);
 
         return _underlyingBalance > _cash ? _cash : _underlyingBalance;
-    }
-
-    /**
-     * @dev The maximum withdrawable _underlyingToken in the market, fee excluded
-     * @param _underlyingToken Token to get real balance.
-     */
-    function getRealBalance(address _underlyingToken)
-        external
-        view
-        returns (uint256)
-    {
-        return getBalance(_underlyingToken);
-    }
-
-    /**
-     * @dev The maximum withdrawable _underlyingToken in the market.
-     * @param _underlyingToken Token to get real liquidity.
-     */
-    function getRealLiquidity(address _underlyingToken)
-        external
-        view
-        returns (uint256)
-    {
-        return getLiquidity(_underlyingToken);
-    }
-
-    /**
-     * @dev The corrsponding AToken address of the _underlyingToken.
-     * @param _underlyingToken Token to query the AToken.
-     */
-    function getaToken(address _underlyingToken) public view returns (address) {
-        return
-            LendingPoolCore(aaveLendingPoolCore).getReserveATokenAddress(
-                _underlyingToken
-            );
     }
 }
