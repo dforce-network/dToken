@@ -1,5 +1,5 @@
 const CompoundHandler = artifacts.require("CompoundHandler");
-const TestHandlerMock = artifacts.require("TestHandlerMock");
+const IHandlerView = artifacts.require("IHandlerView");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
 const DTokenController = artifacts.require("DTokenController");
@@ -12,7 +12,7 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
   let USDC, cUSDC;
-  let handler, test_handler;
+  let handler, handler_view;
   let dtoken_controller;
   let mock_dtoken = "0x0000000000000000000000000000000000000001";
 
@@ -29,7 +29,7 @@ describe("CompoundHandlerMock contract", function () {
   async function resetContracts() {
     dtoken_controller = await DTokenController.new();
     handler = await CompoundHandler.new(dtoken_controller.address);
-    test_handler = await TestHandlerMock.new();
+    handler_view = await IHandlerView.at(handler.address);
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
     });
@@ -348,9 +348,9 @@ describe("CompoundHandlerMock contract", function () {
         from: owner,
       });
       await handler.deposit(USDC.address, 1000e6);
-      await test_handler.getRealBalance(handler.address, USDC.address);
+      let real_balance = await handler_view.getRealBalance(USDC.address);
 
-      assert.equal((await test_handler.returnValue()).toString(), 1000e6);
+      assert.equal(real_balance.toString(), 1000e6);
     });
   });
 
@@ -364,23 +364,9 @@ describe("CompoundHandlerMock contract", function () {
         from: owner,
       });
       await handler.deposit(USDC.address, 1000e6);
-      await test_handler.getRealLiquidity(handler.address, USDC.address);
+      let real_liquidity = await handler_view.getRealLiquidity(USDC.address);
 
-      assert.equal((await test_handler.returnValue()).toString(), 1000e6);
-    });
-  });
-
-  describe("getcToken", function () {
-    beforeEach(async function () {
-      await resetContracts();
-    });
-
-    it("Should get cToken", async function () {
-      let cToken = await handler.getcToken(USDC.address);
-      assert.equal(cToken, cUSDC.address);
-
-      let unknowncToken = await handler.getcToken(mock_dtoken);
-      assert.equal(unknowncToken, ZERO_ADDR);
+      assert.equal(real_liquidity.toString(), 1000e6);
     });
   });
 });

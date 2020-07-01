@@ -271,6 +271,15 @@ describe("DToken Contract Integration", function () {
         balances.getTotalBalance.toLocaleString().replace(/,/g, "")
     );
 
+    if (exchange_rate.eq(new BN(0))) {
+      await truffleAssert.reverts(
+        asyncFn(...args),
+        "Exchange rate should not be 0!"
+      );
+      console.log("Exchange rate should not be 0!");
+      return;
+    }
+
     if (asyncFn == DToken.mint && rdiv(args[1], exchange_rate).eq(new BN(0))) {
       await truffleAssert.reverts(
         asyncFn(...args),
@@ -279,13 +288,6 @@ describe("DToken Contract Integration", function () {
       console.log("mint: can not mint the smallest unit with the given amount");
       return;
     }
-
-    if (
-      asyncFn != DToken.mint &&
-      balances.getTotalBalance.eq(new BN(0)) &&
-      (await DToken.totalSupply()).gt(new BN(0))
-    )
-      return;
 
     await asyncFn(...args);
 
@@ -425,18 +427,20 @@ describe("DToken Contract Integration", function () {
         var balance;
         var amount;
         for (let index = 0; index < dtokens.length; index++) {
-          account = accounts[randomNum(0, accounts.length - 1)];
-          balance = (await dtokens[index].balanceOf(account))
-            .toLocaleString()
-            .replace(/,/g, "");
-          amount = new BN(
-            randomNum(0, balance).toLocaleString().replace(/,/g, "")
-          );
-          await dtokens[index].transfer(
-            accounts[randomNum(0, accounts.length - 1)],
-            amount,
-            {from: account}
-          );
+          if ((await dtokens[index].getExchangeRate()).gt(new BN(0))) {
+            account = accounts[randomNum(0, accounts.length - 1)];
+            balance = (await dtokens[index].balanceOf(account))
+              .toLocaleString()
+              .replace(/,/g, "");
+            amount = new BN(
+              randomNum(0, balance).toLocaleString().replace(/,/g, "")
+            );
+            await dtokens[index].transfer(
+              accounts[randomNum(0, accounts.length - 1)],
+              amount,
+              {from: account}
+            );
+          }
           await atokens[index].updateBalance(
             new BN(
               randomNum(
@@ -564,7 +568,7 @@ describe("DToken Contract Integration", function () {
             }
           }
 
-          if (randomNum(0, 0) == 1) {
+          if (randomNum(0, 50) == 1) {
             console.log("\n");
             var handler_list = [];
             var args = [];

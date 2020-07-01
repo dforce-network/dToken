@@ -83,7 +83,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @param _token Token address to approve.
      */
     function approve(address _token) public {
-        address _dToken = IDTokenController(dTokenController).getdToken(_token);
+        address _dToken = IDTokenController(dTokenController).getDToken(_token);
         if (IERC20(_token).allowance(address(this), targetAddr) != uint256(-1))
             require(
                 doApprove(_token, targetAddr, uint256(-1)),

@@ -10,13 +10,13 @@ contract TestHandlerMock {
     function getRealBalance(address _handlder, address _underlyingToken)
         external
     {
-        returnValue = IHandler(_handlder).getRealBalance(_underlyingToken);
+        returnValue = IHandler(_handlder).getBalance(_underlyingToken);
     }
 
     function getRealLiquidity(address _handlder, address _underlyingToken)
         external
     {
-        returnValue = IHandler(_handlder).getRealLiquidity(_underlyingToken);
+        returnValue = IHandler(_handlder).getLiquidity(_underlyingToken);
     }
 
     function deposit(

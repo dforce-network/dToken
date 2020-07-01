@@ -335,54 +335,6 @@ describe("AaveHandlerMock contract", function () {
     });
   });
 
-  describe("getBalance", function () {
-    beforeEach(async function () {
-      await resetContracts();
-      await USDC.allocateTo(handler.address, 100000e6, {
-        from: owner,
-      });
-      await handler.deposit(USDC.address, 100000e6);
-    });
-
-    it("Should get some balance", async function () {
-      let balance = await handler.getBalance(USDC.address);
-      assert.equal(balance.toString(), 100000e6);
-    });
-  });
-
-  describe("getUnderlyingBalance", function () {
-    beforeEach(async function () {
-      await resetContracts();
-      await USDC.allocateTo(handler.address, 100000e6, {
-        from: owner,
-      });
-      await handler.deposit(USDC.address, 100000e6);
-    });
-
-    it("Should get underlying balance", async function () {
-      // Mock 10% interest, so the underlying balance would grow
-      await aUSDC.updateBalance(BASE.div(new BN("10")));
-
-      let balance = await handler.getBalance(USDC.address);
-      assert.equal(balance.toString(), 110000e6);
-    });
-  });
-
-  describe("getLiquidity", function () {
-    beforeEach(async function () {
-      await resetContracts();
-      await USDC.allocateTo(handler.address, 100000e6, {
-        from: owner,
-      });
-      await handler.deposit(USDC.address, 100000e6);
-    });
-
-    it("Should get some liquidity", async function () {
-      let balance = await handler.getLiquidity(USDC.address);
-      assert.equal(balance.toString(), 100000e6);
-    });
-  });
-
   describe("getRealBalance", function () {
     beforeEach(async function () {
       await resetContracts();
@@ -413,17 +365,33 @@ describe("AaveHandlerMock contract", function () {
     });
   });
 
-  describe("getaToken", function () {
+  describe("getBalance", function () {
     beforeEach(async function () {
       await resetContracts();
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
     });
 
-    it("Should get the corresponding atoken", async function () {
-      let atoken = await handler.getaToken(USDC.address);
-      assert.equal(atoken, aUSDC.address);
+    it("Should get some balance", async function () {
+      let balance = await handler.getBalance(USDC.address);
+      assert.equal(balance.toString(), 100000e6);
+    });
+  });
 
-      let unknownaToken = await handler.getaToken(mock_dtoken);
-      assert.equal(unknownaToken, ZERO_ADDR);
+  describe("getLiquidity", function () {
+    beforeEach(async function () {
+      await resetContracts();
+      await USDC.allocateTo(handler.address, 100000e6, {
+        from: owner,
+      });
+      await handler.deposit(USDC.address, 100000e6);
+    });
+
+    it("Should get some liquidity", async function () {
+      let balance = await handler.getLiquidity(USDC.address);
+      assert.equal(balance.toString(), 100000e6);
     });
   });
 });
