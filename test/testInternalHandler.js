@@ -240,10 +240,19 @@ describe("InternalHandler contract", function () {
 
     it("Should get some real balance", async function () {
       let balance = await handler.getRealBalance(USDC.address);
+      assert.equal(balance.eq(new BN(1000e6)), true);
+    });
+  });
 
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(balance));
-      //assert.equal(balance.eq(new BN(1000e6)), true);
+  describe("getRealLiquidity", function () {
+    beforeEach(async function () {
+      await resetContracts();
+      await handler.deposit(USDC.address, 1000e6);
+    });
+
+    it("Should get some real balance", async function () {
+      let balance = await handler.getRealBalance(USDC.address);
+      assert.equal(balance.eq(new BN(1000e6)), true);
     });
   });
 });

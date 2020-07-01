@@ -271,7 +271,7 @@ describe("DToken Contract Integration", function () {
         balances.getTotalBalance.toLocaleString().replace(/,/g, "")
     );
 
-    if (exchange_rate.eq(new BN(0))){
+    if (exchange_rate.eq(new BN(0))) {
       await truffleAssert.reverts(
         asyncFn(...args),
         "Exchange rate should not be 0!"
@@ -428,7 +428,6 @@ describe("DToken Contract Integration", function () {
         var amount;
         for (let index = 0; index < dtokens.length; index++) {
           if ((await dtokens[index].getExchangeRate()).gt(new BN(0))) {
-            
             account = accounts[randomNum(0, accounts.length - 1)];
             balance = (await dtokens[index].balanceOf(account))
               .toLocaleString()

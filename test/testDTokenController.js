@@ -94,9 +94,9 @@ describe("DTokenController Contract", function () {
     it("Should get dTokenController relation and 0 by default", async function () {
       assert.equal(
         MOCK_DTOKEN_NEW,
-        await dtoken_controller.getdToken(MOCK_TOKEN)
+        await dtoken_controller.getDToken(MOCK_TOKEN)
       );
-      assert.equal(0, await dtoken_controller.getdToken(UNKNOWN_TOKEN));
+      assert.equal(0, await dtoken_controller.getDToken(UNKNOWN_TOKEN));
     });
   });
 });
