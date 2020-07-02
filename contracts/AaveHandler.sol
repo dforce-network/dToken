@@ -234,9 +234,9 @@ contract AaveHandler is Handler, ReentrancyGuard {
         return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }
 
-    /**************************************************/
-    /*** View Interfaces For Backwards compatbility ***/
-    /**************************************************/
+    /***************************************************/
+    /*** View Interfaces For Backwards compatibility ***/
+    /***************************************************/
 
     /**
      * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
