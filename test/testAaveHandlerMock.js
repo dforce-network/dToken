@@ -240,6 +240,21 @@ describe("AaveHandlerMock contract", function () {
       );
     });
 
+    it("Should not deposit if the underlying token has no corresponding AToken", async function () {
+      // Unset the aUSDC
+      await lending_pool_core.setReserveATokenAddress(USDC.address, ZERO_ADDR);
+      await truffleAssert.reverts(
+        handler.deposit(USDC.address, 1000e6),
+        "deposit: Do not support token!"
+      );
+
+      // Restore it back
+      await lending_pool_core.setReserveATokenAddress(
+        USDC.address,
+        aUSDC.address
+      );
+    });
+
     it("Should deposit all balance regardless of amount", async function () {
       await USDC.allocateTo(handler.address, 1000e6);
       await handler.deposit(USDC.address, 1e6);
@@ -312,6 +327,21 @@ describe("AaveHandlerMock contract", function () {
       await truffleAssert.reverts(
         handler.withdraw(USDC.address, 0),
         "withdraw: Withdraw amount should be greater than 0!"
+      );
+    });
+
+    it("Should not withdraw if the underlying token has no corresponding AToken", async function () {
+      // Unset the aUSDC
+      await lending_pool_core.setReserveATokenAddress(USDC.address, ZERO_ADDR);
+      await truffleAssert.reverts(
+        handler.deposit(USDC.address, 1000e6),
+        "deposit: Do not support token!"
+      );
+
+      // Restore it back
+      await lending_pool_core.setReserveATokenAddress(
+        USDC.address,
+        aUSDC.address
       );
     });
 

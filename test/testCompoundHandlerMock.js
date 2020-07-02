@@ -56,6 +56,29 @@ describe("CompoundHandlerMock contract", function () {
     });
   });
 
+  describe("setcTokensRelation", function () {
+    it("Should only allow auth to set cTokens Relation", async function () {
+      await handler.setcTokensRelation([USDC.address], [cUSDC.address]);
+
+      await truffleAssert.reverts(
+        handler.setcTokensRelation([USDC.address], [cUSDC.address], {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not allow set cTokens Relation with the different length", async function () {
+      await truffleAssert.reverts(
+        handler.setcTokensRelation(
+          [USDC.address],
+          [cUSDC.address, cUSDC.address]
+        ),
+        "setTokensRelation: Array length do not match!"
+      );
+    });
+  });
+
   describe("setDTokenController", function () {
     it("Should only allow auth to set dTokenController", async function () {
       let new_dtoken_addresses = await DTokenController.new();
@@ -185,6 +208,18 @@ describe("CompoundHandlerMock contract", function () {
       );
     });
 
+    it("Should not deposit if the underlying token has no corresponding CToken", async function () {
+      // Unset the cUSDC
+      await handler.setcTokensRelation([USDC.address], [ZERO_ADDR]);
+      await truffleAssert.reverts(
+        handler.deposit(USDC.address, 1000e6),
+        "deposit: Do not support token!"
+      );
+
+      // Restore it back
+      await handler.setcTokensRelation([USDC.address], [cUSDC.address]);
+    });
+
     it("Should deposit all balance regardless of amount", async function () {
       await USDC.allocateTo(handler.address, 1000e6);
       await handler.deposit(USDC.address, 1e6);
@@ -267,6 +302,18 @@ describe("CompoundHandlerMock contract", function () {
         handler.withdraw(USDC.address, 0),
         "withdraw: Withdraw amount should be greater than 0!"
       );
+    });
+
+    it("Should not withdraw if the underlying token has no corresponding CToken", async function () {
+      // Unset the cUSDC
+      await handler.setcTokensRelation([USDC.address], [ZERO_ADDR]);
+      await truffleAssert.reverts(
+        handler.withdraw(USDC.address, 1000e6),
+        "withdraw: Do not support token!"
+      );
+
+      // Restore it back
+      await handler.setcTokensRelation([USDC.address], [cUSDC.address]);
     });
 
     it("Check the actual withdraw amount with some interest and changing exchange rate", async function () {
