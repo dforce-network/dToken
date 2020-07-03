@@ -2,6 +2,7 @@ const CompoundHandler = artifacts.require("CompoundHandler");
 const IHandlerView = artifacts.require("IHandlerView");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
+const TestERC20 = artifacts.require("TestERC20");
 const DTokenController = artifacts.require("DTokenController");
 const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
@@ -14,7 +15,8 @@ describe("CompoundHandlerMock contract", function () {
   let USDC, cUSDC;
   let handler, handler_view;
   let dtoken_controller;
-  let mock_dtoken = "0x0000000000000000000000000000000000000001";
+  let dUSDC_address = "0x0000000000000000000000000000000000000001";
+  let dERC20_address = "0x0000000000000000000000000000000000000002";
 
   before(async function () {
     [
@@ -30,17 +32,27 @@ describe("CompoundHandlerMock contract", function () {
     dtoken_controller = await DTokenController.new();
     handler = await CompoundHandler.new(dtoken_controller.address);
     handler_view = await IHandlerView.at(handler.address);
+
+    // Mock USDC
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
     });
-
     cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
     handler.setcTokensRelation([USDC.address], [cUSDC.address]);
 
-    await handler.approve(USDC.address);
+    // Mock TestERC20, can return boolean value
+    ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
+    cERC20 = await CToken.new("cUSDC", "cUSDC", USDC.address);
+    handler.setcTokensRelation([ERC20.address], [cERC20.address]);
 
-    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
-    await handler.enableTokens([USDC.address]);
+    await handler.approve(USDC.address);
+    await handler.approve(ERC20.address);
+
+    await handler.enableTokens([USDC.address, ERC20.address]);
+    await dtoken_controller.setdTokensRelation(
+      [USDC.address, ERC20.address],
+      [dUSDC_address, dERC20_address]
+    );
   }
 
   describe("Deployment", function () {
@@ -151,7 +163,7 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should only allow auth to approve", async function () {
       await handler.approve(USDC.address);
-      let allowance = await USDC.allowance(handler.address, mock_dtoken);
+      let allowance = await USDC.allowance(handler.address, dUSDC_address);
       assert.equal(allowance.eq(UINT256_MAX), true);
 
       await truffleAssert.reverts(
@@ -186,7 +198,7 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should not deposit with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.deposit(mock_dtoken, 1000e6),
+        handler.deposit(dUSDC_address, 1000e6),
         "deposit: Token is disabled!"
       );
     });
@@ -284,7 +296,7 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should not withdraw with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.withdraw(mock_dtoken, 1000e6),
+        handler.withdraw(dUSDC_address, 1000e6),
         "withdraw: Do not support token!"
       );
     });

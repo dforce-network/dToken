@@ -1,4 +1,5 @@
 const FiatToken = artifacts.require("FiatTokenV1");
+const TestERC20 = artifacts.require("TestERC20");
 const DTokenController = artifacts.require("DTokenController");
 const LendingPoolCore = artifacts.require("AaveLendingPoolCoreMock");
 const LendPool = artifacts.require("AaveLendPoolMock");
@@ -12,10 +13,12 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 describe("AaveHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, aUSDC;
+  let USDC, aUSDC, ERC20, aERC20;
   let handler;
   let dtoken_controller;
-  let mock_dtoken = "0x0000000000000000000000000000000000000001";
+  let lending_pool_core;
+  let dUSDC_address = "0x0000000000000000000000000000000000000001";
+  let dERC20_address = "0x0000000000000000000000000000000000000002";
 
   before(async function () {
     [
@@ -29,12 +32,15 @@ describe("AaveHandlerMock contract", function () {
 
   async function resetContracts() {
     dtoken_controller = await DTokenController.new();
-    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
-      from: owner,
-    });
 
     // Deploys Aave system
     lending_pool_core = await LendingPoolCore.new();
+    lending_pool = await LendPool.new(lending_pool_core.address);
+
+    // Mock USDC
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
+      from: owner,
+    });
     aUSDC = await aTokenMock.new(
       "aUSDC",
       "aUSDC",
@@ -45,7 +51,19 @@ describe("AaveHandlerMock contract", function () {
       USDC.address,
       aUSDC.address
     );
-    lending_pool = await LendPool.new(lending_pool_core.address);
+
+    // Mock TestERC20, can return boolean value
+    ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
+    aERC20 = await aTokenMock.new(
+      "aERC20",
+      "aERC20",
+      ERC20.address,
+      lending_pool_core.address
+    );
+    await lending_pool_core.setReserveATokenAddress(
+      ERC20.address,
+      aERC20.address
+    );
 
     handler = await AaveHandler.new(
       dtoken_controller.address,
@@ -54,9 +72,13 @@ describe("AaveHandlerMock contract", function () {
     );
 
     await handler.approve(USDC.address);
+    await handler.approve(ERC20.address);
 
-    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
-    await handler.enableTokens([USDC.address]);
+    await handler.enableTokens([USDC.address, ERC20.address]);
+    await dtoken_controller.setdTokensRelation(
+      [USDC.address, ERC20.address],
+      [dUSDC_address, dERC20_address]
+    );
   }
 
   describe("Deployment", function () {
@@ -177,13 +199,13 @@ describe("AaveHandlerMock contract", function () {
   });
 
   describe("approve", async function () {
-    before(async function () {
+    beforeEach(async function () {
       await resetContracts();
     });
 
     it("Should only allow auth to approve", async function () {
       await handler.approve(USDC.address);
-      let allowance = await USDC.allowance(handler.address, mock_dtoken);
+      let allowance = await USDC.allowance(handler.address, dUSDC_address);
       assert.equal(allowance.eq(UINT256_MAX), true);
 
       await truffleAssert.reverts(
@@ -191,6 +213,21 @@ describe("AaveHandlerMock contract", function () {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+
+      // Approve again should be ok
+      await handler.approve(USDC.address);
+    });
+
+    it("Should fail if underlying approve failed", async function () {
+      // transfer ERC20 will decrease the allowance
+      ERC20.allocateTo(handler.address, 1000e6);
+      await handler.deposit(ERC20.address, 100e6);
+
+      // Approve again would fail
+      await truffleAssert.reverts(
+        handler.approve(ERC20.address),
+        "approve: Approve aToken failed!"
       );
     });
   });
@@ -204,10 +241,6 @@ describe("AaveHandlerMock contract", function () {
     it("Should only allow auth to deposit", async function () {
       let amount = await handler.deposit(USDC.address, 1000e6);
 
-      //TODO: Check return value from transaction
-      //console.log(JSON.stringify(amount));
-      //assert.equal(amount.eq(new BN(1000e6)), true);
-
       await truffleAssert.reverts(
         handler.deposit(USDC.address, 1000e6, {
           from: account1,
@@ -218,7 +251,7 @@ describe("AaveHandlerMock contract", function () {
 
     it("Should not deposit with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.deposit(mock_dtoken, 1000e6),
+        handler.deposit(dUSDC_address, 1000e6),
         "deposit: Token is disabled!"
       );
     });
@@ -296,10 +329,6 @@ describe("AaveHandlerMock contract", function () {
     it("Should only allow auth to withdraw", async function () {
       let amount = await handler.withdraw(USDC.address, 10000e6);
 
-      //TODO: Check returen value from transaction
-      //console.log(JSON.stringify(amount));
-      //assert.equal(amount.eq(new BN(1000e6)), true);
-
       await truffleAssert.reverts(
         handler.withdraw(USDC.address, 1000e6, {
           from: account1,
@@ -310,7 +339,7 @@ describe("AaveHandlerMock contract", function () {
 
     it("Should not withdraw with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.withdraw(mock_dtoken, 1000e6),
+        handler.withdraw(dUSDC_address, 1000e6),
         "withdraw: Do not support token!"
       );
     });
