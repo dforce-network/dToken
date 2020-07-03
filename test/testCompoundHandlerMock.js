@@ -12,7 +12,7 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, cUSDC;
+  let USDC, cUSDC, ERC20, cERC20;
   let handler, handler_view;
   let dtoken_controller;
   let dUSDC_address = "0x0000000000000000000000000000000000000001";
@@ -34,20 +34,15 @@ describe("CompoundHandlerMock contract", function () {
     handler_view = await IHandlerView.at(handler.address);
 
     // Mock USDC
-    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
-      from: owner,
-    });
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner);
     cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
 
     // Mock TestERC20, can return boolean value
     ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
     cERC20 = await CToken.new("cERC20", "cERC20", ERC20.address);
 
-    await handler.approve(USDC.address);
-    await handler.approve(ERC20.address);
-
     await handler.enableTokens([USDC.address, ERC20.address]);
-    handler.setcTokensRelation(
+    await handler.setcTokensRelation(
       [USDC.address, ERC20.address],
       [cUSDC.address, cERC20.address]
     );
@@ -56,6 +51,9 @@ describe("CompoundHandlerMock contract", function () {
       [USDC.address, ERC20.address],
       [dUSDC_address, dERC20_address]
     );
+
+    await handler.approve(USDC.address);
+    await handler.approve(ERC20.address);
   }
 
   describe("Deployment", function () {
@@ -175,6 +173,21 @@ describe("CompoundHandlerMock contract", function () {
         }),
         "ds-auth-unauthorized"
       );
+
+      // Approve again should be ok
+      await handler.approve(USDC.address);
+    });
+
+    it("Should fail if underlying approve failed", async function () {
+      // transfer ERC20 will decrease the allowance
+      ERC20.allocateTo(handler.address, 1000e6);
+      await handler.deposit(ERC20.address, 100e6);
+
+      // Approve again would fail
+      await truffleAssert.reverts(
+        handler.approve(ERC20.address),
+        "approve: Approve cToken failed!"
+      );
     });
   });
 
@@ -280,9 +293,7 @@ describe("CompoundHandlerMock contract", function () {
   describe("withdraw", function () {
     beforeEach(async function () {
       await resetContracts();
-      await USDC.allocateTo(handler.address, 100000e6, {
-        from: owner,
-      });
+      await USDC.allocateTo(handler.address, 100000e6);
       await handler.deposit(USDC.address, 10000e6);
     });
 
