@@ -38,17 +38,20 @@ describe("CompoundHandlerMock contract", function () {
       from: owner,
     });
     cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
-    handler.setcTokensRelation([USDC.address], [cUSDC.address]);
 
     // Mock TestERC20, can return boolean value
     ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
-    cERC20 = await CToken.new("cUSDC", "cUSDC", USDC.address);
-    handler.setcTokensRelation([ERC20.address], [cERC20.address]);
+    cERC20 = await CToken.new("cERC20", "cERC20", ERC20.address);
 
     await handler.approve(USDC.address);
     await handler.approve(ERC20.address);
 
     await handler.enableTokens([USDC.address, ERC20.address]);
+    handler.setcTokensRelation(
+      [USDC.address, ERC20.address],
+      [cUSDC.address, cERC20.address]
+    );
+
     await dtoken_controller.setdTokensRelation(
       [USDC.address, ERC20.address],
       [dUSDC_address, dERC20_address]
