@@ -14,6 +14,9 @@ contract TestERC20 {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
+    uint256 constant BASE = 10**18;
+    uint256 public fee;
+    address public feeRecipient;
     // --- Event ---
     event Approval(address indexed src, address indexed guy, uint256 wad);
     event Transfer(address indexed src, address indexed dst, uint256 wad);
@@ -32,6 +35,24 @@ contract TestERC20 {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
+        feeRecipient = msg.sender;
+    }
+
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x.mul(y) / BASE;
+    }
+
+    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x.mul(BASE).div(y);
+    }
+
+    function rdivup(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x.mul(BASE).add(y.sub(1)).div(y);
+    }
+
+    function updateFee(uint256 _fee) external {
+        require(_fee <= BASE, "updateFee: incorrect fee.");
+        fee = _fee;
     }
 
     // --- Token ---
@@ -58,8 +79,14 @@ contract TestERC20 {
         }
 
         balanceOf[_src] = balanceOf[_src].sub(_wad);
-        balanceOf[_dst] = balanceOf[_dst].add(_wad);
-        emit Transfer(_src, _dst, _wad);
+        uint256 _fee = rmul(_wad, fee);
+        if (_fee > 0) {
+            balanceOf[feeRecipient] = balanceOf[feeRecipient].add(_fee);
+            emit Transfer(_src, feeRecipient, _fee);
+        }
+
+        balanceOf[_dst] = balanceOf[_dst].add(_wad.sub(_fee));
+        emit Transfer(_src, _dst, _wad.sub(_fee));
         return true;
     }
 
