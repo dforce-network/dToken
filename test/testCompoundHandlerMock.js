@@ -1,11 +1,15 @@
 const CompoundHandler = artifacts.require("CompoundHandler");
+const ICompound = artifacts.require("ICompound");
 const IHandlerView = artifacts.require("IHandlerView");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
 const TestERC20 = artifacts.require("TestERC20");
 const DTokenController = artifacts.require("DTokenController");
+
 const truffleAssert = require("truffle-assertions");
+const Waffle = require("ethereum-waffle");
 const BN = require("bn.js");
+
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
@@ -388,6 +392,31 @@ describe("CompoundHandlerMock contract", function () {
     it("Should get some balance", async function () {
       let balance = await handler.getBalance(USDC.address);
       assert.equal(balance.toString(), 100000e6);
+    });
+
+    it("Should get 0 as balance if compound call failed", async function () {
+      // Use Waffle Mock to MockCompound
+      let user = await ethers.provider.getSigner();
+      let cERC20 = await Waffle.deployMockContract(user, ICompound.abi);
+
+      await handler.setcTokensRelation(
+        [USDC.address, ERC20.address],
+        [cUSDC.address, cERC20.address]
+      );
+
+      await cERC20.mock.mint.returns(0);
+      await cERC20.mock.balanceOfUnderlying.returns(100000e6);
+
+      // Allocate some balance
+      await ERC20.allocateTo(handler.address, 100000e6);
+      await handler.deposit(ERC20.address, 100000e6);
+
+      // Compound failed to getAccountSnapshot
+      await cERC20.mock.getAccountSnapshot.returns(1, 0, 0, 0);
+
+      // Should return 0 as balance
+      let balance = await handler.getBalance(ERC20.address);
+      assert.equal(balance.toString(), 0);
     });
   });
 
