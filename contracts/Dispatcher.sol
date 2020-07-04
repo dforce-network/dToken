@@ -104,7 +104,13 @@ contract Dispatcher is DSAuth {
         for (uint256 i = 0; i < _handlers.length; i++) {
             require(
                 _handlers[i] != address(0),
-                "setHandlers: handlerAddr contract address invalid"
+                "setHandlers: handler address invalid"
+            );
+
+            // Do not allow to set the same handler twice
+            require(
+                !isHandlerActive[_handlers[i]],
+                "setHandlers: handler address already exists"
             );
 
             _sum = _sum.add(_proportions[i]);

@@ -83,7 +83,7 @@ describe("Dispatcher Contract", function () {
 
       await truffleAssert.reverts(
         Dispatcher.new(handler_addresses, proportions),
-        "setHandlers: handlerAddr contract address invalid"
+        "setHandlers: handler address invalid"
       );
     });
 
@@ -212,6 +212,16 @@ describe("Dispatcher Contract", function () {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not allow set duplicated handlers", async function () {
+      let new_handlers = [handler_addresses[0], handler_addresses[0]];
+      let new_proportions = [400000, 600000];
+
+      await truffleAssert.reverts(
+        dispatcher.resetHandlers(new_handlers, new_proportions),
+        "setHandlers: handler address already exists"
       );
     });
   });
