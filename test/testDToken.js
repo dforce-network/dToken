@@ -101,8 +101,8 @@ describe("DToken Contract", function () {
     USDC.approve(dUSDC.address, UINT256_MAX, {from: account1});
     USDC.approve(dUSDC.address, UINT256_MAX, {from: account2});
 
-    await ERC20.allocateTo(account1, BASE.mul(new BN('1000')));
-    await ERC20.allocateTo(account2, BASE.mul(new BN('1000')));
+    await ERC20.allocateTo(account1, BASE.mul(new BN("1000")));
+    await ERC20.allocateTo(account2, BASE.mul(new BN("1000")));
     ERC20.approve(dERC20.address, UINT256_MAX, {from: account1});
     ERC20.approve(dERC20.address, UINT256_MAX, {from: account2});
   }
@@ -388,7 +388,6 @@ describe("DToken Contract", function () {
       await dERC20.mint(account1, BASE.mul(new BN(1000)), {from: account1});
       let balance1 = await handlers[1].getBalance(ERC20.address);
 
-
       await dERC20.rebalance(
         [handler_addresses[1]],
         [UINT256_MAX],
@@ -400,20 +399,10 @@ describe("DToken Contract", function () {
 
       assert.equal(new_balance1.sub(balance1).toString(), -balance1.toString());
 
-      await dERC20.rebalance(
-        [],
-        [],
-        [handler_addresses[1]],
-        [BASE]
-      );
+      await dERC20.rebalance([], [], [handler_addresses[1]], [BASE]);
 
       await truffleAssert.reverts(
-        dERC20.rebalance(
-          [handler_addresses[1]],
-          [BASE.add(new BN(1))],
-          [],
-          []
-        ),
+        dERC20.rebalance([handler_addresses[1]], [BASE.add(new BN(1))], [], []),
         "rebalance: transfer to default handler failed"
       );
 
@@ -545,7 +534,6 @@ describe("DToken Contract", function () {
     });
 
     it("Mint other failure", async function () {
-
       await handlers[0].pause();
       await truffleAssert.reverts(
         dERC20.mint(account1, BASE, {from: account1}),
@@ -554,39 +542,36 @@ describe("DToken Contract", function () {
       await handlers[0].unpause();
 
       let amount = await ERC20.balanceOf(account1);
-      await ERC20.transfer(account2, amount, {from : account1});
+      await ERC20.transfer(account2, amount, {from: account1});
       await dERC20.updateOriginationFee(MINT_SELECTOR, FEE);
       await truffleAssert.reverts(
         dERC20.mint(account1, amount, {from: account1}),
         "mint: transferFrom fee failed"
       );
 
-      await ERC20.transfer(account1, rmul(amount, FEE), {from : account2});
+      await ERC20.transfer(account1, rmul(amount, FEE), {from: account2});
       await truffleAssert.reverts(
         dERC20.mint(account1, amount, {from: account1}),
         "mint: transfer token to handler failed."
       );
 
       await dERC20.updateOriginationFee(MINT_SELECTOR, new BN(0));
-      await ERC20.allocateTo(handler_addresses[0], await ERC20.balanceOf(handler_addresses[0]));
+      await ERC20.allocateTo(
+        handler_addresses[0],
+        await ERC20.balanceOf(handler_addresses[0])
+      );
       dERC20.mint(account1, await ERC20.balanceOf(account1), {from: account1});
       await dispatcher.resetHandlers(
-        [
-          handler_addresses[2],
-          handler_addresses[3],
-          handler_addresses[4],
-        ],
+        [handler_addresses[2], handler_addresses[3], handler_addresses[4]],
         [500000, 250000, 250000]
       );
-      await ERC20.transfer(account1, BASE, {from : account2});
+      await ERC20.transfer(account1, BASE, {from: account2});
       amount = await ERC20.balanceOf(account1);
       await truffleAssert.reverts(
         dERC20.mint(account1, amount, {from: account1}),
         "Exchange rate should not be 0!"
       );
     });
-
-    
   });
 
   describe("Burn", function () {
@@ -748,26 +733,37 @@ describe("DToken Contract", function () {
 
       await ERC20.updateFee(BASE);
       await truffleAssert.reverts(
-        dERC20.burn(account1, await dERC20.balanceOf(account1), {from: account1}),
+        dERC20.burn(account1, await dERC20.balanceOf(account1), {
+          from: account1,
+        }),
         "burn: transfer from default handler to user failed"
       );
 
       await dERC20.updateOriginationFee(BURN_SELECTOR, FEE);
       await truffleAssert.reverts(
-        dERC20.burn(account1, await dERC20.balanceOf(account1), {from: account1}),
+        dERC20.burn(account1, await dERC20.balanceOf(account1), {
+          from: account1,
+        }),
         "burn: transfer fee from default handler failed"
       );
-      
-      let dispatcherMock = await DispatcherMock.new(handler_addresses.slice(1 - handler_addresses.length), proportions.slice(1 - handler_addresses.length));
+
+      let dispatcherMock = await DispatcherMock.new(
+        handler_addresses.slice(1 - handler_addresses.length),
+        proportions.slice(1 - handler_addresses.length)
+      );
       await dERC20.updateDispatcher(dispatcherMock.address);
       await truffleAssert.reverts(
-        dERC20.burn(account1, await dERC20.balanceOf(account1), {from: account1}),
+        dERC20.burn(account1, await dERC20.balanceOf(account1), {
+          from: account1,
+        }),
         "burn: default handler is inactive"
       );
 
       await dispatcherMock.setDefaultHandler(handler_addresses[0]);
       await truffleAssert.reverts(
-        dERC20.burn(account1, await dERC20.balanceOf(account1), {from: account1}),
+        dERC20.burn(account1, await dERC20.balanceOf(account1), {
+          from: account1,
+        }),
         "burn: default handler is inactive"
       );
     });
@@ -950,16 +946,23 @@ describe("DToken Contract", function () {
       await ERC20.updateFee(new BN(0));
       dERC20.redeem(account1, BASE.div(new BN(2)), {from: account1});
 
-      let dispatcherMock = await DispatcherMock.new(handler_addresses.slice(1 - handler_addresses.length), proportions.slice(1 - handler_addresses.length));
+      let dispatcherMock = await DispatcherMock.new(
+        handler_addresses.slice(1 - handler_addresses.length),
+        proportions.slice(1 - handler_addresses.length)
+      );
       await dERC20.updateDispatcher(dispatcherMock.address);
       await truffleAssert.reverts(
-        dERC20.redeem(account1, await dERC20.balanceOf(account1), {from: account1}),
+        dERC20.redeem(account1, await dERC20.balanceOf(account1), {
+          from: account1,
+        }),
         "redeem: default handler is inactive"
       );
 
       await dispatcherMock.setDefaultHandler(handler_addresses[0]);
       await truffleAssert.reverts(
-        dERC20.redeem(account1, await dERC20.balanceOf(account1), {from: account1}),
+        dERC20.redeem(account1, await dERC20.balanceOf(account1), {
+          from: account1,
+        }),
         "redeem: default handler is inactive"
       );
     });

@@ -1,5 +1,4 @@
 const CompoundHandler = artifacts.require("CompoundHandler");
-const ICompound = artifacts.require("ICompound");
 const IHandlerView = artifacts.require("IHandlerView");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
@@ -49,7 +48,7 @@ describe("CompoundHandlerMock contract", function () {
     // Mock TestERC20 and Mock CToken, can return error when calling compound
     ERC20E = await TestERC20.new("ERC20E", "ERC20E", 18);
     let user = await ethers.provider.getSigner();
-    cERC20E = await Waffle.deployMockContract(user, ICompound.abi);
+    cERC20E = await Waffle.deployMockContract(user, CToken.abi);
 
     await handler.enableTokens([USDC.address, ERC20.address, ERC20E.address]);
     await handler.setcTokensRelation(
@@ -407,11 +406,18 @@ describe("CompoundHandlerMock contract", function () {
       await handler.deposit(ERC20E.address, 10000e6);
 
       // Prepare the mock error
-      await cERC20E.mock.redeem.returns(2);
       await cERC20E.mock.redeemUnderlying.returns(2);
 
       await truffleAssert.reverts(
         handler.withdraw(ERC20E.address, 1000e6),
+        "withdraw: Fail to withdraw from market!"
+      );
+
+      // For withdraw all
+      await cERC20E.mock.balanceOf.returns(1000e6);
+      await cERC20E.mock.redeem.returns(2);
+      await truffleAssert.reverts(
+        handler.withdraw(ERC20E.address, UINT256_MAX),
         "withdraw: Fail to withdraw from market!"
       );
     });
