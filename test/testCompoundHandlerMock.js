@@ -16,11 +16,12 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, cUSDC, ERC20, cERC20;
+  let USDC, cUSDC, ERC20, cERC20, ERC20E, cERC20E;
   let handler, handler_view;
   let dtoken_controller;
   let dUSDC_address = "0x0000000000000000000000000000000000000001";
   let dERC20_address = "0x0000000000000000000000000000000000000002";
+  let dERC20E_address = "0x0000000000000000000000000000000000000003";
 
   before(async function () {
     [
@@ -45,19 +46,25 @@ describe("CompoundHandlerMock contract", function () {
     ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
     cERC20 = await CToken.new("cERC20", "cERC20", ERC20.address);
 
-    await handler.enableTokens([USDC.address, ERC20.address]);
+    // Mock TestERC20 and Mock CToken, can return error when calling compound
+    ERC20E = await TestERC20.new("ERC20E", "ERC20E", 18);
+    let user = await ethers.provider.getSigner();
+    cERC20E = await Waffle.deployMockContract(user, ICompound.abi);
+
+    await handler.enableTokens([USDC.address, ERC20.address, ERC20E.address]);
     await handler.setcTokensRelation(
-      [USDC.address, ERC20.address],
-      [cUSDC.address, cERC20.address]
+      [USDC.address, ERC20.address, ERC20E.address],
+      [cUSDC.address, cERC20.address, cERC20E.address]
     );
 
     await dtoken_controller.setdTokensRelation(
-      [USDC.address, ERC20.address],
-      [dUSDC_address, dERC20_address]
+      [USDC.address, ERC20.address, ERC20E.address],
+      [dUSDC_address, dERC20_address, dERC20E_address]
     );
 
     await handler.approve(USDC.address);
     await handler.approve(ERC20.address);
+    await handler.approve(ERC20E.address);
   }
 
   describe("Deployment", function () {
@@ -292,6 +299,18 @@ describe("CompoundHandlerMock contract", function () {
         assert.equal(diff.lte(new BN(1)), true);
       }
     });
+
+    it("Should check the mint result from Compound", async function () {
+      // Prepare the mock error
+      await cERC20E.mock.mint.returns(2);
+      await cERC20E.mock.balanceOfUnderlying.returns(0);
+
+      await ERC20E.allocateTo(handler.address, 1000e6);
+      await truffleAssert.reverts(
+        handler.deposit(ERC20E.address, 1000e6),
+        "deposit: Fail to supply to compound!"
+      );
+    });
   });
 
   describe("withdraw", function () {
@@ -378,6 +397,24 @@ describe("CompoundHandlerMock contract", function () {
         assert.equal(diff.lte(new BN(1)), true);
       }
     });
+
+    it("Should check the withdraw result from Compound", async function () {
+      // Mocks to prepare mint
+      await cERC20E.mock.balanceOfUnderlying.returns(0);
+      await cERC20E.mock.mint.returns(0);
+
+      await ERC20E.allocateTo(handler.address, 100000e6);
+      await handler.deposit(ERC20E.address, 10000e6);
+
+      // Prepare the mock error
+      await cERC20E.mock.redeem.returns(2);
+      await cERC20E.mock.redeemUnderlying.returns(2);
+
+      await truffleAssert.reverts(
+        handler.withdraw(ERC20E.address, 1000e6),
+        "withdraw: Fail to withdraw from market!"
+      );
+    });
   });
 
   describe("getBalance", function () {
@@ -395,27 +432,18 @@ describe("CompoundHandlerMock contract", function () {
     });
 
     it("Should get 0 as balance if compound call failed", async function () {
-      // Use Waffle Mock to MockCompound
-      let user = await ethers.provider.getSigner();
-      let cERC20 = await Waffle.deployMockContract(user, ICompound.abi);
-
-      await handler.setcTokensRelation(
-        [USDC.address, ERC20.address],
-        [cUSDC.address, cERC20.address]
-      );
-
-      await cERC20.mock.mint.returns(0);
-      await cERC20.mock.balanceOfUnderlying.returns(100000e6);
+      await cERC20E.mock.mint.returns(0);
+      await cERC20E.mock.balanceOfUnderlying.returns(100000e6);
 
       // Allocate some balance
-      await ERC20.allocateTo(handler.address, 100000e6);
-      await handler.deposit(ERC20.address, 100000e6);
+      await ERC20E.allocateTo(handler.address, 100000e6);
+      await handler.deposit(ERC20E.address, 100000e6);
 
       // Compound failed to getAccountSnapshot
-      await cERC20.mock.getAccountSnapshot.returns(1, 0, 0, 0);
+      await cERC20E.mock.getAccountSnapshot.returns(1, 0, 0, 0);
 
       // Should return 0 as balance
-      let balance = await handler.getBalance(ERC20.address);
+      let balance = await handler.getBalance(ERC20E.address);
       assert.equal(balance.toString(), 0);
     });
   });
