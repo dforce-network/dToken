@@ -1,5 +1,6 @@
 const InternalHandler = artifacts.require("InternalHandler");
 const FiatToken = artifacts.require("FiatTokenV1");
+const TestERC20 = artifacts.require("TestERC20");
 const DTokenController = artifacts.require("DTokenController");
 const truffleAssert = require("truffle-assertions");
 const BN = require("bn.js");
@@ -7,10 +8,11 @@ const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 
 describe("InternalHandler contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC;
+  let USDC, ERC20;
   let handler;
   let dtoken_controller;
-  let mock_dtoken = "0x0000000000000000000000000000000000000001";
+  let dUSDC_address;
+  let dERC20_address;
 
   before(async function () {
     [
@@ -25,6 +27,8 @@ describe("InternalHandler contract", function () {
   async function resetContracts() {
     dtoken_controller = await DTokenController.new();
     handler = await InternalHandler.new(dtoken_controller.address);
+
+    // USDC
     USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
       from: owner,
     });
@@ -32,8 +36,22 @@ describe("InternalHandler contract", function () {
       from: owner,
     });
 
-    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
-    await handler.enableTokens([USDC.address]);
+    // Mock ERC20
+    ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
+    await ERC20.allocateTo(handler.address, 1000e6, {
+      from: owner,
+    });
+
+    // Use account3,account4 as mock dtokens
+    dUSDC_address = account3;
+    dERC20_address = account4;
+
+    await dtoken_controller.setdTokensRelation(
+      [USDC.address, ERC20.address],
+      [dUSDC_address, dERC20_address]
+    );
+
+    await handler.enableTokens([USDC.address, ERC20.address]);
   }
 
   describe("Deployment", function () {
@@ -121,8 +139,8 @@ describe("InternalHandler contract", function () {
 
     it("Should only allow auth to approve", async function () {
       await handler.approve(USDC.address);
-      let allowance = await USDC.allowance(handler.address, mock_dtoken);
-      assert.equal(allowance.eq(UINT256_MAX), true);
+      let allowance = await USDC.allowance(handler.address, dUSDC_address);
+      assert.equal(allowance.toString(), UINT256_MAX.toString());
 
       await truffleAssert.reverts(
         handler.approve(USDC.address, {
@@ -133,6 +151,19 @@ describe("InternalHandler contract", function () {
 
       // Approve again should do nothing
       await handler.approve(USDC.address);
+    });
+
+    it("Should fail if underlying approve failed", async function () {
+      // Approve some allowance in ERC20, approve again would fail
+      await handler.approve(ERC20.address);
+      await ERC20.transferFrom(handler.address, account1, 100e6, {
+        from: dERC20_address,
+      });
+
+      await truffleAssert.reverts(
+        handler.approve(ERC20.address),
+        "approve: Approve dToken failed!"
+      );
     });
   });
 
@@ -158,7 +189,7 @@ describe("InternalHandler contract", function () {
 
     it("Should not deposit with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.deposit(mock_dtoken, 1000e6),
+        handler.deposit(dUSDC_address, 1000e6),
         "deposit: Token is disabled!"
       );
     });

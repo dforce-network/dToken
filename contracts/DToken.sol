@@ -553,21 +553,21 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _burnLocal.exchangeRate = getCurrentExchangeRate();
         _burnLocal.grossAmount = rmul(_wad, _burnLocal.exchangeRate);
 
-        // Get `_token` best withdraw strategy base on the withdraw amount `_pie`.
-        (_burnLocal.handlers, _burnLocal.amounts) = IDispatcher(dispatcher)
-            .getWithdrawStrategy(_burnLocal.token, _burnLocal.grossAmount);
-        require(
-            _burnLocal.handlers.length > 0,
-            "burn: no withdraw stratege available, possibly due to a paused handler"
-        );
-
         _burnLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
         require(
             _burnLocal.defaultHandler != address(0) &&
                 IDispatcher(dispatcher).isHandlerActive(
                     _burnLocal.defaultHandler
                 ),
-            "redeem: default handler is inactive"
+            "burn: default handler is inactive"
+        );
+
+        // Get `_token` best withdraw strategy base on the withdraw amount `_pie`.
+        (_burnLocal.handlers, _burnLocal.amounts) = IDispatcher(dispatcher)
+            .getWithdrawStrategy(_burnLocal.token, _burnLocal.grossAmount);
+        require(
+            _burnLocal.handlers.length > 0,
+            "burn: no withdraw stratege available, possibly due to a paused handler"
         );
 
         for (uint256 i = 0; i < _burnLocal.handlers.length; i++) {
@@ -696,6 +696,15 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             BASE.sub(_redeemLocal.originationFee)
         );
 
+        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
+        require(
+            _redeemLocal.defaultHandler != address(0) &&
+                IDispatcher(dispatcher).isHandlerActive(
+                    _redeemLocal.defaultHandler
+                ),
+            "redeem: default handler is inactive"
+        );
+
         // Get `_token` best redeem strategy base on the redeem amount including fee.
         (_redeemLocal.handlers, _redeemLocal.amounts) = IDispatcher(dispatcher)
             .getWithdrawStrategy(
@@ -705,15 +714,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         require(
             _redeemLocal.handlers.length > 0,
             "redeem: no redeem stratege available, possibly due to a paused handler"
-        );
-
-        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
-        require(
-            _redeemLocal.defaultHandler != address(0) &&
-                IDispatcher(dispatcher).isHandlerActive(
-                    _redeemLocal.defaultHandler
-                ),
-            "redeem: default handler is inactive"
         );
 
         // Get current exchange rate.

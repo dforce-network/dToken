@@ -69,9 +69,9 @@ contract InternalHandler is Handler {
         return IERC20(_underlyingToken).balanceOf(address(this));
     }
 
-    /**************************************************/
-    /*** View Interfaces For Backwards compatbility ***/
-    /**************************************************/
+    /***************************************************/
+    /*** View Interfaces For Backwards compatibility ***/
+    /***************************************************/
 
     /**
      * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.

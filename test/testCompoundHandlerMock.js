@@ -2,19 +2,25 @@ const CompoundHandler = artifacts.require("CompoundHandler");
 const IHandlerView = artifacts.require("IHandlerView");
 const CToken = artifacts.require("CTokenMock");
 const FiatToken = artifacts.require("FiatTokenV1");
+const TestERC20 = artifacts.require("TestERC20");
 const DTokenController = artifacts.require("DTokenController");
+
 const truffleAssert = require("truffle-assertions");
+const Waffle = require("ethereum-waffle");
 const BN = require("bn.js");
+
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 const BASE = new BN(10).pow(new BN(18));
 const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, cUSDC;
+  let USDC, cUSDC, ERC20, cERC20, ERC20E, cERC20E;
   let handler, handler_view;
   let dtoken_controller;
-  let mock_dtoken = "0x0000000000000000000000000000000000000001";
+  let dUSDC_address = "0x0000000000000000000000000000000000000001";
+  let dERC20_address = "0x0000000000000000000000000000000000000002";
+  let dERC20E_address = "0x0000000000000000000000000000000000000003";
 
   before(async function () {
     [
@@ -30,17 +36,34 @@ describe("CompoundHandlerMock contract", function () {
     dtoken_controller = await DTokenController.new();
     handler = await CompoundHandler.new(dtoken_controller.address);
     handler_view = await IHandlerView.at(handler.address);
-    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner, {
-      from: owner,
-    });
 
+    // Mock USDC
+    USDC = await FiatToken.new("USDC", "USDC", "USD", 6, owner, owner, owner);
     cUSDC = await CToken.new("cUSDC", "cUSDC", USDC.address);
-    handler.setcTokensRelation([USDC.address], [cUSDC.address]);
+
+    // Mock TestERC20, can return boolean value
+    ERC20 = await TestERC20.new("ERC20", "ERC20", 18);
+    cERC20 = await CToken.new("cERC20", "cERC20", ERC20.address);
+
+    // Mock TestERC20 and Mock CToken, can return error when calling compound
+    ERC20E = await TestERC20.new("ERC20E", "ERC20E", 18);
+    let user = await ethers.provider.getSigner();
+    cERC20E = await Waffle.deployMockContract(user, CToken.abi);
+
+    await handler.enableTokens([USDC.address, ERC20.address, ERC20E.address]);
+    await handler.setcTokensRelation(
+      [USDC.address, ERC20.address, ERC20E.address],
+      [cUSDC.address, cERC20.address, cERC20E.address]
+    );
+
+    await dtoken_controller.setdTokensRelation(
+      [USDC.address, ERC20.address, ERC20E.address],
+      [dUSDC_address, dERC20_address, dERC20E_address]
+    );
 
     await handler.approve(USDC.address);
-
-    await dtoken_controller.setdTokensRelation([USDC.address], [mock_dtoken]);
-    await handler.enableTokens([USDC.address]);
+    await handler.approve(ERC20.address);
+    await handler.approve(ERC20E.address);
   }
 
   describe("Deployment", function () {
@@ -52,6 +75,29 @@ describe("CompoundHandlerMock contract", function () {
           from: owner,
         }),
         "initialize: Already initialized!"
+      );
+    });
+  });
+
+  describe("setcTokensRelation", function () {
+    it("Should only allow auth to set cTokens Relation", async function () {
+      await handler.setcTokensRelation([USDC.address], [cUSDC.address]);
+
+      await truffleAssert.reverts(
+        handler.setcTokensRelation([USDC.address], [cUSDC.address], {
+          from: account1,
+        }),
+        "ds-auth-unauthorized"
+      );
+    });
+
+    it("Should not allow set cTokens Relation with the different length", async function () {
+      await truffleAssert.reverts(
+        handler.setcTokensRelation(
+          [USDC.address],
+          [cUSDC.address, cUSDC.address]
+        ),
+        "setTokensRelation: Array length do not match!"
       );
     });
   });
@@ -128,7 +174,7 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should only allow auth to approve", async function () {
       await handler.approve(USDC.address);
-      let allowance = await USDC.allowance(handler.address, mock_dtoken);
+      let allowance = await USDC.allowance(handler.address, dUSDC_address);
       assert.equal(allowance.eq(UINT256_MAX), true);
 
       await truffleAssert.reverts(
@@ -136,6 +182,21 @@ describe("CompoundHandlerMock contract", function () {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+
+      // Approve again should be ok
+      await handler.approve(USDC.address);
+    });
+
+    it("Should fail if underlying approve failed", async function () {
+      // transfer ERC20 will decrease the allowance
+      ERC20.allocateTo(handler.address, 1000e6);
+      await handler.deposit(ERC20.address, 100e6);
+
+      // Approve again would fail
+      await truffleAssert.reverts(
+        handler.approve(ERC20.address),
+        "approve: Approve cToken failed!"
       );
     });
   });
@@ -163,7 +224,7 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should not deposit with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.deposit(mock_dtoken, 1000e6),
+        handler.deposit(dUSDC_address, 1000e6),
         "deposit: Token is disabled!"
       );
     });
@@ -183,6 +244,18 @@ describe("CompoundHandlerMock contract", function () {
         handler.deposit(USDC.address, 0),
         "deposit: Deposit amount should be greater than 0!"
       );
+    });
+
+    it("Should not deposit if the underlying token has no corresponding CToken", async function () {
+      // Unset the cUSDC
+      await handler.setcTokensRelation([USDC.address], [ZERO_ADDR]);
+      await truffleAssert.reverts(
+        handler.deposit(USDC.address, 1000e6),
+        "deposit: Do not support token!"
+      );
+
+      // Restore it back
+      await handler.setcTokensRelation([USDC.address], [cUSDC.address]);
     });
 
     it("Should deposit all balance regardless of amount", async function () {
@@ -225,14 +298,24 @@ describe("CompoundHandlerMock contract", function () {
         assert.equal(diff.lte(new BN(1)), true);
       }
     });
+
+    it("Should check the mint result from Compound", async function () {
+      // Prepare the mock error
+      await cERC20E.mock.mint.returns(2);
+      await cERC20E.mock.balanceOfUnderlying.returns(0);
+
+      await ERC20E.allocateTo(handler.address, 1000e6);
+      await truffleAssert.reverts(
+        handler.deposit(ERC20E.address, 1000e6),
+        "deposit: Fail to supply to compound!"
+      );
+    });
   });
 
   describe("withdraw", function () {
     beforeEach(async function () {
       await resetContracts();
-      await USDC.allocateTo(handler.address, 100000e6, {
-        from: owner,
-      });
+      await USDC.allocateTo(handler.address, 100000e6);
       await handler.deposit(USDC.address, 10000e6);
     });
 
@@ -249,7 +332,7 @@ describe("CompoundHandlerMock contract", function () {
 
     it("Should not withdraw with disabled token", async function () {
       await truffleAssert.reverts(
-        handler.withdraw(mock_dtoken, 1000e6),
+        handler.withdraw(dUSDC_address, 1000e6),
         "withdraw: Do not support token!"
       );
     });
@@ -267,6 +350,18 @@ describe("CompoundHandlerMock contract", function () {
         handler.withdraw(USDC.address, 0),
         "withdraw: Withdraw amount should be greater than 0!"
       );
+    });
+
+    it("Should not withdraw if the underlying token has no corresponding CToken", async function () {
+      // Unset the cUSDC
+      await handler.setcTokensRelation([USDC.address], [ZERO_ADDR]);
+      await truffleAssert.reverts(
+        handler.withdraw(USDC.address, 1000e6),
+        "withdraw: Do not support token!"
+      );
+
+      // Restore it back
+      await handler.setcTokensRelation([USDC.address], [cUSDC.address]);
     });
 
     it("Check the actual withdraw amount with some interest and changing exchange rate", async function () {
@@ -301,6 +396,31 @@ describe("CompoundHandlerMock contract", function () {
         assert.equal(diff.lte(new BN(1)), true);
       }
     });
+
+    it("Should check the withdraw result from Compound", async function () {
+      // Mocks to prepare mint
+      await cERC20E.mock.balanceOfUnderlying.returns(0);
+      await cERC20E.mock.mint.returns(0);
+
+      await ERC20E.allocateTo(handler.address, 100000e6);
+      await handler.deposit(ERC20E.address, 10000e6);
+
+      // Prepare the mock error
+      await cERC20E.mock.redeemUnderlying.returns(2);
+
+      await truffleAssert.reverts(
+        handler.withdraw(ERC20E.address, 1000e6),
+        "withdraw: Fail to withdraw from market!"
+      );
+
+      // For withdraw all
+      await cERC20E.mock.balanceOf.returns(1000e6);
+      await cERC20E.mock.redeem.returns(2);
+      await truffleAssert.reverts(
+        handler.withdraw(ERC20E.address, UINT256_MAX),
+        "withdraw: Fail to withdraw from market!"
+      );
+    });
   });
 
   describe("getBalance", function () {
@@ -315,6 +435,22 @@ describe("CompoundHandlerMock contract", function () {
     it("Should get some balance", async function () {
       let balance = await handler.getBalance(USDC.address);
       assert.equal(balance.toString(), 100000e6);
+    });
+
+    it("Should get 0 as balance if compound call failed", async function () {
+      await cERC20E.mock.mint.returns(0);
+      await cERC20E.mock.balanceOfUnderlying.returns(100000e6);
+
+      // Allocate some balance
+      await ERC20E.allocateTo(handler.address, 100000e6);
+      await handler.deposit(ERC20E.address, 100000e6);
+
+      // Compound failed to getAccountSnapshot
+      await cERC20E.mock.getAccountSnapshot.returns(1, 0, 0, 0);
+
+      // Should return 0 as balance
+      let balance = await handler.getBalance(ERC20E.address);
+      assert.equal(balance.toString(), 0);
     });
   });
 

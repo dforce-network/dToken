@@ -25,7 +25,7 @@ module.exports = async function (deployer, network, accounts) {
   let dToken_contract_library = await DTokenController.deployed();
   await dToken_contract_library.setAuthority(ds_guard.address);
 
-  if (network != "development") {
+  if (network == "kovan") {
     // Compound USDC
     usdc = await FiatToken.at("0xb7a4F3E9097C08dA09517b5aB877F7a917224ede");
     // Compound cUSDC
@@ -98,14 +98,14 @@ module.exports = async function (deployer, network, accounts) {
   let aave_handler = await AaveHandler.deployed();
   await deployer.deploy(Proxy, aave_handler.address);
   let aave_handler_proxy = await Proxy.deployed();
-  let aavev_proxy = await AaveHandler.at(aave_handler_proxy.address);
-  await aavev_proxy.initialize(
+  let aave_proxy = await AaveHandler.at(aave_handler_proxy.address);
+  await aave_proxy.initialize(
     dToken_contract_library.address,
     lendingPool.address,
     lendingPoolCore.address
   );
-  await aavev_proxy.enableTokens([usdt.address]);
-  await aavev_proxy.setAuthority(ds_guard.address);
+  await aave_proxy.enableTokens([usdt.address]);
+  await aave_proxy.setAuthority(ds_guard.address);
 
   // Deploys usdc dispatcher
   await deployer.deploy(
@@ -119,8 +119,8 @@ module.exports = async function (deployer, network, accounts) {
   // Deploys dUSDC
   await deployer.deploy(
     DToken,
-    "dUSDC",
-    "dUSDC",
+    "dToken",
+    "dToken",
     usdc.address,
     usdc_dispatcher.address
   );
@@ -148,15 +148,7 @@ module.exports = async function (deployer, network, accounts) {
   await usdt_dispatcher.setAuthority(ds_guard.address);
 
   // Deploys dUSDT
-  await deployer.deploy(
-    DToken,
-    "dUSDT",
-    "dUSDT",
-    usdt.address,
-    usdt_dispatcher.address
-  );
-  let dUSDT = await DToken.deployed();
-  await deployer.deploy(Proxy, dUSDT.address);
+  await deployer.deploy(Proxy, dUSDC.address);
   let dUSDT_token_proxy = await Proxy.deployed();
   let dUSDT_proxy = await DToken.at(dUSDT_token_proxy.address);
   await dUSDT_proxy.initialize(
@@ -177,5 +169,33 @@ module.exports = async function (deployer, network, accounts) {
   await internal_proxy.approve(usdc.address);
   await internal_proxy.approve(usdt.address);
   await compound_proxy.approve(usdc.address);
-  await aavev_proxy.approve(usdt.address);
+  await aave_proxy.approve(usdt.address);
+
+  console.log('Deployer address: ', owner);
+  console.log('DS Guard contract address: ', ds_guard.address);
+  console.log('DToken Controller contract address: ', dToken_contract_library.address,'\n');
+
+  console.log('USDC contract address: ', usdc.address);
+  console.log('cUSDC contract address: ', cUSDC.address);
+  console.log('USDT contract address: ', usdt.address);
+  console.log('aUSDT contract address: ', aUSDT.address);
+  console.log('LendingPoolCore contract address: ', lendingPoolCore.address);
+  console.log('LendingPool contract address: ', lendingPool.address,'\n');
+
+  console.log('Internal handler contract address: ', internal_handler.address);
+  console.log('Internal handler proxy contract address: ', internal_proxy.address,'\n');
+
+  console.log('Compound handler contract address: ', compound_handler.address);
+  console.log('Compound handler proxy contract address: ', compound_proxy.address,'\n');
+
+  console.log('Aave handler contract address: ', aave_handler.address);
+  console.log('Aave handler proxy contract address: ', aave_proxy.address,'\n');
+
+  console.log('dToken implementation', dUSDC.address,'\n');
+
+  console.log('USDC dispatcher contract address: ', usdc_dispatcher.address);
+  console.log('dUSDC contract address: ', dUSDC_proxy.address,'\n');
+
+  console.log('USDT dispatcher contract address: ', usdt_dispatcher.address);
+  console.log('dUSDT contract address: ', dUSDT_proxy.address,'\n');
 };
