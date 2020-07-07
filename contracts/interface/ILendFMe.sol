@@ -27,15 +27,8 @@ interface ILendFMe {
             uint256
         );
 
-    // struct Balance {
-    //     uint principal;
-    //     uint interestIndex;
-    // }
-
     function supplyBalances(address account, address token)
         external
         view
         returns (uint256, uint256);
-
-    // mapping(address => mapping(address => Balance)) public supplyBalances;
 }

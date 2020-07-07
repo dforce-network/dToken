@@ -1,67 +1,35 @@
 pragma solidity 0.5.12;
 
+import "./Handler.sol";
 import "./interface/ILendFMe.sol";
-import "./library/ERC20SafeTransfer.sol";
-import "./library/DSAuth.sol";
-import "./library/SafeMath.sol";
-import "./library/Pausable.sol";
-import "./interface/IDTokenController.sol";
+import "./library/ReentrancyGuard.sol";
 
-contract Handler is ERC20SafeTransfer, Pausable {
-    using SafeMath for uint256;
+contract MoneyMarketHandler is Handler, ReentrancyGuard {
 
-    bool private initialized; // Flags for initializing data
     address public targetAddr; // market address
-    address public dTokenController; // dToken address
 
-    mapping(address => bool) private tokensEnable;
     mapping(address => uint256) public interestDetails;
 
     event NewdTargetAddr(
         address indexed originalTargetAddr,
         address indexed newTargetAddr
     );
-    event DisableToken(address indexed underlyingToken);
-    event EnableToken(address indexed underlyingToken);
 
-    constructor(address _targetAddr, address _dTokenController) public {
-        initialize(_targetAddr, _dTokenController);
+    constructor(
+        address _dTokenController,
+        address _targetAddr
+    ) public {
+        initialize(_dTokenController, _targetAddr);
     }
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
-    function initialize(address _targetAddr, address _dTokenController) public {
-        require(!initialized, "initialize: Already initialized!");
-        owner = msg.sender;
+    function initialize(
+        address _dTokenController,
+        address _targetAddr
+    ) public {
+        super.initialize(_dTokenController);
         targetAddr = _targetAddr;
-        dTokenController = _dTokenController;
-        initialized = true;
-    }
-
-    /**
-     * @dev Authorized function to disable an underlying token.
-     * @param _underlyingToken Token to disable.
-     */
-    function disableToken(address _underlyingToken) external auth {
-        require(
-            tokensEnable[_underlyingToken],
-            "disableToken: Has been disabled!"
-        );
-        tokensEnable[_underlyingToken] = false;
-        emit DisableToken(_underlyingToken);
-    }
-
-    /**
-     * @dev Authorized function to enable an underlying token.
-     * @param _underlyingToken Token to enable.
-     */
-    function enableToken(address _underlyingToken) external auth {
-        require(
-            !tokensEnable[_underlyingToken],
-            "enableToken: Has been enabled!"
-        );
-        tokensEnable[_underlyingToken] = true;
-        emit EnableToken(_underlyingToken);
     }
 
     /**
@@ -79,23 +47,19 @@ contract Handler is ERC20SafeTransfer, Pausable {
     }
 
     /**
-     * @dev This token `_token` approves to market and dToken contract.
-     * @param _token Token address to approve.
+     * @dev This token `_underlyingToken` approves to market and dToken contract.
+     * @param _underlyingToken Token address to approve.
      */
-    function approve(address _token) public {
-        address _dToken = IDTokenController(dTokenController).getDToken(_token);
-        if (IERC20(_token).allowance(address(this), targetAddr) != uint256(-1))
+    function approve(address _underlyingToken) public {
+        if (IERC20(_underlyingToken).allowance(address(this), targetAddr) != uint256(-1))
             require(
-                doApprove(_token, targetAddr, uint256(-1)),
+                doApprove(_underlyingToken, targetAddr, uint256(-1)),
                 "approve: Approve market failed!"
             );
 
-        if (IERC20(_token).allowance(address(this), _dToken) != uint256(-1))
-            require(
-                doApprove(_token, _dToken, uint256(-1)),
-                "approve: Approve dToken failed!"
-            );
+        super.approve(_underlyingToken);
     }
+
 
     /**
      * @dev Deposit token to market, but only for dToken contract.
@@ -106,27 +70,40 @@ contract Handler is ERC20SafeTransfer, Pausable {
         external
         auth
         whenNotPaused
+        nonReentrant
         returns (uint256)
     {
-        require(tokensEnable[_underlyingToken], "deposit: Token is disabled!");
+        require(tokenIsEnabled(_underlyingToken), "deposit: Token is disabled!");
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
         );
-        // including unexpected transfer.
+        
+        // Update the stored interest with the market balance before the deposit
+        uint256 _MarketBalanceBefore = _updateInterest(_underlyingToken);
+        
+        // Mint all the token balance of the handler,
+        // which should be the exact deposit amount normally,
+        // but there could be some unexpected transfers before.
         uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
-        _updateInterest(_underlyingToken);
 
         require(
             ILendFMe(targetAddr).supply(
-                address(_underlyingToken),
+                _underlyingToken,
                 _handlerBalance
             ) == 0,
             "deposit: Fail to supply to money market!"
         );
-        return _handlerBalance > _amount ? _amount : _handlerBalance;
+        
+        // including unexpected transfers.
+        uint256 _MarketBalanceAfter = getBalance(_underlyingToken);
+        
+        uint256 _changedAmount = _MarketBalanceAfter.sub(_MarketBalanceBefore);
+
+        // return a smaller value as unexpected transfers were also included.
+        return _changedAmount > _amount ? _amount : _changedAmount;
     }
 
     /**
@@ -139,6 +116,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
         external
         auth
         whenNotPaused
+        nonReentrant
         returns (uint256)
     {
         require(
@@ -147,52 +125,55 @@ contract Handler is ERC20SafeTransfer, Pausable {
         );
 
         _updateInterest(_underlyingToken);
+        
+        uint256 _handlerBalanceBefore = IERC20(_underlyingToken).balanceOf(
+            address(this)
+        );
 
         require(
-            ILendFMe(targetAddr).withdraw(address(_underlyingToken), _amount) ==
+            ILendFMe(targetAddr).withdraw(_underlyingToken, _amount) ==
                 0,
             "withdraw: Fail to withdraw from money market!"
         );
 
         // including unexpected transfer.
-        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(
+        uint256 _handlerBalanceAfter = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
 
-        return _handlerBalance > _amount ? _amount : _handlerBalance;
+        uint256 _changedAmount = _handlerBalanceAfter.sub(
+            _handlerBalanceBefore
+        );
+
+        // return a smaller value.
+        return _changedAmount > _amount ? _amount : _changedAmount;
     }
 
     /**
      * @dev Update the handler deposit interest based on the underlying token.
      */
-    function _updateInterest(address _underlyingToken) internal {
-        uint256 _lastTotalBalance = getBalance(_underlyingToken);
-        (uint256 _lastPrincipalBalance, ) = ILendFMe(targetAddr).supplyBalances(
+    function _updateInterest(address _underlyingToken) internal returns (uint256) {
+        uint256 _balance = getBalance(_underlyingToken);
+        (uint256 _underlyingBalance, ) = ILendFMe(targetAddr).supplyBalances(
             address(this),
             _underlyingToken
         );
-
-        uint256 _periodInterests = _lastTotalBalance.sub(_lastPrincipalBalance);
+        
+        // Interest = Balance - UnderlyingBalance.
+        uint256 _interest = _balance.sub(_underlyingBalance);
+        
+        // Update the stored interest
         interestDetails[_underlyingToken] = interestDetails[_underlyingToken]
-            .add(_periodInterests);
+            .add(_interest);
+            
+        return _balance;
     }
 
     /**
-     * @dev Support token or not.
-     */
-    function tokenIsEnabled(address _underlyingToken)
-        public
-        view
-        returns (bool)
-    {
-        return tokensEnable[_underlyingToken];
-    }
-
-    /**
-     * @dev Supply balance with any accumulated interest for `_underlyingToken` belonging to `handler`
+     * @dev Total balance with any accumulated interest for _underlyingToken belonging to handler
      * @param _underlyingToken Token to get balance.
      */
-    function getBalance(address _underlyingToken)
+    function getRealBalance(address _underlyingToken)
         public
         view
         returns (uint256)
@@ -205,6 +186,37 @@ contract Handler is ERC20SafeTransfer, Pausable {
     }
 
     /**
+     * @dev The maximum withdrawable _underlyingToken in the market.
+     * @param _underlyingToken Token to get liquidity.
+     */
+    function getRealLiquidity(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        uint256 _underlyingBalance = getRealBalance(_underlyingToken);
+        uint256 _cash = IERC20(_underlyingToken).balanceOf(targetAddr);
+
+        return _underlyingBalance > _cash ? _cash : _underlyingBalance;
+    }
+    
+    /***************************************************/
+    /*** View Interfaces For Backwards compatibility ***/
+    /***************************************************/
+    
+    /**
+     * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
+     * @param _underlyingToken Token to get balance.
+     */
+    function getBalance(address _underlyingToken)
+        public
+        view
+        returns (uint256)
+    {
+        return getRealBalance(_underlyingToken);
+    }
+    
+    /**
      * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
      * @param _underlyingToken Token to get balance.
      */
@@ -213,39 +225,7 @@ contract Handler is ERC20SafeTransfer, Pausable {
         view
         returns (uint256)
     {
-        uint256 _supplyBalance = getBalance(_underlyingToken);
-        uint256 _balance = IERC20(_underlyingToken).balanceOf(targetAddr);
-        if (_supplyBalance > _balance) return _balance;
-
-        return _supplyBalance;
-    }
-
-    /**
-     * @dev The maximum withdrawable amount of asset `_underlyingToken` in the market,
-     *      and excludes fee, if has.
-     * @param _underlyingToken Token to get actual balance.
-     */
-    function getRealBalance(address _underlyingToken)
-        external
-        view
-        returns (uint256)
-    {
-        return getBalance(_underlyingToken);
-    }
-
-    /**
-     * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
-     * @param _underlyingToken Token to get balance.
-     */
-    function getRealLiquidity(address _underlyingToken)
-        public
-        view
-        returns (uint256)
-    {
-        return getLiquidity(_underlyingToken);
-    }
-
-    function getTargetAddress() external view returns (address) {
-        return targetAddr;
+        return getRealLiquidity(_underlyingToken);
     }
 }
+
