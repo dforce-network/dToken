@@ -127,6 +127,13 @@ describe("Dispatcher Contract", function () {
         }),
         "ds-auth-unauthorized"
       );
+
+      let handler_list = handler_addresses;
+      handler_list[handler_list.length - 1] = handler_list[0];
+      await truffleAssert.reverts(
+        dispatcher.updateProportions(handler_list, proportions),
+        "updateProportions: input handler contract address is duplicate"
+      );
     });
 
     it("Should not update proportion as length mismatch", async function () {

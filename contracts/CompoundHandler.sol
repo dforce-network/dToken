@@ -23,6 +23,7 @@ contract CompoundHandler is Handler, ReentrancyGuard {
 
     constructor(address _dTokenController) public {
         super.initialize(_dTokenController);
+        initReentrancyStatus();
     }
 
     /**

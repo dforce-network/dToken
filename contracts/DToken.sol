@@ -30,7 +30,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     // --- ERC20 Data ---
     string public name;
     string public symbol;
-    uint256 public decimals;
+    uint8 public decimals;
     uint256 public totalSupply;
 
     struct Balance {
@@ -125,6 +125,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     ) public {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
+        initReentrancyStatus();
         feeRecipient = address(this);
         name = _name;
         symbol = _symbol;
@@ -862,7 +863,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         return true;
     }
 
-    function approve(address _spender, uint256 _wad) public returns (bool) {
+    function approve(address _spender, uint256 _wad)
+        public
+        whenNotPaused
+        returns (bool)
+    {
         allowance[msg.sender][_spender] = _wad;
         emit Approval(msg.sender, _spender, _wad);
         return true;

@@ -144,6 +144,12 @@ contract Dispatcher is DSAuth {
 
         uint256 _sum = 0;
         for (uint256 i = 0; i < _proportions.length; i++) {
+            for (uint256 j = 0; j < i; j++) {
+                require(
+                    _handlers[i] != _handlers[j],
+                    "updateProportions: input handler contract address is duplicate"
+                );
+            }
             require(
                 isHandlerActive[_handlers[i]],
                 "updateProportions: the handler contract address does not exist"
