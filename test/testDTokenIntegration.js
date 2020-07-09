@@ -1796,7 +1796,7 @@ describe("DToken Contract Integration", function () {
     });
   });
 
-  describe.only("DToken Integration: Rebalance related cases ", async function () {
+  describe("DToken Integration: Rebalance related cases ", async function () {
     before(async function () {
       await resetContracts();
       await dispatcher.resetHandlers(
