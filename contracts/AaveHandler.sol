@@ -8,7 +8,13 @@ contract AaveHandler is Handler, ReentrancyGuard {
     address public aaveLendingPool;
     address public aaveLendingPoolCore;
 
-    mapping(address => uint256) public interestDetails;
+    // mapping(address => uint256) public interestDetails;
+    struct InterestDetails {
+        uint256 totalUnderlyingBalance; // Total underlying balance including interest
+        uint256 interest; // Total interest
+    }
+    // Based on underlying token, get current interest details
+    mapping(address => InterestDetails) public interestDetails;
 
     constructor(
         address _dTokenController,
@@ -82,11 +88,7 @@ contract AaveHandler is Handler, ReentrancyGuard {
         address _aToken = getAToken(_underlyingToken);
         require(_aToken != address(0x0), "deposit: Do not support token!");
 
-        // Update the stored interest with the market balance before the deposit
-        uint256 _MarketBalanceBefore = _updateInterest(
-            _aToken,
-            _underlyingToken
-        );
+        uint256 _MarketBalanceBefore = IERC20(_aToken).balanceOf(address(this));
 
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
@@ -102,6 +104,16 @@ contract AaveHandler is Handler, ReentrancyGuard {
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = IERC20(_aToken).balanceOf(address(this));
+
+        InterestDetails storage _details = interestDetails[_underlyingToken];
+        // Update the stored interest with the market balance after the mint
+        uint256 _interest = _MarketBalanceAfter
+            .sub(_details.totalUnderlyingBalance)
+            .sub(_amount);
+        _details.interest = _details.interest.add(_interest);
+
+        // Store the latest real balance.
+        _details.totalUnderlyingBalance = _MarketBalanceAfter;
 
         uint256 _changedAmount = _MarketBalanceAfter.sub(_MarketBalanceBefore);
 
@@ -130,8 +142,6 @@ contract AaveHandler is Handler, ReentrancyGuard {
         address _aToken = getAToken(_underlyingToken);
         require(_aToken != address(0x0), "withdraw: Do not support token!");
 
-        _updateInterest(_aToken, _underlyingToken);
-
         uint256 _handlerBalanceBefore = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
@@ -147,32 +157,21 @@ contract AaveHandler is Handler, ReentrancyGuard {
             _handlerBalanceBefore
         );
 
+        // including unexpected transfers.
+        uint256 _MarketBalanceAfter = IERC20(_aToken).balanceOf(address(this));
+
+        InterestDetails storage _details = interestDetails[_underlyingToken];
+        // Update the stored interest with the market balance after the redeem
+        uint256 _interest = _MarketBalanceAfter.add(_changedAmount).sub(
+            _details.totalUnderlyingBalance
+        );
+        _details.interest = _details.interest.add(_interest);
+
+        // Store the latest real balance.
+        _details.totalUnderlyingBalance = _MarketBalanceAfter;
+
         // return a smaller value.
         return _changedAmount > _amount ? _amount : _changedAmount;
-    }
-
-    /**
-     * @dev Update the handler deposit interest based on the underlying token.
-     * @param _aToken The underlying token to check interest with.
-     * @param _underlyingToken The underlying token to check interest with.
-     * @return The current balance in market.
-     */
-    function _updateInterest(address _aToken, address _underlyingToken)
-        internal
-        returns (uint256)
-    {
-        uint256 _balance = IERC20(_aToken).balanceOf(address(this));
-
-        // Interest = Balance - UnderlyingBalance.
-        uint256 _interest = _balance.sub(
-            getUnderlyingBalance(_underlyingToken)
-        );
-
-        // Update the stored interest
-        interestDetails[_underlyingToken] = interestDetails[_underlyingToken]
-            .add(_interest);
-
-        return _balance;
     }
 
     /**
