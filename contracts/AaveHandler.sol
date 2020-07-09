@@ -90,6 +90,13 @@ contract AaveHandler is Handler, ReentrancyGuard {
 
         uint256 _MarketBalanceBefore = IERC20(_aToken).balanceOf(address(this));
 
+        InterestDetails storage _details = interestDetails[_underlyingToken];
+        // Update the stored interest with the market balance after the mint
+        uint256 _interest = _MarketBalanceBefore.sub(
+            _details.totalUnderlyingBalance
+        );
+        _details.interest = _details.interest.add(_interest);
+
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
         // but there could be some unexpected transfers before.
@@ -104,13 +111,6 @@ contract AaveHandler is Handler, ReentrancyGuard {
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = IERC20(_aToken).balanceOf(address(this));
-
-        InterestDetails storage _details = interestDetails[_underlyingToken];
-        // Update the stored interest with the market balance after the mint
-        uint256 _interest = _MarketBalanceAfter
-            .sub(_details.totalUnderlyingBalance)
-            .sub(_amount);
-        _details.interest = _details.interest.add(_interest);
 
         // Store the latest real balance.
         _details.totalUnderlyingBalance = _MarketBalanceAfter;
@@ -146,6 +146,13 @@ contract AaveHandler is Handler, ReentrancyGuard {
             address(this)
         );
 
+        InterestDetails storage _details = interestDetails[_underlyingToken];
+        // Update the stored interest with the market balance after the redeem
+        uint256 _interest = _MarketBalanceAfter.sub(
+            _details.totalUnderlyingBalance
+        );
+        _details.interest = _details.interest.add(_interest);
+
         // aave supports redeem -1
         AToken(_aToken).redeem(_amount);
 
@@ -159,13 +166,6 @@ contract AaveHandler is Handler, ReentrancyGuard {
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = IERC20(_aToken).balanceOf(address(this));
-
-        InterestDetails storage _details = interestDetails[_underlyingToken];
-        // Update the stored interest with the market balance after the redeem
-        uint256 _interest = _MarketBalanceAfter.add(_changedAmount).sub(
-            _details.totalUnderlyingBalance
-        );
-        _details.interest = _details.interest.add(_interest);
 
         // Store the latest real balance.
         _details.totalUnderlyingBalance = _MarketBalanceAfter;
