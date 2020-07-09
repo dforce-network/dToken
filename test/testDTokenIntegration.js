@@ -1887,25 +1887,21 @@ describe("DToken Contract Integration", function () {
     it("Case Rebalance 111: user mint burn redeem ", async function () {
       await USDC.allocateTo(account1, 100000e6);
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 100e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.mint(account1, 100e6, {from: account1})
       );
 
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 1e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.burn(account1, 1e6, {from: account1})
       );
 
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 1e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.redeem(account1, 1e6, {from: account1})
       );
     });
 
     it("Case Rebalance 112: rebalance withdraw other contract ", async function () {
       await truffleAssert.reverts(
-        dUSDC.rebalance([other_contract.address], [100], [], []),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.rebalance([other_contract.address], [100], [], [])
       );
     });
 
@@ -1928,15 +1924,13 @@ describe("DToken Contract Integration", function () {
           [100, 100],
           [],
           []
-        ),
-        "function selector was not recognized and there's no fallback function"
+        )
       );
     });
 
     it("Case Rebalance 115: rebalance supply other contract ", async function () {
       await truffleAssert.reverts(
-        dUSDC.rebalance([], [], [other_contract.address], [100]),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.rebalance([], [], [other_contract.address], [100])
       );
     });
 
@@ -1959,8 +1953,7 @@ describe("DToken Contract Integration", function () {
           [],
           [compound_handler.address, other_contract.address],
           [100, 100]
-        ),
-        "function selector was not recognized and there's no fallback function"
+        )
       );
     });
 
@@ -1971,25 +1964,21 @@ describe("DToken Contract Integration", function () {
       );
 
       await truffleAssert.reverts(
-        dUSDC.getExchangeRate(),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.getExchangeRate()
       );
     });
 
     it("Case Rebalance 119: user mint burn redeem with compound and other contracts ", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 100e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.mint(account1, 100e6, {from: account1})
       );
 
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 1e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.burn(account1, 1e6, {from: account1})
       );
 
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 1e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.redeem(account1, 1e6, {from: account1})
       );
     });
 
@@ -2021,25 +2010,21 @@ describe("DToken Contract Integration", function () {
       await dispatcher.resetHandlers([other_contract.address], [1000000]);
 
       await truffleAssert.reverts(
-        dUSDC.getExchangeRate(),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.getExchangeRate()
       );
     });
 
     it("Case Rebalance 123: user mint burn redeem with other contracts ", async function () {
       await truffleAssert.reverts(
-        dUSDC.mint(account1, 100e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.mint(account1, 100e6, {from: account1})
       );
 
       await truffleAssert.reverts(
-        dUSDC.burn(account1, 1e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.burn(account1, 1e6, {from: account1})
       );
 
       await truffleAssert.reverts(
-        dUSDC.redeem(account1, 1e6, {from: account1}),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.redeem(account1, 1e6, {from: account1})
       );
     });
 
@@ -2057,8 +2042,7 @@ describe("DToken Contract Integration", function () {
 
     it("Case Rebalance 125: rebalance supply other contract ", async function () {
       await truffleAssert.reverts(
-        dUSDC.rebalance([], [], [other_contract.address], [100]),
-        "function selector was not recognized and there's no fallback function"
+        dUSDC.rebalance([], [], [other_contract.address], [100])
       );
     });
   });
