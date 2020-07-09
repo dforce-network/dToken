@@ -1811,35 +1811,59 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case Rebalance 105: rebalance withdraw other ", async function () {
-      let other_handler_balance = await other_handler.getLiquidity(USDC.address);
+      let other_handler_balance = await other_handler.getLiquidity(
+        USDC.address
+      );
       await truffleAssert.reverts(
-        dUSDC.rebalance([other_handler.address], [other_handler_balance], [], []),
-        'ds-auth-unauthorized'
+        dUSDC.rebalance(
+          [other_handler.address],
+          [other_handler_balance],
+          [],
+          []
+        ),
+        "ds-auth-unauthorized"
       );
     });
 
     it("Case Rebalance 106: rebalance withdraw compound other ", async function () {
       await other_handler.setAuthority(ds_guard.address);
       await ds_guard.permitx(dUSDC.address, other_handler.address);
-      let other_handler_balance = await other_handler.getLiquidity(USDC.address);
+      let other_handler_balance = await other_handler.getLiquidity(
+        USDC.address
+      );
       await truffleAssert.reverts(
-        dUSDC.rebalance([compound_handler.address, other_handler.address], [new BN(100000), other_handler_balance], [], [])
+        dUSDC.rebalance(
+          [compound_handler.address, other_handler.address],
+          [new BN(100000), other_handler_balance],
+          [],
+          []
+        )
       );
     });
 
     it("Case Rebalance 107: rebalance supply other ", async function () {
       let internal_balance = await internal_handler.getLiquidity(USDC.address);
       await truffleAssert.reverts(
-        dUSDC.rebalance([], [], [other_handler.address], [internal_balance.div(new BN(2))]),
-        'rebalance: both handler and token must be enabled'
+        dUSDC.rebalance(
+          [],
+          [],
+          [other_handler.address],
+          [internal_balance.div(new BN(2))]
+        ),
+        "rebalance: both handler and token must be enabled"
       );
     });
 
     it("Case Rebalance 108: rebalance supply compound aave ", async function () {
       let internal_balance = await internal_handler.getLiquidity(USDC.address);
       await truffleAssert.reverts(
-        dUSDC.rebalance([], [], [compound_handler.address, aave_handler.address], [internal_balance.div(new BN(4)), internal_balance.div(new BN(4))]),
-        'rebalance: both handler and token must be enabled'
+        dUSDC.rebalance(
+          [],
+          [],
+          [compound_handler.address, aave_handler.address],
+          [internal_balance.div(new BN(4)), internal_balance.div(new BN(4))]
+        ),
+        "rebalance: both handler and token must be enabled"
       );
     });
 
@@ -1850,7 +1874,14 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case Rebalance 110: update proportions ", async function () {
-      await dispatcher.updateProportions([internal_handler.address, compound_handler.address, other_contract.address], [100000, 700000, 200000]);
+      await dispatcher.updateProportions(
+        [
+          internal_handler.address,
+          compound_handler.address,
+          other_contract.address,
+        ],
+        [100000, 700000, 200000]
+      );
     });
 
     it("Case Rebalance 111: user mint burn redeem ", async function () {
@@ -1859,12 +1890,12 @@ describe("DToken Contract Integration", function () {
         dUSDC.mint(account1, 100e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
       );
-      
+
       await truffleAssert.reverts(
         dUSDC.burn(account1, 1e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
       );
-      
+
       await truffleAssert.reverts(
         dUSDC.redeem(account1, 1e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
@@ -1881,12 +1912,23 @@ describe("DToken Contract Integration", function () {
     it("Case Rebalance 113: rebalance withdraw compound ", async function () {
       let compound_balance = await compound_handler.getLiquidity(USDC.address);
       await dUSDC.rebalance([compound_handler.address], [100], [], []);
-      assert.equal(compound_balance.sub(await compound_handler.getLiquidity(USDC.address)).abs().toString(), 100);
+      assert.equal(
+        compound_balance
+          .sub(await compound_handler.getLiquidity(USDC.address))
+          .abs()
+          .toString(),
+        100
+      );
     });
 
     it("Case Rebalance 114: rebalance withdraw compound other contract ", async function () {
       await truffleAssert.reverts(
-        dUSDC.rebalance([compound_handler.address, other_contract.address], [100, 100], [], []),
+        dUSDC.rebalance(
+          [compound_handler.address, other_contract.address],
+          [100, 100],
+          [],
+          []
+        ),
         "function selector was not recognized and there's no fallback function"
       );
     });
@@ -1901,12 +1943,23 @@ describe("DToken Contract Integration", function () {
     it("Case Rebalance 116: rebalance supply compound ", async function () {
       let compound_balance = await compound_handler.getLiquidity(USDC.address);
       await dUSDC.rebalance([], [], [compound_handler.address], [100]);
-      assert.equal(compound_balance.sub(await compound_handler.getLiquidity(USDC.address)).abs().toString(), 100);
+      assert.equal(
+        compound_balance
+          .sub(await compound_handler.getLiquidity(USDC.address))
+          .abs()
+          .toString(),
+        100
+      );
     });
 
     it("Case Rebalance 117: rebalance supply compound other contract ", async function () {
       await truffleAssert.reverts(
-        dUSDC.rebalance([], [], [compound_handler.address, other_contract.address], [100, 100]),
+        dUSDC.rebalance(
+          [],
+          [],
+          [compound_handler.address, other_contract.address],
+          [100, 100]
+        ),
         "function selector was not recognized and there's no fallback function"
       );
     });
@@ -1924,16 +1977,16 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case Rebalance 119: user mint burn redeem with compound and other contracts ", async function () {
-        await truffleAssert.reverts(
+      await truffleAssert.reverts(
         dUSDC.mint(account1, 100e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
       );
-      
+
       await truffleAssert.reverts(
         dUSDC.burn(account1, 1e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
       );
-      
+
       await truffleAssert.reverts(
         dUSDC.redeem(account1, 1e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
@@ -1943,20 +1996,29 @@ describe("DToken Contract Integration", function () {
     it("Case Rebalance 120: rebalance withdraw compound with other contracts ", async function () {
       let compound_balance = await compound_handler.getLiquidity(USDC.address);
       await dUSDC.rebalance([compound_handler.address], [100], [], []);
-      assert.equal(compound_balance.sub(await compound_handler.getLiquidity(USDC.address)).abs().toString(), 0);
+      assert.equal(
+        compound_balance
+          .sub(await compound_handler.getLiquidity(USDC.address))
+          .abs()
+          .toString(),
+        0
+      );
     });
 
     it("Case Rebalance 121: rebalance supply compound with other contracts ", async function () {
       let compound_balance = await compound_handler.getLiquidity(USDC.address);
       await dUSDC.rebalance([], [], [compound_handler.address], [100]);
-      assert.equal(compound_balance.sub(await compound_handler.getLiquidity(USDC.address)).abs().toString(), 0);
+      assert.equal(
+        compound_balance
+          .sub(await compound_handler.getLiquidity(USDC.address))
+          .abs()
+          .toString(),
+        0
+      );
     });
 
     it("Case Rebalance 122: resetHandler other contract ", async function () {
-      await dispatcher.resetHandlers(
-        [other_contract.address],
-        [1000000]
-      );
+      await dispatcher.resetHandlers([other_contract.address], [1000000]);
 
       await truffleAssert.reverts(
         dUSDC.getExchangeRate(),
@@ -1969,12 +2031,12 @@ describe("DToken Contract Integration", function () {
         dUSDC.mint(account1, 100e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
       );
-      
+
       await truffleAssert.reverts(
         dUSDC.burn(account1, 1e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
       );
-      
+
       await truffleAssert.reverts(
         dUSDC.redeem(account1, 1e6, {from: account1}),
         "function selector was not recognized and there's no fallback function"
@@ -1984,7 +2046,13 @@ describe("DToken Contract Integration", function () {
     it("Case Rebalance 124: rebalance withdraw other contract ", async function () {
       let other_contract_balance = await USDC.balanceOf(other_contract.address);
       await dUSDC.rebalance([other_contract.address], [10000], [], []);
-      assert.equal(other_contract_balance.sub(await USDC.balanceOf(other_contract.address)).abs().toString(), 0);
+      assert.equal(
+        other_contract_balance
+          .sub(await USDC.balanceOf(other_contract.address))
+          .abs()
+          .toString(),
+        0
+      );
     });
 
     it("Case Rebalance 125: rebalance supply other contract ", async function () {

@@ -863,7 +863,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         return true;
     }
 
-    function approve(address _spender, uint256 _wad) public whenNotPaused returns (bool) {
+    function approve(address _spender, uint256 _wad)
+        public
+        whenNotPaused
+        returns (bool)
+    {
         allowance[msg.sender][_spender] = _wad;
         emit Approval(msg.sender, _spender, _wad);
         return true;

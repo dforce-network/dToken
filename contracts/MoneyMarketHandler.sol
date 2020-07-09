@@ -5,7 +5,6 @@ import "./interface/ILendFMe.sol";
 import "./library/ReentrancyGuard.sol";
 
 contract MoneyMarketHandler is Handler, ReentrancyGuard {
-
     address public targetAddr; // market address
 
     mapping(address => uint256) public interestDetails;
@@ -15,19 +14,13 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
         address indexed newTargetAddr
     );
 
-    constructor(
-        address _dTokenController,
-        address _targetAddr
-    ) public {
+    constructor(address _dTokenController, address _targetAddr) public {
         initialize(_dTokenController, _targetAddr);
     }
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
-    function initialize(
-        address _dTokenController,
-        address _targetAddr
-    ) public {
+    function initialize(address _dTokenController, address _targetAddr) public {
         super.initialize(_dTokenController);
         initReentrancyStatus();
         targetAddr = _targetAddr;
@@ -52,7 +45,10 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
      * @param _underlyingToken Token address to approve.
      */
     function approve(address _underlyingToken) public {
-        if (IERC20(_underlyingToken).allowance(address(this), targetAddr) != uint256(-1))
+        if (
+            IERC20(_underlyingToken).allowance(address(this), targetAddr) !=
+            uint256(-1)
+        )
             require(
                 doApprove(_underlyingToken, targetAddr, uint256(-1)),
                 "approve: Approve market failed!"
@@ -60,7 +56,6 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
 
         super.approve(_underlyingToken);
     }
-
 
     /**
      * @dev Deposit token to market, but only for dToken contract.
@@ -74,15 +69,18 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
         nonReentrant
         returns (uint256)
     {
-        require(tokenIsEnabled(_underlyingToken), "deposit: Token is disabled!");
+        require(
+            tokenIsEnabled(_underlyingToken),
+            "deposit: Token is disabled!"
+        );
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
         );
-        
+
         // Update the stored interest with the market balance before the deposit
         uint256 _MarketBalanceBefore = _updateInterest(_underlyingToken);
-        
+
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
         // but there could be some unexpected transfers before.
@@ -91,16 +89,13 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
         );
 
         require(
-            ILendFMe(targetAddr).supply(
-                _underlyingToken,
-                _handlerBalance
-            ) == 0,
+            ILendFMe(targetAddr).supply(_underlyingToken, _handlerBalance) == 0,
             "deposit: Fail to supply to money market!"
         );
-        
+
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = getBalance(_underlyingToken);
-        
+
         uint256 _changedAmount = _MarketBalanceAfter.sub(_MarketBalanceBefore);
 
         // return a smaller value as unexpected transfers were also included.
@@ -126,14 +121,13 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
         );
 
         _updateInterest(_underlyingToken);
-        
+
         uint256 _handlerBalanceBefore = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
 
         require(
-            ILendFMe(targetAddr).withdraw(_underlyingToken, _amount) ==
-                0,
+            ILendFMe(targetAddr).withdraw(_underlyingToken, _amount) == 0,
             "withdraw: Fail to withdraw from money market!"
         );
 
@@ -153,20 +147,23 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
     /**
      * @dev Update the handler deposit interest based on the underlying token.
      */
-    function _updateInterest(address _underlyingToken) internal returns (uint256) {
+    function _updateInterest(address _underlyingToken)
+        internal
+        returns (uint256)
+    {
         uint256 _balance = getBalance(_underlyingToken);
         (uint256 _underlyingBalance, ) = ILendFMe(targetAddr).supplyBalances(
             address(this),
             _underlyingToken
         );
-        
+
         // Interest = Balance - UnderlyingBalance.
         uint256 _interest = _balance.sub(_underlyingBalance);
-        
+
         // Update the stored interest
         interestDetails[_underlyingToken] = interestDetails[_underlyingToken]
             .add(_interest);
-            
+
         return _balance;
     }
 
@@ -200,11 +197,11 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
 
         return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }
-    
+
     /***************************************************/
     /*** View Interfaces For Backwards compatibility ***/
     /***************************************************/
-    
+
     /**
      * @dev Total balance with any accumulated interest for `_underlyingToken` belonging to `handler`.
      * @param _underlyingToken Token to get balance.
@@ -216,7 +213,7 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
     {
         return getRealBalance(_underlyingToken);
     }
-    
+
     /**
      * @dev The maximum withdrawable amount of token `_underlyingToken` in the market.
      * @param _underlyingToken Token to get balance.
@@ -229,4 +226,3 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
         return getRealLiquidity(_underlyingToken);
     }
 }
-
