@@ -80,5 +80,5 @@ interface IERC20 {
     );
 
     // This function is not a standard ERC20 interface, just for compitable with market.
-    function decimals() external view returns (uint256);
+    function decimals() external view returns (uint8);
 }

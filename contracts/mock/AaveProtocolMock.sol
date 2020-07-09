@@ -197,7 +197,7 @@ contract aTokenMock is ERC20 {
 
     string public name;
     string public symbol;
-    uint256 public decimals;
+    uint8 public decimals;
 
     constructor(
         string memory _name,

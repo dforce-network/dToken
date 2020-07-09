@@ -17,9 +17,6 @@ usePlugin("solidity-coverage");
 // defaultNetwork, networks, solc, and paths.
 // Go to https://buidler.dev/config/ to learn more
 module.exports = {
-  buidlerevm: {
-    throwOnTransactionFailures: true,
-  },
   // This is a sample solc configuration that specifies which version of solc to use
   solc: {
     version: "0.5.12",
@@ -36,4 +33,5 @@ module.exports = {
     // enabled: true,
     currency: "USD",
   },
+  mocha: { timeout: 50000 },
 };
