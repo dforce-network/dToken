@@ -146,9 +146,10 @@ contract AaveHandler is Handler, ReentrancyGuard {
             address(this)
         );
 
+        uint256 _MarketBalanceBefore = IERC20(_aToken).balanceOf(address(this));
         InterestDetails storage _details = interestDetails[_underlyingToken];
         // Update the stored interest with the market balance after the redeem
-        uint256 _interest = _MarketBalanceAfter.sub(
+        uint256 _interest = _MarketBalanceBefore.sub(
             _details.totalUnderlyingBalance
         );
         _details.interest = _details.interest.add(_interest);
