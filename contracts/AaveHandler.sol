@@ -175,21 +175,6 @@ contract AaveHandler is Handler, ReentrancyGuard {
     }
 
     /**
-     * @dev The principal balance.
-     * @param _underlyingToken Token to get balance.
-     */
-    function getUnderlyingBalance(address _underlyingToken)
-        internal
-        view
-        returns (uint256)
-    {
-        return
-            AToken(getAToken(_underlyingToken)).principalBalanceOf(
-                address(this)
-            );
-    }
-
-    /**
      * @dev The corrsponding AToken address of the _underlyingToken.
      * @param _underlyingToken Token to query the AToken.
      */
