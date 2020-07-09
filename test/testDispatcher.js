@@ -108,7 +108,7 @@ describe("Dispatcher Contract", function () {
       await resetContracts(5, proportions);
     });
 
-    it("Should only allow auth to update proportion", async function () {
+    it.only("Should only allow auth to update proportion", async function () {
       let proportions = [500000, 500000, 0, 0, 0];
 
       await dispatcher.updateProportions(handler_addresses, proportions);
@@ -126,6 +126,13 @@ describe("Dispatcher Contract", function () {
           from: account1,
         }),
         "ds-auth-unauthorized"
+      );
+
+      let handler_list = handler_addresses;
+      handler_list[handler_list.length - 1] = handler_list[0];
+      await truffleAssert.reverts(
+        dispatcher.updateProportions(handler_list, proportions),
+        "updateProportions: input handler contract address is duplicate"
       );
     });
 
