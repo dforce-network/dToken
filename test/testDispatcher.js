@@ -108,7 +108,7 @@ describe("Dispatcher Contract", function () {
       await resetContracts(5, proportions);
     });
 
-    it.only("Should only allow auth to update proportion", async function () {
+    it("Should only allow auth to update proportion", async function () {
       let proportions = [500000, 500000, 0, 0, 0];
 
       await dispatcher.updateProportions(handler_addresses, proportions);
