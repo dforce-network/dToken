@@ -125,6 +125,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     ) public {
         require(!initialized, "initialize: Already initialized!");
         owner = msg.sender;
+        initReentrancyStatus();
         feeRecipient = address(this);
         name = _name;
         symbol = _symbol;

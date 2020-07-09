@@ -29,6 +29,7 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
         address _targetAddr
     ) public {
         super.initialize(_dTokenController);
+        initReentrancyStatus();
         targetAddr = _targetAddr;
     }
 

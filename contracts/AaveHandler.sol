@@ -32,6 +32,7 @@ contract AaveHandler is Handler, ReentrancyGuard {
         address _lendingPoolCore
     ) public {
         super.initialize(_dTokenController);
+        initReentrancyStatus();
         aaveLendingPool = _lendingPool;
         aaveLendingPoolCore = _lendingPoolCore;
     }
