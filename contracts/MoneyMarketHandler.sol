@@ -44,17 +44,13 @@ contract MoneyMarketHandler is Handler, ReentrancyGuard {
      * @dev This token `_underlyingToken` approves to market and dToken contract.
      * @param _underlyingToken Token address to approve.
      */
-    function approve(address _underlyingToken) public {
-        if (
-            IERC20(_underlyingToken).allowance(address(this), targetAddr) !=
-            uint256(-1)
-        )
-            require(
-                doApprove(_underlyingToken, targetAddr, uint256(-1)),
-                "approve: Approve market failed!"
-            );
+    function approve(address _underlyingToken, uint256 amount) public {
+        require(
+            doApprove(_underlyingToken, targetAddr, amount),
+            "approve: Approve market failed!"
+        );
 
-        super.approve(_underlyingToken);
+        super.approve(_underlyingToken, amount);
     }
 
     /**

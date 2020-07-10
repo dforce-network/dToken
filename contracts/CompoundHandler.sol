@@ -56,20 +56,15 @@ contract CompoundHandler is Handler, ReentrancyGuard {
      * @dev Authorized function to approves market and dToken to transfer handler's underlying token.
      * @param _underlyingToken Token address to approve.
      */
-    function approve(address _underlyingToken) public auth {
+    function approve(address _underlyingToken, uint256 amount) public auth {
         address _cToken = cTokens[_underlyingToken];
 
-        if (
-            IERC20(_underlyingToken).allowance(address(this), _cToken) !=
-            uint256(-1)
-        ) {
-            require(
-                doApprove(_underlyingToken, _cToken, uint256(-1)),
-                "approve: Approve cToken failed!"
-            );
-        }
+        require(
+            doApprove(_underlyingToken, _cToken, amount),
+            "approve: Approve cToken failed!"
+        );
 
-        super.approve(_underlyingToken);
+        super.approve(_underlyingToken, amount);
     }
 
     /**

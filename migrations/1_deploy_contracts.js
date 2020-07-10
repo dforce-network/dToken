@@ -13,7 +13,10 @@ var DToken = artifacts.require("DToken");
 var DSGuard = artifacts.require("DSGuard");
 var Proxy = artifacts.require("DTokenProxy");
 
-var usdc, cUSDC, usdt, aUSDT, lendingPoolCore, lendingPool
+const BN = require("bn.js");
+const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
+
+var usdc, cUSDC, usdt, aUSDT, lendingPoolCore, lendingPool;
 
 module.exports = async function (deployer, network, accounts) {
   let owner = accounts[0];
@@ -43,7 +46,16 @@ module.exports = async function (deployer, network, accounts) {
       "0x580D4Fdc4BF8f9b5ae2fb9225D584fED4AD5375c"
     );
   } else {
-    await deployer.deploy(FiatToken, "USDC", "USDC", "USD", 6, owner, owner, owner);
+    await deployer.deploy(
+      FiatToken,
+      "USDC",
+      "USDC",
+      "USD",
+      6,
+      owner,
+      owner,
+      owner
+    );
     usdc = await FiatToken.deployed();
 
     await deployer.deploy(CTokenMock, "cUSDC", "cUSDC", usdc.address);
@@ -58,12 +70,15 @@ module.exports = async function (deployer, network, accounts) {
     await deployer.deploy(LendPoolMock, lendingPoolCore.address);
     lendingPool = await LendPoolMock.deployed();
 
-    await deployer.deploy(aTokenMock, "aUSDT", "aUSDT", usdt.address, lendingPoolCore.address);
-    aUSDT = await aTokenMock.deployed();
-    await lendingPoolCore.setReserveATokenAddress(
+    await deployer.deploy(
+      aTokenMock,
+      "aUSDT",
+      "aUSDT",
       usdt.address,
-      aUSDT.address
+      lendingPoolCore.address
     );
+    aUSDT = await aTokenMock.deployed();
+    await lendingPoolCore.setReserveATokenAddress(usdt.address, aUSDT.address);
   }
 
   // Deploys Internal contract
@@ -166,36 +181,52 @@ module.exports = async function (deployer, network, accounts) {
     [dUSDC_proxy.address, dUSDT_proxy.address]
   );
 
-  await internal_proxy.approve(usdc.address);
-  await internal_proxy.approve(usdt.address);
-  await compound_proxy.approve(usdc.address);
-  await aave_proxy.approve(usdt.address);
+  await internal_proxy.approve(usdc.address, UINT256_MAX);
+  await internal_proxy.approve(usdt.address, UINT256_MAX);
+  await compound_proxy.approve(usdc.address, UINT256_MAX);
+  await aave_proxy.approve(usdt.address, UINT256_MAX);
 
-  console.log('Deployer address: ', owner);
-  console.log('DS Guard contract address: ', ds_guard.address);
-  console.log('DToken Controller contract address: ', dToken_contract_library.address,'\n');
+  console.log("Deployer address: ", owner);
+  console.log("DS Guard contract address: ", ds_guard.address);
+  console.log(
+    "DToken Controller contract address: ",
+    dToken_contract_library.address,
+    "\n"
+  );
 
-  console.log('USDC contract address: ', usdc.address);
-  console.log('cUSDC contract address: ', cUSDC.address);
-  console.log('USDT contract address: ', usdt.address);
-  console.log('aUSDT contract address: ', aUSDT.address);
-  console.log('LendingPoolCore contract address: ', lendingPoolCore.address);
-  console.log('LendingPool contract address: ', lendingPool.address,'\n');
+  console.log("USDC contract address: ", usdc.address);
+  console.log("cUSDC contract address: ", cUSDC.address);
+  console.log("USDT contract address: ", usdt.address);
+  console.log("aUSDT contract address: ", aUSDT.address);
+  console.log("LendingPoolCore contract address: ", lendingPoolCore.address);
+  console.log("LendingPool contract address: ", lendingPool.address, "\n");
 
-  console.log('Internal handler contract address: ', internal_handler.address);
-  console.log('Internal handler proxy contract address: ', internal_proxy.address,'\n');
+  console.log("Internal handler contract address: ", internal_handler.address);
+  console.log(
+    "Internal handler proxy contract address: ",
+    internal_proxy.address,
+    "\n"
+  );
 
-  console.log('Compound handler contract address: ', compound_handler.address);
-  console.log('Compound handler proxy contract address: ', compound_proxy.address,'\n');
+  console.log("Compound handler contract address: ", compound_handler.address);
+  console.log(
+    "Compound handler proxy contract address: ",
+    compound_proxy.address,
+    "\n"
+  );
 
-  console.log('Aave handler contract address: ', aave_handler.address);
-  console.log('Aave handler proxy contract address: ', aave_proxy.address,'\n');
+  console.log("Aave handler contract address: ", aave_handler.address);
+  console.log(
+    "Aave handler proxy contract address: ",
+    aave_proxy.address,
+    "\n"
+  );
 
-  console.log('dToken implementation', dUSDC.address,'\n');
+  console.log("dToken implementation", dUSDC.address, "\n");
 
-  console.log('USDC dispatcher contract address: ', usdc_dispatcher.address);
-  console.log('dUSDC contract address: ', dUSDC_proxy.address,'\n');
+  console.log("USDC dispatcher contract address: ", usdc_dispatcher.address);
+  console.log("dUSDC contract address: ", dUSDC_proxy.address, "\n");
 
-  console.log('USDT dispatcher contract address: ', usdt_dispatcher.address);
-  console.log('dUSDT contract address: ', dUSDT_proxy.address,'\n');
+  console.log("USDT dispatcher contract address: ", usdt_dispatcher.address);
+  console.log("dUSDT contract address: ", dUSDT_proxy.address, "\n");
 };

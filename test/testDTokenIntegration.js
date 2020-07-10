@@ -125,8 +125,8 @@ describe("DToken Contract Integration", function () {
     let handlers = [internal_handler, compound_handler, aave_handler];
     for (const handler of handlers) {
       await handler.setAuthority(ds_guard.address);
-      await handler.approve(USDC.address);
-      await handler.approve(USDT.address);
+      await handler.approve(USDC.address, UINT256_MAX);
+      await handler.approve(USDT.address, UINT256_MAX);
       await ds_guard.permitx(dUSDC.address, handler.address);
       await ds_guard.permitx(dUSDT.address, handler.address);
 
@@ -1890,9 +1890,7 @@ describe("DToken Contract Integration", function () {
         dUSDC.mint(account1, 100e6, {from: account1})
       );
 
-      await truffleAssert.reverts(
-        dUSDC.burn(account1, 1e6, {from: account1})
-      );
+      await truffleAssert.reverts(dUSDC.burn(account1, 1e6, {from: account1}));
 
       await truffleAssert.reverts(
         dUSDC.redeem(account1, 1e6, {from: account1})
@@ -1963,9 +1961,7 @@ describe("DToken Contract Integration", function () {
         [100000, 900000]
       );
 
-      await truffleAssert.reverts(
-        dUSDC.getExchangeRate()
-      );
+      await truffleAssert.reverts(dUSDC.getExchangeRate());
     });
 
     it("Case Rebalance 119: user mint burn redeem with compound and other contracts ", async function () {
@@ -1973,9 +1969,7 @@ describe("DToken Contract Integration", function () {
         dUSDC.mint(account1, 100e6, {from: account1})
       );
 
-      await truffleAssert.reverts(
-        dUSDC.burn(account1, 1e6, {from: account1})
-      );
+      await truffleAssert.reverts(dUSDC.burn(account1, 1e6, {from: account1}));
 
       await truffleAssert.reverts(
         dUSDC.redeem(account1, 1e6, {from: account1})
@@ -2009,9 +2003,7 @@ describe("DToken Contract Integration", function () {
     it("Case Rebalance 122: resetHandler other contract ", async function () {
       await dispatcher.resetHandlers([other_contract.address], [1000000]);
 
-      await truffleAssert.reverts(
-        dUSDC.getExchangeRate()
-      );
+      await truffleAssert.reverts(dUSDC.getExchangeRate());
     });
 
     it("Case Rebalance 123: user mint burn redeem with other contracts ", async function () {
@@ -2019,9 +2011,7 @@ describe("DToken Contract Integration", function () {
         dUSDC.mint(account1, 100e6, {from: account1})
       );
 
-      await truffleAssert.reverts(
-        dUSDC.burn(account1, 1e6, {from: account1})
-      );
+      await truffleAssert.reverts(dUSDC.burn(account1, 1e6, {from: account1}));
 
       await truffleAssert.reverts(
         dUSDC.redeem(account1, 1e6, {from: account1})

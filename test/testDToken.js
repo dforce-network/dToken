@@ -90,8 +90,8 @@ describe("DToken Contract", function () {
     await dispatcher.setAuthority(ds_guard.address);
 
     for (i = 0; i < handler_num; i++) {
-      await handlers[i].approve(USDC.address);
-      await handlers[i].approve(ERC20.address);
+      await handlers[i].approve(USDC.address, UINT256_MAX);
+      await handlers[i].approve(ERC20.address, UINT256_MAX);
       await ds_guard.permitx(dUSDC.address, handler_addresses[i]);
       await ds_guard.permitx(dERC20.address, handler_addresses[i]);
     }
@@ -337,7 +337,7 @@ describe("DToken Contract", function () {
         dtoken_controller.address
       );
       await unknown_handler.enableTokens([USDC.address]);
-      await unknown_handler.approve(USDC.address);
+      await unknown_handler.approve(USDC.address, UINT256_MAX);
       await unknown_handler.setAuthority(ds_guard.address);
       await ds_guard.permitx(dUSDC.address, unknown_handler.address);
       await USDC.allocateTo(unknown_handler.address, 1000e6);
@@ -560,7 +560,9 @@ describe("DToken Contract", function () {
         handler_addresses[0],
         await ERC20.balanceOf(handler_addresses[0])
       );
-      dERC20.mint(account1, await ERC20.balanceOf(account1), {from: account1});
+      dERC20.mint(account1, await ERC20.balanceOf(account1), {
+        from: account1,
+      });
       await dispatcher.resetHandlers(
         [handler_addresses[2], handler_addresses[3], handler_addresses[4]],
         [500000, 250000, 250000]
