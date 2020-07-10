@@ -71,8 +71,8 @@ describe("AaveHandlerMock contract", function () {
       lending_pool_core.address
     );
 
-    await handler.approve(USDC.address);
-    await handler.approve(ERC20.address);
+    await handler.approve(USDC.address, UINT256_MAX);
+    await handler.approve(ERC20.address, UINT256_MAX);
 
     await handler.enableTokens([USDC.address, ERC20.address]);
     await dtoken_controller.setdTokensRelation(
@@ -204,29 +204,26 @@ describe("AaveHandlerMock contract", function () {
     });
 
     it("Should only allow auth to approve", async function () {
-      await handler.approve(USDC.address);
+      await handler.approve(USDC.address, UINT256_MAX);
       let allowance = await USDC.allowance(handler.address, dUSDC_address);
       assert.equal(allowance.eq(UINT256_MAX), true);
 
       await truffleAssert.reverts(
-        handler.approve(USDC.address, {
+        handler.approve(USDC.address, UINT256_MAX, {
           from: account1,
         }),
         "ds-auth-unauthorized"
       );
 
       // Approve again should be ok
-      await handler.approve(USDC.address);
+      await handler.approve(USDC.address, UINT256_MAX);
     });
 
     it("Should fail if underlying approve failed", async function () {
-      // transfer ERC20 will decrease the allowance
-      ERC20.allocateTo(handler.address, 1000e6);
-      await handler.deposit(ERC20.address, 100e6);
-
-      // Approve again would fail
+      // Already approved when setting up
+      // ERC20 does not allow approve again
       await truffleAssert.reverts(
-        handler.approve(ERC20.address),
+        handler.approve(ERC20.address, UINT256_MAX),
         "approve: Approve aToken failed!"
       );
     });
@@ -235,7 +232,7 @@ describe("AaveHandlerMock contract", function () {
   describe("deposit", function () {
     before(async function () {
       await resetContracts();
-      await handler.approve(USDC.address);
+      await handler.approve(USDC.address, UINT256_MAX);
     });
 
     it("Should only allow auth to deposit", async function () {

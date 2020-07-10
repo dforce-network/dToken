@@ -138,30 +138,27 @@ describe("InternalHandler contract", function () {
     });
 
     it("Should only allow auth to approve", async function () {
-      await handler.approve(USDC.address);
+      await handler.approve(USDC.address, UINT256_MAX);
       let allowance = await USDC.allowance(handler.address, dUSDC_address);
       assert.equal(allowance.toString(), UINT256_MAX.toString());
 
       await truffleAssert.reverts(
-        handler.approve(USDC.address, {
+        handler.approve(USDC.address, UINT256_MAX, {
           from: account1,
         }),
         "ds-auth-unauthorized"
       );
 
-      // Approve again should do nothing
-      await handler.approve(USDC.address);
+      // Approve again should be okay for USDC
+      await handler.approve(USDC.address, UINT256_MAX);
     });
 
     it("Should fail if underlying approve failed", async function () {
       // Approve some allowance in ERC20, approve again would fail
-      await handler.approve(ERC20.address);
-      await ERC20.transferFrom(handler.address, account1, 100e6, {
-        from: dERC20_address,
-      });
+      await handler.approve(ERC20.address, UINT256_MAX);
 
       await truffleAssert.reverts(
-        handler.approve(ERC20.address),
+        handler.approve(ERC20.address, UINT256_MAX),
         "approve: Approve dToken failed!"
       );
     });

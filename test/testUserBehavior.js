@@ -147,8 +147,8 @@ describe("DToken Contract Integration", function () {
     handlers[other_handler.address] = other_handler;
     for (const key in handlers) {
       await handlers[key].setAuthority(ds_guard.address);
-      await handlers[key].approve(USDC.address);
-      await handlers[key].approve(USDT.address);
+      await handlers[key].approve(USDC.address, UINT256_MAX);
+      await handlers[key].approve(USDT.address, UINT256_MAX);
       await ds_guard.permitx(dUSDC.address, handlers[key].address);
       await ds_guard.permitx(dUSDT.address, handlers[key].address);
 
