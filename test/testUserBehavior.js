@@ -23,8 +23,8 @@ const FEE_MAX = BASE.div(new BN(10)).sub(new BN(1));
 const TOTAL_PROPORTION = new BN(1000000);
 
 const MINT_SELECTOR = "0x40c10f19";
-const BURN_SELECTOR = "0x9dc29fac";
-const FEE_HASHES_LIST = [MINT_SELECTOR, BURN_SELECTOR];
+const REDEEM_SELECTOR = "0x1e9a6950";
+const FEE_HASHES_LIST = [MINT_SELECTOR, REDEEM_SELECTOR];
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
   let USDC, USDT, DF, COMP;
@@ -171,13 +171,13 @@ describe("DToken Contract Integration", function () {
     ctokens = [cUSDC, cUSDT];
     user_behavior = [
       dUSDC.mint,
-      dUSDC.burn,
       dUSDC.redeem,
+      dUSDC.redeemUnderlying,
       dUSDT.mint,
-      dUSDT.burn,
       dUSDT.redeem,
+      dUSDT.redeemUnderlying,
     ];
-    user_behavior_name = ["mint", "burn", "redeem"];
+    user_behavior_name = ["mint", "redeem", "redeemUnderlying"];
     dtoken_admin_behavior = [
       dUSDC.rebalance,
       dUSDC.updateOriginationFee,
@@ -346,7 +346,7 @@ describe("DToken Contract Integration", function () {
           account_dtoken_change.toLocaleString().replace(/,/g, "")
         );
         break;
-      case DToken.burn:
+      case DToken.redeem:
         assert.equal(
           account_dtoken_change.toLocaleString().replace(/,/g, ""),
           args[1].toLocaleString().replace(/,/g, "")
@@ -374,7 +374,7 @@ describe("DToken Contract Integration", function () {
             .replace(/,/g, "")
         );
         break;
-      case DToken.redeem:
+      case DToken.redeemUnderlying:
         assert.equal(
           account_token_change.toLocaleString().replace(/,/g, ""),
           args[1].toLocaleString().replace(/,/g, "")
@@ -412,9 +412,9 @@ describe("DToken Contract Integration", function () {
         [700000, 200000, 100000]
       );
 
-      await dUSDC.updateOriginationFee(BURN_SELECTOR, FEE);
+      await dUSDC.updateOriginationFee(REDEEM_SELECTOR, FEE);
       await dUSDC.updateOriginationFee(MINT_SELECTOR, FEE);
-      await dUSDT.updateOriginationFee(BURN_SELECTOR, FEE);
+      await dUSDT.updateOriginationFee(REDEEM_SELECTOR, FEE);
       await dUSDT.updateOriginationFee(MINT_SELECTOR, FEE);
     });
 
@@ -644,7 +644,9 @@ describe("DToken Contract Integration", function () {
           case 2:
             balance = rmul(
               await dtokens[dtoken_index].getTokenBalance(account),
-              BASE.sub(await dtokens[dtoken_index].originationFee("0x9dc29fac"))
+              BASE.sub(
+                await dtokens[dtoken_index].originationFee(REDEEM_SELECTOR)
+              )
             )
               .toLocaleString()
               .replace(/,/g, "");
@@ -675,7 +677,7 @@ describe("DToken Contract Integration", function () {
           var amount = await dtokens[i].balanceOf(accounts[j]);
           if (amount.lte(new BN("0"))) continue;
           if ((await dtokens[i].getTotalBalance()).eq(new BN(0))) continue;
-          await dtokens[i].burn(accounts[j], amount, {
+          await dtokens[i].redeem(accounts[j], amount, {
             from: accounts[j],
           });
 

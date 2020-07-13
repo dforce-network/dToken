@@ -275,7 +275,7 @@ contract Dispatcher is DSAuth {
         uint256 _res = _amount;
         uint256 _lastIndex = _amounts.length.sub(1);
         for (uint256 i = 0; ; i++) {
-            // Return empty stratege if any handler is paused for abnormal case,
+            // Return empty strategy if any handler is paused for abnormal case,
             // resulting further failure with mint and burn
             if (IHandler(_handlers[i]).paused()) {
                 delete _handlers;
@@ -324,7 +324,7 @@ contract Dispatcher is DSAuth {
         uint256 _res = _amount;
         uint256 _lastIndex = _amounts.length.sub(1);
         for (uint256 i = 0; i < _handlers.length; i++) {
-            // Return empty stratege if any handler is paused for abnormal case,
+            // Return empty strategy if any handler is paused for abnormal case,
             // resulting further failure with mint and burn
             if (IHandler(_handlers[i]).paused()) {
                 delete _handlers;
