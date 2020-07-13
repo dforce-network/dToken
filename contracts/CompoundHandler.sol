@@ -161,6 +161,10 @@ contract CompoundHandler is Handler, ReentrancyGuard {
             "withdraw: Withdraw amount should be greater than 0!"
         );
 
+        address _dToken = IDTokenController(dTokenController).getDToken(
+            _underlyingToken
+        );
+
         address _cToken = cTokens[_underlyingToken];
         require(_cToken != address(0x0), "withdraw: Do not support token!");
 
@@ -191,6 +195,14 @@ contract CompoundHandler is Handler, ReentrancyGuard {
             require(
                 ICompound(_cToken).redeemUnderlying(_amount) == 0,
                 "withdraw: Fail to withdraw from market!"
+            );
+        }
+
+        uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
+        if (compBalance > 0) {
+            require(
+                doTransferOut(compAddress, _dToken, compBalance),
+                "deposit: Comp transfer out of contract failed."
             );
         }
 
