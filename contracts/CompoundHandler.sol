@@ -3,7 +3,6 @@ pragma solidity 0.5.12;
 import "./Handler.sol";
 import "./interface/ICompound.sol";
 import "./library/ReentrancyGuard.sol";
-import "./library/ERC20SafeTransfer.sol";
 
 contract CompoundHandler is Handler, ReentrancyGuard {
     uint256 constant BASE = 10**18;
@@ -25,6 +24,15 @@ contract CompoundHandler is Handler, ReentrancyGuard {
     );
 
     constructor(address _dTokenController, address _compAddress) public {
+        initialize(_dTokenController, _compAddress);
+    }
+
+    // --- Init ---
+    // This function is used with contract proxy, do not modify this function.
+    function initialize(
+        address _dTokenController,
+        address _compAddress
+    ) public {
         super.initialize(_dTokenController);
         compAddress = _compAddress;
         initReentrancyStatus();
@@ -72,6 +80,23 @@ contract CompoundHandler is Handler, ReentrancyGuard {
     }
 
     /**
+     * @dev Internal function to transfer COMP airdrops to corresponding dToken to distribute.
+     */
+    function claimComp(address _underlyingToken) internal {
+        address _dToken = IDTokenController(dTokenController).getDToken(
+            _underlyingToken
+        );
+
+        uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
+        if (compBalance > 0) {
+            require(
+                doTransferOut(compAddress, _dToken, compBalance),
+                "deposit: Comp transfer out of contract failed."
+            );
+        }
+    }
+
+    /**
      * @dev Deposit token to market, only called by dToken contract.
      * @param _underlyingToken Token to deposit.
      * @return The actual deposited token amount.
@@ -90,10 +115,6 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
-        );
-
-        address _dToken = IDTokenController(dTokenController).getDToken(
-            _underlyingToken
         );
 
         address _cToken = cTokens[_underlyingToken];
@@ -121,13 +142,7 @@ contract CompoundHandler is Handler, ReentrancyGuard {
             "deposit: Fail to supply to compound!"
         );
 
-        uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
-        if (compBalance > 0) {
-            require(
-                doTransferOut(compAddress, _dToken, compBalance),
-                "deposit: Comp transfer out of contract failed."
-            );
-        }
+        claimComp(_underlyingToken);
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = ICompound(_cToken).balanceOfUnderlying(
@@ -159,10 +174,6 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         require(
             _amount > 0,
             "withdraw: Withdraw amount should be greater than 0!"
-        );
-
-        address _dToken = IDTokenController(dTokenController).getDToken(
-            _underlyingToken
         );
 
         address _cToken = cTokens[_underlyingToken];
@@ -198,13 +209,7 @@ contract CompoundHandler is Handler, ReentrancyGuard {
             );
         }
 
-        uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
-        if (compBalance > 0) {
-            require(
-                doTransferOut(compAddress, _dToken, compBalance),
-                "deposit: Comp transfer out of contract failed."
-            );
-        }
+        claimComp(_underlyingToken);
 
         uint256 _handlerBalanceAfter = IERC20(_underlyingToken).balanceOf(
             address(this)
