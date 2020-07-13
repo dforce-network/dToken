@@ -27,7 +27,7 @@ const BURN_SELECTOR = "0x9dc29fac";
 const FEE_HASHES_LIST = [MINT_SELECTOR, BURN_SELECTOR];
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, USDT, DF;
+  let USDC, USDT, DF, COMP;
   let ds_guard;
   let dispatcher;
   let dtoken_controller;
@@ -68,6 +68,7 @@ describe("DToken Contract Integration", function () {
 
     USDT = await TetherToken.new("0", "USDT", "USDT", 6);
     DF = await TetherToken.new("0", "DF", "DF", 18);
+    COMP = await TetherToken.new("0", "COMP", "COMP", 18);
 
     dtoken_controller = await DTokenController.new();
     ds_guard = await DSGuard.new();
@@ -78,7 +79,7 @@ describe("DToken Contract Integration", function () {
     cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
     cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
-    compound_handler = await CompoundHandler.new(dtoken_controller.address);
+    compound_handler = await CompoundHandler.new(dtoken_controller.address, COMP.address);
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]
