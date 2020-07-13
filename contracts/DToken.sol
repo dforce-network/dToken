@@ -53,16 +53,16 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     );
 
     event Mint(
-        address account,
-        uint256 pie,
+        address indexed account,
+        uint256 indexed pie,
         uint256 wad,
         uint256 totalSupply,
         uint256 exchangeRate
     );
 
     event Burn(
-        address account,
-        uint256 pie,
+        address indexed account,
+        uint256 indexed pie,
         uint256 wad,
         uint256 totalSupply,
         uint256 exchangeRate
@@ -70,7 +70,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
     // --- Admin Triggered Event ---
     event Rebalance(
-        address admin,
         address[] withdraw,
         uint256[] withdrawAmount,
         address[] supply,
@@ -85,8 +84,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     );
 
     event FeeRecipientSet(
-        address indexed oldFeeRecipient,
-        address indexed newFeeRecipient
+        address oldFeeRecipient,
+        address newFeeRecipient
     );
 
     event NewDispatcher(address oldDispatcher, address Dispatcher);
@@ -300,7 +299,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         }
 
         emit Rebalance(
-            msg.sender,
             _withdraw,
             _withdrawAmount,
             _deposit,
