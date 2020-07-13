@@ -92,6 +92,10 @@ contract CompoundHandler is Handler, ReentrancyGuard {
             "deposit: Deposit amount should be greater than 0!"
         );
 
+        address _dToken = IDTokenController(dTokenController).getDToken(
+            _underlyingToken
+        );
+
         address _cToken = cTokens[_underlyingToken];
         require(_cToken != address(0x0), "deposit: Do not support token!");
 
@@ -120,7 +124,7 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
         if (compBalance > 0) {
             require(
-                doTransferOut(compAddress, msg.sender, compBalance),
+                doTransferOut(compAddress, _dToken, compBalance),
                 "deposit: Comp transfer out of contract failed."
             );
         }
