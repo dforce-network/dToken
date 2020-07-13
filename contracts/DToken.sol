@@ -89,7 +89,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address indexed newFeeRecipient
     );
 
-    event NewDispatcher(address Dispatcher, address oldDispatcher);
+    event NewDispatcher(address oldDispatcher, address Dispatcher);
 
     event NewOriginationFee(
         bytes4 sig,
@@ -135,7 +135,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         data.exchangeRate = BASE;
         initialized = true;
 
-        emit NewDispatcher(_dispatcher, address(0));
+        emit NewDispatcher(address(0), _dispatcher);
     }
 
     /**
@@ -150,7 +150,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         dispatcher = _newDispatcher;
-        emit NewDispatcher(_newDispatcher, _oldDispatcher);
+        emit NewDispatcher(_oldDispatcher, _newDispatcher);
     }
 
     /**
