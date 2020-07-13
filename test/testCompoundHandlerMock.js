@@ -15,7 +15,7 @@ const ZERO_ADDR = "0x0000000000000000000000000000000000000000";
 
 describe("CompoundHandlerMock contract", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, cUSDC, ERC20, cERC20, ERC20E, cERC20E;
+  let USDC, cUSDC, ERC20, cERC20, ERC20E, cERC20E, COMP;
   let handler, handler_view;
   let dtoken_controller;
   let dUSDC_address = "0x0000000000000000000000000000000000000001";
@@ -33,8 +33,10 @@ describe("CompoundHandlerMock contract", function () {
   });
 
   async function resetContracts() {
+    // Mock COMP, can return boolean value
+    COMP = await TestERC20.new("COMP", "COMP", 18);
     dtoken_controller = await DTokenController.new();
-    handler = await CompoundHandler.new(dtoken_controller.address);
+    handler = await CompoundHandler.new(dtoken_controller.address, COMP.address);
     handler_view = await IHandlerView.at(handler.address);
 
     // Mock USDC
@@ -71,7 +73,7 @@ describe("CompoundHandlerMock contract", function () {
       await resetContracts();
 
       await truffleAssert.reverts(
-        handler.initialize(dtoken_controller.address, {
+        handler.initialize(dtoken_controller.address, COMP.address, {
           from: owner,
         }),
         "initialize: Already initialized!"
