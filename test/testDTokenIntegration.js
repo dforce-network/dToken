@@ -26,7 +26,7 @@ const BURN_SELECTOR = "0x9dc29fac";
 
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, USDT;
+  let USDC, USDT, COMP;
   let ds_guard;
   let dispatcher;
   let dtoken_controller;
@@ -61,7 +61,9 @@ describe("DToken Contract Integration", function () {
     cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
     cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
-    compound_handler = await CompoundHandler.new(dtoken_controller.address);
+    COMP = await TetherToken.new("0", "COMP", "COMP", 18);
+
+    compound_handler = await CompoundHandler.new(dtoken_controller.address, COMP.address);
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]
