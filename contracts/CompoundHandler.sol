@@ -1,8 +1,9 @@
 pragma solidity 0.5.12;
 
 import "./Handler.sol";
-import "./library/ReentrancyGuard.sol";
 import "./interface/ICompound.sol";
+import "./library/ReentrancyGuard.sol";
+import "./library/ERC20SafeTransfer.sol";
 
 contract CompoundHandler is Handler, ReentrancyGuard {
     uint256 constant BASE = 10**18;
@@ -16,13 +17,16 @@ contract CompoundHandler is Handler, ReentrancyGuard {
 
     mapping(address => address) public cTokens; //cTokens;
 
+    address public compAddress;
+
     event NewMappingcToken(
         address indexed token,
         address indexed mappingcToken
     );
 
-    constructor(address _dTokenController) public {
+    constructor(address _dTokenController, address _compAddress) public {
         super.initialize(_dTokenController);
+        compAddress = _compAddress;
         initReentrancyStatus();
     }
 
@@ -112,6 +116,14 @@ contract CompoundHandler is Handler, ReentrancyGuard {
             ICompound(_cToken).mint(_handlerBalance) == 0,
             "deposit: Fail to supply to compound!"
         );
+
+        uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
+        if (compBalance > 0) {
+            require(
+                doTransferOut(compAddress, msg.sender, compBalance),
+                "deposit: Comp transfer out of contract failed."
+            );
+        }
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = ICompound(_cToken).balanceOfUnderlying(
