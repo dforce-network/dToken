@@ -690,7 +690,9 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         _redeemLocal.token = token;
 
         // Here use the signature of burn(), both functions should use the same fee rate
-        _redeemLocal.originationFee = originationFee[0x9dc29fac];
+        _redeemLocal.originationFee = originationFee[DToken(this)
+            .burn
+            .selector];
 
         _redeemLocal.consumeAmountWithFee = rdivup(
             _pie,
