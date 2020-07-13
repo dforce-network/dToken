@@ -60,7 +60,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         uint256 exchangeRate
     );
 
-    event Burn(
+    event Redeem(
         address indexed account,
         uint256 indexed pie,
         uint256 wad,
@@ -83,10 +83,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         uint256 amount
     );
 
-    event FeeRecipientSet(
-        address oldFeeRecipient,
-        address newFeeRecipient
-    );
+    event FeeRecipientSet(address oldFeeRecipient, address newFeeRecipient);
 
     event NewDispatcher(address oldDispatcher, address Dispatcher);
 
@@ -298,12 +295,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
         }
 
-        emit Rebalance(
-            _withdraw,
-            _withdrawAmount,
-            _deposit,
-            _depositAmount
-        );
+        emit Rebalance(_withdraw, _withdrawAmount, _deposit, _depositAmount);
     }
 
     /*************************************/
@@ -445,7 +437,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             .getDepositStrategy(_mintLocal.netDepositAmount);
         require(
             _mintLocal.handlers.length > 0,
-            "mint: no doposit stratege available, possibly due to a paused handler"
+            "mint: no deposit strategy available, possibly due to a paused handler"
         );
 
         // Get current exchange rate.
@@ -507,7 +499,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
     }
 
-    struct BurnLocalVars {
+    struct RedeemLocalVars {
         address token;
         address defaultHandler;
         address[] handlers;
@@ -524,141 +516,141 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     }
 
     /**
-     * @dev Withdraw to get token according to input dToken amount,
+     * @dev Redeem token according to input dToken amount,
      *      but only when the contract is not paused.
      * @param _src Account who will spend dToken.
      * @param _wad Amount to burn dToken, scaled by 1e18.
      */
-    function burn(address _src, uint256 _wad)
+    function redeem(address _src, uint256 _wad)
         external
         nonReentrant
         whenNotPaused
     {
         // Check the balance and allowance
         Balance storage _balance = balances[_src];
-        require(_balance.value >= _wad, "burn: insufficient balance");
+        require(_balance.value >= _wad, "redeem: insufficient balance");
         if (_src != msg.sender && allowance[_src][msg.sender] != uint256(-1)) {
             require(
                 allowance[_src][msg.sender] >= _wad,
-                "burn: insufficient allowance"
+                "redeem: insufficient allowance"
             );
             allowance[_src][msg.sender] = allowance[_src][msg.sender].sub(_wad);
         }
 
-        BurnLocalVars memory _burnLocal;
-        _burnLocal.token = token;
+        RedeemLocalVars memory _redeemLocal;
+        _redeemLocal.token = token;
 
         // Get current exchange rate.
-        _burnLocal.exchangeRate = getCurrentExchangeRate();
-        _burnLocal.grossAmount = rmul(_wad, _burnLocal.exchangeRate);
+        _redeemLocal.exchangeRate = getCurrentExchangeRate();
+        _redeemLocal.grossAmount = rmul(_wad, _redeemLocal.exchangeRate);
 
-        _burnLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
+        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
         require(
-            _burnLocal.defaultHandler != address(0) &&
+            _redeemLocal.defaultHandler != address(0) &&
                 IDispatcher(dispatcher).isHandlerActive(
-                    _burnLocal.defaultHandler
+                    _redeemLocal.defaultHandler
                 ),
-            "burn: default handler is inactive"
+            "redeem: default handler is inactive"
         );
 
         // Get `_token` best withdraw strategy base on the withdraw amount `_pie`.
-        (_burnLocal.handlers, _burnLocal.amounts) = IDispatcher(dispatcher)
-            .getWithdrawStrategy(_burnLocal.token, _burnLocal.grossAmount);
+        (_redeemLocal.handlers, _redeemLocal.amounts) = IDispatcher(dispatcher)
+            .getWithdrawStrategy(_redeemLocal.token, _redeemLocal.grossAmount);
         require(
-            _burnLocal.handlers.length > 0,
-            "burn: no withdraw stratege available, possibly due to a paused handler"
+            _redeemLocal.handlers.length > 0,
+            "redeem: no withdraw strategy available, possibly due to a paused handler"
         );
 
-        for (uint256 i = 0; i < _burnLocal.handlers.length; i++) {
-            if (_burnLocal.amounts[i] == 0) continue;
+        for (uint256 i = 0; i < _redeemLocal.handlers.length; i++) {
+            if (_redeemLocal.amounts[i] == 0) continue;
 
             // The handler withdraw calculated amount from the market.
-            _burnLocal.withdrawAmount = IHandler(_burnLocal.handlers[i])
-                .withdraw(_burnLocal.token, _burnLocal.amounts[i]);
+            _redeemLocal.withdrawAmount = IHandler(_redeemLocal.handlers[i])
+                .withdraw(_redeemLocal.token, _redeemLocal.amounts[i]);
             require(
-                _burnLocal.withdrawAmount > 0,
-                "burn: handler withdraw failed"
+                _redeemLocal.withdrawAmount > 0,
+                "redeem: handler withdraw failed"
             );
 
             // Transfer token from other handlers to default handler
             // Default handler acts as a temporary pool here
-            if (_burnLocal.defaultHandler != _burnLocal.handlers[i])
+            if (_redeemLocal.defaultHandler != _redeemLocal.handlers[i])
                 require(
                     doTransferFrom(
-                        _burnLocal.token,
-                        _burnLocal.handlers[i],
-                        _burnLocal.defaultHandler,
-                        _burnLocal.withdrawAmount
+                        _redeemLocal.token,
+                        _redeemLocal.handlers[i],
+                        _redeemLocal.defaultHandler,
+                        _redeemLocal.withdrawAmount
                     ),
-                    "burn: transfer to default handler failed"
+                    "redeem: transfer to default handler failed"
                 );
 
-            _burnLocal.withdrawTotalAmount = _burnLocal.withdrawTotalAmount.add(
-                _burnLocal.withdrawAmount
-            );
+            _redeemLocal.withdrawTotalAmount = _redeemLocal
+                .withdrawTotalAmount
+                .add(_redeemLocal.withdrawAmount);
         }
 
         // Market may charge some fee in withdraw, so the actual withdrown total amount
         // could be less than what was intended
         // Use the withdrawTotalAmount as the baseline for further calculation
         require(
-            _burnLocal.withdrawTotalAmount <= _burnLocal.grossAmount,
-            "burn: withdrown more than intended"
+            _redeemLocal.withdrawTotalAmount <= _redeemLocal.grossAmount,
+            "redeem: withdrown more than intended"
         );
 
-        updateInterest(_src, _burnLocal.exchangeRate);
+        updateInterest(_src, _redeemLocal.exchangeRate);
 
         // Update the balance and totalSupply
         _balance.value = _balance.value.sub(_wad);
         totalSupply = totalSupply.sub(_wad);
 
         // Calculate fee
-        _burnLocal.originationFee = originationFee[msg.sig];
-        _burnLocal.fee = rmul(
-            _burnLocal.withdrawTotalAmount,
-            _burnLocal.originationFee
+        _redeemLocal.originationFee = originationFee[msg.sig];
+        _redeemLocal.fee = rmul(
+            _redeemLocal.withdrawTotalAmount,
+            _redeemLocal.originationFee
         );
 
         // Transfer fee from the default handler(the temporary pool) to dToken.
-        if (_burnLocal.fee > 0)
+        if (_redeemLocal.fee > 0)
             require(
                 doTransferFrom(
-                    _burnLocal.token,
-                    _burnLocal.defaultHandler,
+                    _redeemLocal.token,
+                    _redeemLocal.defaultHandler,
                     feeRecipient,
-                    _burnLocal.fee
+                    _redeemLocal.fee
                 ),
-                "burn: transfer fee from default handler failed"
+                "redeem: transfer fee from default handler failed"
             );
 
         // Subtracting the fee
-        _burnLocal.userAmount = _burnLocal.withdrawTotalAmount.sub(
-            _burnLocal.fee
+        _redeemLocal.userAmount = _redeemLocal.withdrawTotalAmount.sub(
+            _redeemLocal.fee
         );
 
         // Transfer the remaining amount from the default handler to msg.sender.
-        if (_burnLocal.userAmount > 0)
+        if (_redeemLocal.userAmount > 0)
             require(
                 doTransferFrom(
-                    _burnLocal.token,
-                    _burnLocal.defaultHandler,
+                    _redeemLocal.token,
+                    _redeemLocal.defaultHandler,
                     msg.sender,
-                    _burnLocal.userAmount
+                    _redeemLocal.userAmount
                 ),
-                "burn: transfer from default handler to user failed"
+                "redeem: transfer from default handler to user failed"
             );
 
         emit Transfer(_src, address(0), _wad);
-        emit Burn(
+        emit Redeem(
             _src,
-            _burnLocal.withdrawTotalAmount,
+            _redeemLocal.withdrawTotalAmount,
             _wad,
             totalSupply,
-            _burnLocal.exchangeRate
+            _redeemLocal.exchangeRate
         );
     }
 
-    struct RedeemLocalVars {
+    struct RedeemUnderlyingLocalVars {
         address token;
         address defaultHandler;
         address[] handlers;
@@ -675,21 +667,21 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     }
 
     /**
-     * @dev Withdraw to get specified token, but only when the contract is not paused.
+     * @dev Redeem specific amount of underlying token, but only when the contract is not paused.
      * @param _src Account who will spend dToken.
-     * @param _pie Amount to withdraw token, scaled by 1e18.
+     * @param _pie Amount to redeem, scaled by 1e18.
      */
-    function redeem(address _src, uint256 _pie)
+    function redeemUnderlying(address _src, uint256 _pie)
         external
         nonReentrant
         whenNotPaused
     {
-        RedeemLocalVars memory _redeemLocal;
+        RedeemUnderlyingLocalVars memory _redeemLocal;
         _redeemLocal.token = token;
 
-        // Here use the signature of burn(), both functions should use the same fee rate
+        // Here use the signature of redeem(), both functions should use the same fee rate
         _redeemLocal.originationFee = originationFee[DToken(this)
-            .burn
+            .redeem
             .selector];
 
         _redeemLocal.consumeAmountWithFee = rdivup(
@@ -703,10 +695,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 IDispatcher(dispatcher).isHandlerActive(
                     _redeemLocal.defaultHandler
                 ),
-            "redeem: default handler is inactive"
+            "redeemUnderlying: default handler is inactive"
         );
 
-        // Get `_token` best redeem strategy base on the redeem amount including fee.
+        // Get `_token` best withdraw strategy base on the redeem amount including fee.
         (_redeemLocal.handlers, _redeemLocal.amounts) = IDispatcher(dispatcher)
             .getWithdrawStrategy(
             _redeemLocal.token,
@@ -714,7 +706,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
         require(
             _redeemLocal.handlers.length > 0,
-            "redeem: no redeem stratege available, possibly due to a paused handler"
+            "redeemUnderlying: no withdraw strategy available, possibly due to a paused handler"
         );
 
         // Get current exchange rate.
@@ -726,12 +718,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         for (uint256 i = 0; i < _redeemLocal.handlers.length; i++) {
             if (_redeemLocal.amounts[i] == 0) continue;
 
-            // The `handler` redeem calculated amount from the market.
+            // The `handler` withdraw calculated amount from the market.
             _redeemLocal.redeemAmount = IHandler(_redeemLocal.handlers[i])
                 .withdraw(_redeemLocal.token, _redeemLocal.amounts[i]);
             require(
                 _redeemLocal.redeemAmount > 0,
-                "redeem: handler withdraw failed"
+                "redeemUnderlying: handler withdraw failed"
             );
 
             // Transfer token from other handlers to default handler
@@ -744,7 +736,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                         _redeemLocal.defaultHandler,
                         _redeemLocal.redeemAmount
                     ),
-                    "redeem: transfer to default handler failed"
+                    "redeemUnderlying: transfer to default handler failed"
                 );
             _redeemLocal.redeemTotalAmount = _redeemLocal.redeemTotalAmount.add(
                 _redeemLocal.redeemAmount
@@ -757,7 +749,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         // 2) redeemed == intended, then fee was covered by consuming more underlying token
         require(
             _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
-            "redeem: withdrown more than intended"
+            "redeemUnderlying: withdrown more than intended"
         );
 
         // Calculate amount of the dToken based on current exchange rate.
@@ -772,12 +764,12 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         Balance storage _balance = balances[_src];
         require(
             _balance.value >= _redeemLocal.wad,
-            "redeem: insufficient balance"
+            "redeemUnderlying: insufficient balance"
         );
         if (_src != msg.sender && allowance[_src][msg.sender] != uint256(-1)) {
             require(
                 allowance[_src][msg.sender] >= _redeemLocal.wad,
-                "redeem: insufficient allowance"
+                "redeemUnderlying: insufficient allowance"
             );
             allowance[_src][msg.sender] = allowance[_src][msg.sender].sub(
                 _redeemLocal.wad
@@ -800,7 +792,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                     feeRecipient,
                     _redeemLocal.fee
                 ),
-                "redeem: transfer fee from default handler failed"
+                "redeemUnderlying: transfer fee from default handler failed"
             );
 
         // Transfer original amount _pie from the default handler to msg.sender.
@@ -811,11 +803,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
                 msg.sender,
                 _pie
             ),
-            "redeem: transfer to user failed"
+            "redeemUnderlying: transfer to user failed"
         );
 
         emit Transfer(_src, address(0), _redeemLocal.wad);
-        emit Burn(
+        emit Redeem(
             _src,
             _redeemLocal.redeemTotalAmount,
             _redeemLocal.wad,
