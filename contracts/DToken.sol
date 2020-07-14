@@ -384,7 +384,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     /**
      * @dev Internal function to withdraw specific amount underlying token from handlers,
      *    all tokens withdrown will be put into default handler.
-     * @param _defaultHandler list of handlers to withdraw.
+     * @param _defaultHandler default handler acting as temporary pool.
      * @param _handlers list of handlers to withdraw.
      * @param _amounts list of amounts to withdraw.
      * @return The actual withdrown amount.
