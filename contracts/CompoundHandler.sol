@@ -83,12 +83,11 @@ contract CompoundHandler is Handler, ReentrancyGuard {
      * @dev Internal function to transfer COMP airdrops to corresponding dToken to distribute.
      */
     function claimComp(address _underlyingToken) internal {
-        address _dToken = IDTokenController(dTokenController).getDToken(
-            _underlyingToken
-        );
-
         uint256 compBalance = IERC20(compAddress).balanceOf(address(this));
         if (compBalance > 0) {
+            address _dToken = IDTokenController(dTokenController).getDToken(
+                _underlyingToken
+            );
             require(
                 doTransferOut(compAddress, _dToken, compBalance),
                 "deposit: Comp transfer out of contract failed."
