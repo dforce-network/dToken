@@ -63,7 +63,10 @@ describe("DToken Contract Integration", function () {
 
     COMP = await TetherToken.new("0", "COMP", "COMP", 18);
 
-    compound_handler = await CompoundHandler.new(dtoken_controller.address, COMP.address);
+    compound_handler = await CompoundHandler.new(
+      dtoken_controller.address,
+      COMP.address
+    );
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]

@@ -76,11 +76,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         uint256[] supplyAmount
     );
 
-    event TransferFee(
-        address token,
-        address feeRecipient,
-        uint256 amount
-    );
+    event TransferFee(address token, address feeRecipient, uint256 amount);
 
     event FeeRecipientSet(address oldFeeRecipient, address newFeeRecipient);
 

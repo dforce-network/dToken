@@ -36,7 +36,10 @@ describe("CompoundHandlerMock contract", function () {
     // Mock COMP, can return boolean value
     COMP = await TestERC20.new("COMP", "COMP", 18);
     dtoken_controller = await DTokenController.new();
-    handler = await CompoundHandler.new(dtoken_controller.address, COMP.address);
+    handler = await CompoundHandler.new(
+      dtoken_controller.address,
+      COMP.address
+    );
     handler_view = await IHandlerView.at(handler.address);
 
     // Mock USDC

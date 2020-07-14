@@ -29,10 +29,9 @@ contract CompoundHandler is Handler, ReentrancyGuard {
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
-    function initialize(
-        address _dTokenController,
-        address _compAddress
-    ) public {
+    function initialize(address _dTokenController, address _compAddress)
+        public
+    {
         super.initialize(_dTokenController);
         compAddress = _compAddress;
         initReentrancyStatus();

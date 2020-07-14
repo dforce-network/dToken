@@ -62,7 +62,10 @@ describe("DToken Contract Integration", function () {
     cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
     cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
-    compound_handler = await CompoundHandler.new(dtoken_controller.address, COMP.address);
+    compound_handler = await CompoundHandler.new(
+      dtoken_controller.address,
+      COMP.address
+    );
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]
