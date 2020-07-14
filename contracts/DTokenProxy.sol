@@ -117,15 +117,15 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
         _setAdmin(msg.sender);
     }
 
-    function admin() external view ifAdmin returns (address) {
+    function admin() external ifAdmin returns (address) {
         return _admin();
     }
 
-    function pendingAdmin() external view ifAdmin returns (address) {
+    function pendingAdmin() external ifAdmin returns (address) {
         return _pendingAdmin();
     }
 
-    function implementation() external view ifAdmin returns (address) {
+    function implementation() external ifAdmin returns (address) {
         return _implementation();
     }
 
