@@ -600,8 +600,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             "redeem: no withdraw strategy available, possibly due to a paused handler"
         );
 
-        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
-
         _redeemLocal.redeemTotalAmount = withdrawFromHandlers(
             _redeemLocal.defaultHandler,
             _redeemLocal.handlers,
@@ -732,8 +730,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             _redeemLocal.handlers,
             _redeemLocal.token
         );
-
-        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
 
         _redeemLocal.redeemTotalAmount = withdrawFromHandlers(
             _redeemLocal.defaultHandler,
