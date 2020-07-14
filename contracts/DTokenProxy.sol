@@ -103,9 +103,9 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
     modifier ifAdmin() {
         if (msg.sender == _admin()) {
             _;
-        } /* else {
-        _fallback();
-        }*/
+        } else {
+            _fallback();
+        }
     }
 
     constructor(address _implementation)
@@ -206,7 +206,10 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
     }
 
     function _willFallback() internal {
-        // require(msg.sender != _admin(), "Cannot call fallback function from the proxy admin");
+        require(
+            msg.sender != _admin(),
+            "Cannot call fallback function from the proxy admin"
+        );
         super._willFallback();
     }
 }
