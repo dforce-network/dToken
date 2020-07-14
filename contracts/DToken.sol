@@ -77,7 +77,6 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     );
 
     event TransferFee(
-        address admin,
         address token,
         address feeRecipient,
         uint256 amount
@@ -207,7 +206,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             "transferFee: Token transfer out of contract failed."
         );
 
-        emit TransferFee(msg.sender, _token, feeRecipient, _amount);
+        emit TransferFee(_token, feeRecipient, _amount);
     }
 
     /**
