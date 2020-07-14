@@ -381,6 +381,50 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         data.exchangeRate = _exchangeRate;
     }
 
+    /**
+     * @dev Internal function to withdraw specific amount underlying token from handlers,
+     *    all tokens withdrown will be put into default handler.
+     * @param _defaultHandler list of handlers to withdraw.
+     * @param _handlers list of handlers to withdraw.
+     * @param _amounts list of amounts to withdraw.
+     * @return The actual withdrown amount.
+     */
+    function withdrawFromHandlers(
+        address _defaultHandler,
+        address[] memory _handlers,
+        uint256[] memory _amounts
+    ) internal returns (uint256 _totalWithdrown) {
+        address _token = token;
+
+        uint256 _withdrown;
+        for (uint256 i = 0; i < _handlers.length; i++) {
+            if (_amounts[i] == 0) continue;
+
+            // The handler withdraw underlying token from the market.
+            _withdrown = IHandler(_handlers[i]).withdraw(_token, _amounts[i]);
+            require(
+                _withdrown > 0,
+                "withdrawFromHandlers: handler withdraw failed"
+            );
+
+            // Transfer token from other handlers to default handler
+            // Default handler acts as a temporary pool here
+            if (_defaultHandler != _handlers[i]) {
+                require(
+                    doTransferFrom(
+                        _token,
+                        _handlers[i],
+                        _defaultHandler,
+                        _withdrown
+                    ),
+                    "withdrawFromHandlers: transfer to default handler failed"
+                );
+            }
+
+            _totalWithdrown = _totalWithdrown.add(_withdrown);
+        }
+    }
+
     /***********************/
     /*** User Operations ***/
     /***********************/
@@ -501,8 +545,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         uint256[] amounts;
         uint256 exchangeRate;
         uint256 grossAmount;
-        uint256 withdrawAmount;
-        uint256 withdrawTotalAmount;
+        uint256 redeemAmount;
+        uint256 redeemTotalAmount;
         uint256 userAmount;
         uint256 fee;
         uint256 wad;
@@ -556,41 +600,20 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             "redeem: no withdraw strategy available, possibly due to a paused handler"
         );
 
-        for (uint256 i = 0; i < _redeemLocal.handlers.length; i++) {
-            if (_redeemLocal.amounts[i] == 0) continue;
+        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
 
-            // The handler withdraw calculated amount from the market.
-            _redeemLocal.withdrawAmount = IHandler(_redeemLocal.handlers[i])
-                .withdraw(_redeemLocal.token, _redeemLocal.amounts[i]);
-            require(
-                _redeemLocal.withdrawAmount > 0,
-                "redeem: handler withdraw failed"
-            );
-
-            // Transfer token from other handlers to default handler
-            // Default handler acts as a temporary pool here
-            if (_redeemLocal.defaultHandler != _redeemLocal.handlers[i])
-                require(
-                    doTransferFrom(
-                        _redeemLocal.token,
-                        _redeemLocal.handlers[i],
-                        _redeemLocal.defaultHandler,
-                        _redeemLocal.withdrawAmount
-                    ),
-                    "redeem: transfer to default handler failed"
-                );
-
-            _redeemLocal.withdrawTotalAmount = _redeemLocal
-                .withdrawTotalAmount
-                .add(_redeemLocal.withdrawAmount);
-        }
+        _redeemLocal.redeemTotalAmount = withdrawFromHandlers(
+            _redeemLocal.defaultHandler,
+            _redeemLocal.handlers,
+            _redeemLocal.amounts
+        );
 
         // Market may charge some fee in withdraw, so the actual withdrown total amount
         // could be less than what was intended
-        // Use the withdrawTotalAmount as the baseline for further calculation
+        // Use the redeemTotalAmount as the baseline for further calculation
         require(
-            _redeemLocal.withdrawTotalAmount <= _redeemLocal.grossAmount,
-            "redeem: withdrown more than intended"
+            _redeemLocal.redeemTotalAmount <= _redeemLocal.grossAmount,
+            "redeem: redeemed more than intended"
         );
 
         updateInterest(_src, _redeemLocal.exchangeRate);
@@ -602,7 +625,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         // Calculate fee
         _redeemLocal.originationFee = originationFee[msg.sig];
         _redeemLocal.fee = rmul(
-            _redeemLocal.withdrawTotalAmount,
+            _redeemLocal.redeemTotalAmount,
             _redeemLocal.originationFee
         );
 
@@ -619,7 +642,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             );
 
         // Subtracting the fee
-        _redeemLocal.userAmount = _redeemLocal.withdrawTotalAmount.sub(
+        _redeemLocal.userAmount = _redeemLocal.redeemTotalAmount.sub(
             _redeemLocal.fee
         );
 
@@ -638,7 +661,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         emit Transfer(_src, address(0), _wad);
         emit Redeem(
             _src,
-            _redeemLocal.withdrawTotalAmount,
+            _redeemLocal.redeemTotalAmount,
             _wad,
             totalSupply,
             _redeemLocal.exchangeRate
@@ -704,44 +727,24 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
             "redeemUnderlying: no withdraw strategy available, possibly due to a paused handler"
         );
 
-        // Get current exchange rate.
+        // !!!DO NOT move up, we need the handlers to current exchange rate.
         _redeemLocal.exchangeRate = getCurrentExchangeRateByHandler(
             _redeemLocal.handlers,
             _redeemLocal.token
         );
 
-        for (uint256 i = 0; i < _redeemLocal.handlers.length; i++) {
-            if (_redeemLocal.amounts[i] == 0) continue;
+        _redeemLocal.defaultHandler = IDispatcher(dispatcher).defaultHandler();
 
-            // The `handler` withdraw calculated amount from the market.
-            _redeemLocal.redeemAmount = IHandler(_redeemLocal.handlers[i])
-                .withdraw(_redeemLocal.token, _redeemLocal.amounts[i]);
-            require(
-                _redeemLocal.redeemAmount > 0,
-                "redeemUnderlying: handler withdraw failed"
-            );
-
-            // Transfer token from other handlers to default handler
-            // Default handler acts as a temporary pool here
-            if (_redeemLocal.defaultHandler != _redeemLocal.handlers[i])
-                require(
-                    doTransferFrom(
-                        _redeemLocal.token,
-                        _redeemLocal.handlers[i],
-                        _redeemLocal.defaultHandler,
-                        _redeemLocal.redeemAmount
-                    ),
-                    "redeemUnderlying: transfer to default handler failed"
-                );
-            _redeemLocal.redeemTotalAmount = _redeemLocal.redeemTotalAmount.add(
-                _redeemLocal.redeemAmount
-            );
-        }
+        _redeemLocal.redeemTotalAmount = withdrawFromHandlers(
+            _redeemLocal.defaultHandler,
+            _redeemLocal.handlers,
+            _redeemLocal.amounts
+        );
 
         // Make sure enough token has been withdrown
         // If the market charge fee in withdraw, there are 2 cases:
-        // 1) redeemed < intended, the check below would fail;
-        // 2) redeemed == intended, then fee was covered by consuming more underlying token
+        // 1) redeemed < intended, unlike redeem(), it should fail as user has demanded the specific amount;
+        // 2) redeemed == intended, it is okay, as fee was covered by consuming more underlying token
         require(
             _redeemLocal.redeemTotalAmount == _redeemLocal.consumeAmountWithFee,
             "redeemUnderlying: withdrown more than intended"

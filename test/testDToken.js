@@ -934,7 +934,7 @@ describe("DToken Contract", function () {
         dERC20.redeemUnderlying(account1, amount.mul(new BN(3)), {
           from: account1,
         }),
-        "redeemUnderlying: transfer to default handler failed"
+        "withdrawFromHandlers: transfer to default handler failed"
       );
 
       await ERC20.updateFee(BASE);
