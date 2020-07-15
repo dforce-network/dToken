@@ -17,11 +17,15 @@ const BN = require("bn.js");
 const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
 
 var usdc, cUSDC, usdt, aUSDT, lendingPoolCore, lendingPool;
+var comp;
 
 module.exports = async function (deployer, network, accounts) {
-  let owner = accounts[0];
+  // Contract deployer of all the contracts, so at the same time it is also the contract owner.
+  let contractDeployer = accounts[0];
+  let guardOwner = accounts[1];
+  let proxyAdmin = accounts[1];
   // Deploys Guard contract
-  await deployer.deploy(DSGuard);
+  await deployer.deploy(DSGuard, {'from': guardOwner});
   let ds_guard = await DSGuard.deployed();
   // Deploys dToken library contract
   await deployer.deploy(DTokenController);
@@ -45,6 +49,8 @@ module.exports = async function (deployer, network, accounts) {
     lendingPool = await LendPoolMock.at(
       "0x580D4Fdc4BF8f9b5ae2fb9225D584fED4AD5375c"
     );
+    // COMP token
+    comp = await FiatToken.at("0x61460874a7196d6a22D1eE4922473664b3E95270");
   } else {
     await deployer.deploy(
       FiatToken,
@@ -52,9 +58,9 @@ module.exports = async function (deployer, network, accounts) {
       "USDC",
       "USD",
       6,
-      owner,
-      owner,
-      owner
+      contractDeployer,
+      contractDeployer,
+      contractDeployer
     );
     usdc = await FiatToken.deployed();
 
@@ -79,12 +85,15 @@ module.exports = async function (deployer, network, accounts) {
     );
     aUSDT = await aTokenMock.deployed();
     await lendingPoolCore.setReserveATokenAddress(usdt.address, aUSDT.address);
+
+    await deployer.deploy(TetherToken, "1000000000", "COMP", "COMP", 18);
+    comp = await TetherToken.deployed();;
   }
 
   // Deploys Internal contract
   await deployer.deploy(InternalHandler, dToken_contract_library.address);
   let internal_handler = await InternalHandler.deployed();
-  await deployer.deploy(Proxy, internal_handler.address);
+  await deployer.deploy(Proxy, internal_handler.address, {'from':proxyAdmin});
   let internal_handler_proxy = await Proxy.deployed();
   let internal_proxy = await InternalHandler.at(internal_handler_proxy.address);
   await internal_proxy.initialize(dToken_contract_library.address);
@@ -92,12 +101,12 @@ module.exports = async function (deployer, network, accounts) {
   await internal_proxy.setAuthority(ds_guard.address);
 
   // Deploy Compound handler
-  await deployer.deploy(CompoundHandler, dToken_contract_library.address);
+  await deployer.deploy(CompoundHandler, dToken_contract_library.address, comp.address);
   let compound_handler = await CompoundHandler.deployed();
-  await deployer.deploy(Proxy, compound_handler.address);
+  await deployer.deploy(Proxy, compound_handler.address, {'from':proxyAdmin});
   let compound_handler_proxy = await Proxy.deployed();
   let compound_proxy = await CompoundHandler.at(compound_handler_proxy.address);
-  await compound_proxy.initialize(dToken_contract_library.address);
+  await compound_proxy.initialize(dToken_contract_library.address, comp.address);
   await compound_proxy.enableTokens([usdc.address]);
   await compound_proxy.setAuthority(ds_guard.address);
 
@@ -111,7 +120,7 @@ module.exports = async function (deployer, network, accounts) {
     lendingPoolCore.address
   );
   let aave_handler = await AaveHandler.deployed();
-  await deployer.deploy(Proxy, aave_handler.address);
+  await deployer.deploy(Proxy, aave_handler.address, {'from':proxyAdmin});
   let aave_handler_proxy = await Proxy.deployed();
   let aave_proxy = await AaveHandler.at(aave_handler_proxy.address);
   await aave_proxy.initialize(
@@ -140,7 +149,7 @@ module.exports = async function (deployer, network, accounts) {
     usdc_dispatcher.address
   );
   let dUSDC = await DToken.deployed();
-  await deployer.deploy(Proxy, dUSDC.address);
+  await deployer.deploy(Proxy, dUSDC.address, {'from':proxyAdmin});
   let dUSDC_token_proxy = await Proxy.deployed();
   let dUSDC_proxy = await DToken.at(dUSDC_token_proxy.address);
   await dUSDC_proxy.initialize(
@@ -150,8 +159,8 @@ module.exports = async function (deployer, network, accounts) {
     usdc_dispatcher.address
   );
   await dUSDC_proxy.setAuthority(ds_guard.address);
-  await ds_guard.permitx(dUSDC_proxy.address, internal_handler_proxy.address);
-  await ds_guard.permitx(dUSDC_proxy.address, compound_handler_proxy.address);
+  await ds_guard.permitx(dUSDC_proxy.address, internal_handler_proxy.address, {'from': guardOwner});
+  await ds_guard.permitx(dUSDC_proxy.address, compound_handler_proxy.address, {'from': guardOwner});
 
   // Deploys usdt dispatcher
   await deployer.deploy(
@@ -163,7 +172,7 @@ module.exports = async function (deployer, network, accounts) {
   await usdt_dispatcher.setAuthority(ds_guard.address);
 
   // Deploys dUSDT
-  await deployer.deploy(Proxy, dUSDC.address);
+  await deployer.deploy(Proxy, dUSDC.address, {'from':proxyAdmin});
   let dUSDT_token_proxy = await Proxy.deployed();
   let dUSDT_proxy = await DToken.at(dUSDT_token_proxy.address);
   await dUSDT_proxy.initialize(
@@ -173,8 +182,8 @@ module.exports = async function (deployer, network, accounts) {
     usdt_dispatcher.address
   );
   await dUSDT_proxy.setAuthority(ds_guard.address);
-  await ds_guard.permitx(dUSDT_proxy.address, internal_handler_proxy.address);
-  await ds_guard.permitx(dUSDT_proxy.address, aave_handler_proxy.address);
+  await ds_guard.permitx(dUSDT_proxy.address, internal_handler_proxy.address, {'from': guardOwner});
+  await ds_guard.permitx(dUSDT_proxy.address, aave_handler_proxy.address, {'from': guardOwner});
 
   await dToken_contract_library.setdTokensRelation(
     [usdc.address, usdt.address],
@@ -186,7 +195,9 @@ module.exports = async function (deployer, network, accounts) {
   await compound_proxy.approve(usdc.address, UINT256_MAX);
   await aave_proxy.approve(usdt.address, UINT256_MAX);
 
-  console.log("Deployer address: ", owner);
+  console.log("Deployer address:   ", contractDeployer);
+  console.log("DS Guard owner is:  ", guardOwner);
+  console.log("All proxy admin is: ", proxyAdmin);
   console.log("DS Guard contract address: ", ds_guard.address);
   console.log(
     "DToken Controller contract address: ",
@@ -199,7 +210,8 @@ module.exports = async function (deployer, network, accounts) {
   console.log("USDT contract address: ", usdt.address);
   console.log("aUSDT contract address: ", aUSDT.address);
   console.log("LendingPoolCore contract address: ", lendingPoolCore.address);
-  console.log("LendingPool contract address: ", lendingPool.address, "\n");
+  console.log("LendingPool contract address: ", lendingPool.address);
+  console.log("COMP contract address: ", comp.address, "\n");
 
   console.log("Internal handler contract address: ", internal_handler.address);
   console.log(
