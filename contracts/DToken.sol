@@ -543,11 +543,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address[] handlers;
         uint256[] amounts;
         uint256 exchangeRate;
+        uint256 originationFee;
+        uint256 fee;
         uint256 grossAmount;
         uint256 redeemTotalAmount;
         uint256 userAmount;
-        uint256 fee;
-        uint256 originationFee;
     }
 
     /**
@@ -668,11 +668,11 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         address[] handlers;
         uint256[] amounts;
         uint256 exchangeRate;
+        uint256 originationFee;
+        uint256 fee;
         uint256 consumeAmountWithFee;
         uint256 redeemTotalAmount;
         uint256 wad;
-        uint256 fee;
-        uint256 originationFee;
     }
 
     /**
