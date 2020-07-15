@@ -59,4 +59,8 @@ contract ReentrancyGuard {
         // https://eips.ethereum.org/EIPS/eip-2200)
         _status = _NOT_ENTERED;
     }
+
+    function initReentrancyStatus() internal {
+        _status = _NOT_ENTERED;
+    }
 }
