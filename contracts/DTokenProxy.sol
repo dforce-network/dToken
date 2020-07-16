@@ -221,7 +221,7 @@ contract DTokenProxy is AdminUpgradeabilityProxy {
     {}
 
     // Allow anyone to view the implementation address
-    function DTokenImplementation() external view returns (address) {
+    function dTokenImplementation() external view returns (address) {
         return _implementation();
     }
 }
