@@ -103,9 +103,9 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
     modifier ifAdmin() {
         if (msg.sender == _admin()) {
             _;
-        } /* else {
-        _fallback();
-        }*/
+        } else {
+            _fallback();
+        }
     }
 
     constructor(address _implementation)
@@ -117,15 +117,15 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
         _setAdmin(msg.sender);
     }
 
-    function admin() external view ifAdmin returns (address) {
+    function admin() external ifAdmin returns (address) {
         return _admin();
     }
 
-    function pendingAdmin() external view ifAdmin returns (address) {
+    function pendingAdmin() external ifAdmin returns (address) {
         return _pendingAdmin();
     }
 
-    function implementation() external view ifAdmin returns (address) {
+    function implementation() external ifAdmin returns (address) {
         return _implementation();
     }
 
@@ -206,7 +206,10 @@ contract AdminUpgradeabilityProxy is UpgradeabilityProxy {
     }
 
     function _willFallback() internal {
-        // require(msg.sender != _admin(), "Cannot call fallback function from the proxy admin");
+        require(
+            msg.sender != _admin(),
+            "Cannot call fallback function from the proxy admin"
+        );
         super._willFallback();
     }
 }
@@ -216,4 +219,9 @@ contract DTokenProxy is AdminUpgradeabilityProxy {
         public
         AdminUpgradeabilityProxy(_implementation)
     {}
+
+    // Allow anyone to view the implementation address
+    function dTokenImplementation() external view returns (address) {
+        return _implementation();
+    }
 }

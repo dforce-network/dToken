@@ -7,6 +7,9 @@ const DTokenController = artifacts.require("DTokenController");
 const Dispatcher = artifacts.require("Dispatcher");
 const DToken = artifacts.require("DToken");
 
+const BN = require("bn.js");
+const UINT256_MAX = new BN(2).pow(new BN(256)).sub(new BN(1));
+
 describe("Aave handler contract", function () {
   let accounts;
   let usdc;
@@ -88,7 +91,7 @@ describe("Aave handler contract", function () {
         [dUSDC.address]
       );
 
-      await aaveHandler.approve(usdc.address);
+      await aaveHandler.approve(usdc.address, UINT256_MAX);
 
       await usdc.allocateTo(aaveHandler.address, 1000e6);
       console.log(

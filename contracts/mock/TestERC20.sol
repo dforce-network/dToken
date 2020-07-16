@@ -67,10 +67,7 @@ contract TestERC20 {
     ) public returns (bool) {
         if (balanceOf[_src] < _wad) return false;
 
-        // HACK: When approved with -1, also decrease the allowance
-        // so that the next approve will return false
-        //if (_src != msg.sender && allowance[_src][msg.sender] != uint256(-1)) {
-        if (_src != msg.sender) {
+        if (_src != msg.sender && allowance[_src][msg.sender] != uint256(-1)) {
             require(
                 allowance[_src][msg.sender] >= _wad,
                 "transferFrom: insufficient allowance"

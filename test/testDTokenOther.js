@@ -21,11 +21,11 @@ const BASE = new BN(10).pow(new BN(18));
 const FEE = new BN(10).pow(new BN(14));
 
 const MINT_SELECTOR = "0x40c10f19";
-const BURN_SELECTOR = "0x9dc29fac";
+const REDEEM_SELECTOR = "0x1e9a6950";
 
 describe("DToken Contract Integration", function () {
   let owner, account1, account2, account3, account4;
-  let USDC, USDT, DF;
+  let USDC, USDT, DF, COMP;
   let ds_guard;
   let dispatcher;
   let dtoken_controller;
@@ -52,6 +52,7 @@ describe("DToken Contract Integration", function () {
     USDT = await TetherToken.new("0", "USDT", "USDT", 6);
 
     DF = await TetherToken.new("0", "DF", "DF", 18);
+    COMP = await TetherToken.new("0", "COMP", "COMP", 18);
 
     dtoken_controller = await DTokenController.new();
     ds_guard = await DSGuard.new();
@@ -61,7 +62,10 @@ describe("DToken Contract Integration", function () {
     cUSDT = await CTokenMock.new("cUSDT", "cUSDT", USDT.address);
     cUSDC = await CTokenMock.new("cUSDC", "cUSDC", USDC.address);
 
-    compound_handler = await CompoundHandler.new(dtoken_controller.address);
+    compound_handler = await CompoundHandler.new(
+      dtoken_controller.address,
+      COMP.address
+    );
     await compound_handler.setcTokensRelation(
       [USDT.address, USDC.address],
       [cUSDT.address, cUSDC.address]
@@ -125,8 +129,8 @@ describe("DToken Contract Integration", function () {
     let handlers = [internal_handler, compound_handler, aave_handler];
     for (const handler of handlers) {
       await handler.setAuthority(ds_guard.address);
-      await handler.approve(USDC.address);
-      await handler.approve(USDT.address);
+      await handler.approve(USDC.address, UINT256_MAX);
+      await handler.approve(USDT.address, UINT256_MAX);
       await ds_guard.permitx(dUSDC.address, handler.address);
       await ds_guard.permitx(dUSDT.address, handler.address);
 
@@ -389,7 +393,7 @@ describe("DToken Contract Integration", function () {
       );
 
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -424,7 +428,7 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -457,19 +461,19 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, 1, {from: account1}],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
 
-      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
-      await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE); // Mint
+      await dUSDC.updateOriginationFee(REDEEM_SELECTOR, FEE);
+      await dUSDC.updateOriginationFee(MINT_SELECTOR, FEE);
 
       diff = await calcDiff(
         dUSDC.mint,
@@ -499,13 +503,13 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, 1, {from: account1}],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
@@ -532,13 +536,13 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, 1, {from: account1}],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
@@ -578,8 +582,8 @@ describe("DToken Contract Integration", function () {
     });
 
     it("Case 100~104 (Skipped in coverage)", async function () {
-      await dUSDC.updateOriginationFee(Buffer.from("9dc29fac", "hex"), FEE); // Burn
-      await dUSDC.updateOriginationFee(Buffer.from("40c10f19", "hex"), FEE); // Mint
+      await dUSDC.updateOriginationFee(REDEEM_SELECTOR, FEE);
+      await dUSDC.updateOriginationFee(MINT_SELECTOR, FEE);
       diff = await calcDiff(
         dispatcher.resetHandlers,
         [
@@ -600,7 +604,7 @@ describe("DToken Contract Integration", function () {
       );
 
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -622,7 +626,7 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -661,7 +665,7 @@ describe("DToken Contract Integration", function () {
       );
 
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -683,7 +687,7 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -722,7 +726,7 @@ describe("DToken Contract Integration", function () {
       );
 
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -744,7 +748,7 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -800,7 +804,7 @@ describe("DToken Contract Integration", function () {
       );
 
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -822,7 +826,7 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [
           account1,
           new BN(
@@ -874,13 +878,13 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, 1, {from: account1}],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
@@ -913,13 +917,13 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, 1, {from: account1}],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );
@@ -946,13 +950,13 @@ describe("DToken Contract Integration", function () {
         account1
       );
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, 1, {from: account1}],
         account1
       );
       console.log("dUSDC empty!");
       diff = await calcDiff(
-        dUSDC.burn,
+        dUSDC.redeem,
         [account1, await dUSDC.balanceOf(account1), {from: account1}],
         account1
       );

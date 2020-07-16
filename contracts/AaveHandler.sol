@@ -49,20 +49,13 @@ contract AaveHandler is Handler, ReentrancyGuard {
      * @dev Authorized function to approves market and dToken to transfer handler's underlying token.
      * @param _underlyingToken Token address to approve.
      */
-    function approve(address _underlyingToken) public auth {
-        if (
-            IERC20(_underlyingToken).allowance(
-                address(this),
-                aaveLendingPoolCore
-            ) != uint256(-1)
-        ) {
-            require(
-                doApprove(_underlyingToken, aaveLendingPoolCore, uint256(-1)),
-                "approve: Approve aToken failed!"
-            );
-        }
+    function approve(address _underlyingToken, uint256 amount) public auth {
+        require(
+            doApprove(_underlyingToken, aaveLendingPoolCore, amount),
+            "approve: Approve aToken failed!"
+        );
 
-        super.approve(_underlyingToken);
+        super.approve(_underlyingToken, amount);
     }
 
     /**

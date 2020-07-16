@@ -87,19 +87,15 @@ contract Handler is ERC20SafeTransfer, Pausable {
      * @dev The _underlyingToken approves to dToken contract.
      * @param _underlyingToken Token address to approve.
      */
-    function approve(address _underlyingToken) public auth {
+    function approve(address _underlyingToken, uint256 amount) public auth {
         address _dToken = IDTokenController(dTokenController).getDToken(
             _underlyingToken
         );
-        if (
-            IERC20(_underlyingToken).allowance(address(this), _dToken) !=
-            uint256(-1)
-        ) {
-            require(
-                doApprove(_underlyingToken, _dToken, uint256(-1)),
-                "approve: Approve dToken failed!"
-            );
-        }
+
+        require(
+            doApprove(_underlyingToken, _dToken, amount),
+            "approve: Approve dToken failed!"
+        );
     }
 
     /**
