@@ -16,7 +16,7 @@ jobs:
       - run:
           name: Run tests
           command: |
-            npm run prepare
+            npm run copy-uniswap-artifacts
             npx buidler test
       - run:
           name: Run coverage

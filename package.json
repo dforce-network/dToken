@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "npx buidler test",
-    "prepare": "cp node_modules/@uniswap/v2-core/build/*.json artifacts/ && cp node_modules/@uniswap/v2-periphery/build/*.json artifacts/",
+    "copy-uniswap-artifacts": "cp node_modules/@uniswap/v2-core/build/*.json artifacts/ && cp node_modules/@uniswap/v2-periphery/build/*.json artifacts/",
     "format": "prettier --write contracts test --ignore-path .prettierignore"
   },
   "author": "",
