@@ -15,8 +15,8 @@ contract UniswapSwapModel is ISwapModel, ERC20SafeTransfer {
     // Mainnet and testnet
     // address public constant router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
-    // Localhost for development
-    address public constant router = 0x5F6CaC05CDF893f029b29F44d368eAeD40e573B6;
+    // Localhost for development, use accouts[4] to deploy
+    address public constant router = 0x7D0DFE8209F598f2030372a761C5b8f66323F2eC;
 
     function swap(address _token, uint256 _amount) external {
         IDToken _dtoken = IDToken(address(this));

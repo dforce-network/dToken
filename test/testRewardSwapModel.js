@@ -98,25 +98,25 @@ describe("RewardSwapModel Contract", function () {
     }
   }
 
-  // async function setupUniswap() {
-  //   const [owner, ...accounts] = await waffle.provider.getWallets();
+  async function setupUniswapWaffle() {
+    const [owner] = waffle.provider.getWallets();
 
-  //   // Deploy Uniswap contracts and create pairs
-  //   let uniswap_factory = await deployContract(owner, UniswapV2Factory);
-  //   await uniswap_factory.deployed();
-  //   await uniswap_factory.createPair(COMP.address, USDC.address);
-  //   let pair = await uniswap_factory.getPair(COMP.address, USDC.address);
+    // Deploy Uniswap contracts and create pairs
+    uniswap_factory = await deployContract(owner, UniswapV2Factory);
+    await uniswap_factory.deployed();
+    await uniswap_factory.createPair(COMP.address, USDC.address);
+    let pair = await uniswap_factory.getPair(COMP.address, USDC.address);
 
-  //   let uniswap_pair = await ethers.getContractAt(UniswapV2Pair.abi, pair);
-  //   let weth = await deployContract(owner, WETH);
-  //   await weth.deployed();
+    uniswap_pair = await ethers.getContractAt(UniswapV2Pair.abi, pair);
+    weth = await deployContract(owner, WETH);
+    await weth.deployed();
 
-  //   let uniswap_router = await deployContract(
-  //     owner,
-  //     UniswapV2Router02[(uniswap_factory.address, weth.address)]
-  //   );
-  //   await uniswap_router.deployed();
-  // }
+    uniswap_router = await deployContract(
+      owner,
+      UniswapV2Router02[(uniswap_factory.address, weth.address)]
+    );
+    await uniswap_router.deployed();
+  }
 
   async function setupUniswap() {
     uniswap_factory = await UniswapV2Factory.new(owner);
@@ -129,8 +129,15 @@ describe("RewardSwapModel Contract", function () {
 
     uniswap_router = await UniswapV2Router02.new(
       uniswap_factory.address,
-      weth.address
+      weth.address,
+      {from: account4}
     );
+  }
+
+  async function resetContracts() {
+    await setupDToken();
+    await setupUniswap();
+    //await setupUniswapWaffle();
 
     console.log("\tROUTER:\t", uniswap_router.address);
     console.log("\tCOMP:\t", COMP.address);
@@ -185,11 +192,6 @@ describe("RewardSwapModel Contract", function () {
       usdc_after.sub(usdc_before).div(new BN(1e6)).toString(),
       " USDC"
     );
-  }
-
-  async function resetContracts() {
-    await setupDToken();
-    await setupUniswap();
 
     // Reward Swap Model
     swap_model = await UniswapSwapModel.new();
@@ -239,10 +241,12 @@ describe("RewardSwapModel Contract", function () {
       let total_before = await dUSDC.getTotalBalance();
 
       let comp_balance = await COMP.balanceOf(dUSDC.address);
-      await dUSDC.swap(COMP.address, comp_balance);
+      let tx = await dUSDC.swap(COMP.address, comp_balance);
 
       let exchange_rate_after = await dUSDC.getExchangeRate();
       let total_after = await dUSDC.getTotalBalance();
+
+      console.log(tx.logs);
 
       console.log(
         "\tExchange Rate: \t",
