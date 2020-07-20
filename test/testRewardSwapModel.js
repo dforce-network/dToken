@@ -31,7 +31,7 @@ function expandTo18Decimals(n) {
   return new BN(n).mul(new BN(10).pow(new BN(18)));
 }
 
-describe("RewardSwapModel Contract", function () {
+describe("RewardSwapModel Contract (Skipped in coverage)", function () {
   let owner, account1, account2, account3, account4;
   let USDC, COMP;
   let dispatcher;
