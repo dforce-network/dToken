@@ -16,6 +16,7 @@ jobs:
       - run:
           name: Run tests
           command: |
+            npm run prepare
             npx buidler test
       - run:
           name: Run coverage
