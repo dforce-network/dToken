@@ -12,11 +12,11 @@ interface IRewardSwapModel {
 contract UniswapSwapModel is IRewardSwapModel, ERC20SafeTransfer {
   // !!!! Hard code address for UniswapV2Router02,
   // Change it to corresponding address for mainnet or testnet
-  // Mainet and testnet
-  address public constant router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+  // Mainnet and testnet
+  // address public constant router = 0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
   // Localhost for development
-  // address public constant router = 0xFAe0fd738dAbc8a0426F47437322b6d026A9FD95;
+  address public constant router = 0x5F6CaC05CDF893f029b29F44d368eAeD40e573B6;
 
   function swap(address _token, uint256 _amount) external {
     IDToken _dtoken = IDToken(address(this));
