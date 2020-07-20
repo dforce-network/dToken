@@ -127,10 +127,13 @@ describe("RewardSwapModel Contract", function () {
     uniswap_pair = await UniswapV2Pair.at(pair);
     weth = await WETH.new();
 
+    // Use the last account to deploy router to get a fixed address
+    let accounts = await web3.eth.getAccounts();
+    let account = accounts[accounts.length - 1];
     uniswap_router = await UniswapV2Router02.new(
       uniswap_factory.address,
       weth.address,
-      {from: account4}
+      {from: account}
     );
   }
 
