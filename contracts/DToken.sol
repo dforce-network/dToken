@@ -205,7 +205,9 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
      * @param _amount Amount to swap.
      */
     function swap(address _token, uint256 _amount) external auth {
-        (bool success, ) = swapModel.delegatecall(abi.encodeWithSignature("swap(address,uint256)", _token, _amount));
+        (bool success, ) = swapModel.delegatecall(
+            abi.encodeWithSignature("swap(address,uint256)", _token, _amount)
+        );
 
         require(success, "swap: swap to another token failed!");
     }
