@@ -200,8 +200,8 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     }
 
     /**
-     * @dev Authorized function to swap airdrop tokens to another token.
-     * @param _token New token to get.
+     * @dev Authorized function to swap airdrop tokens to increase yield.
+     * @param _token Airdrop token to swap from.
      * @param _amount Amount to swap.
      */
     function swap(address _token, uint256 _amount) external auth {

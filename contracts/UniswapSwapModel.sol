@@ -5,11 +5,11 @@ import "./interface/IDToken.sol";
 import "./interface/IDispatcher.sol";
 import "./library/ERC20SafeTransfer.sol";
 
-interface IRewardSwapModel {
+interface ISwapModel {
     function swap(address reward, uint256 amount) external;
 }
 
-contract UniswapSwapModel is IRewardSwapModel, ERC20SafeTransfer {
+contract UniswapSwapModel is ISwapModel, ERC20SafeTransfer {
     // !!!! Hard code address for UniswapV2Router02,
     // Change it to corresponding address for mainnet or testnet
     // Mainnet and testnet
