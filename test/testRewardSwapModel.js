@@ -7,6 +7,7 @@ const InternalHandler = artifacts.require("InternalHandler");
 const Dispatcher = artifacts.require("Dispatcher");
 const DTokenController = artifacts.require("DTokenController");
 const DToken = artifacts.require("DToken");
+const IDToken = artifacts.require("IDToken");
 const DSGuard = artifacts.require("DSGuard");
 
 // Use waffle to deploy uniswap contracts
@@ -96,6 +97,8 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
       await COMP.allocateTo(account, expandTo18Decimals(100000));
       USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
     }
+
+    dUSDC = await IDToken.at(dUSDC.address);
   }
 
   async function setupUniswapWaffle() {
@@ -137,8 +140,7 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     );
   }
 
-  async function resetContracts() {
-    await setupDToken();
+  async function setupUniswapAndSwapModel() {
     await setupUniswap();
     //await setupUniswapWaffle();
 
@@ -208,62 +210,77 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
       account3,
       account4,
     ] = await web3.eth.getAccounts();
+
+    await setupDToken();
   });
 
-  describe("Deployment", function () {
-    it("Should deployed", async function () {
-      await resetContracts();
-    });
+  it("Should claim some COMP", async function () {
+    dUSDC.mint(account1, 1000e6, {from: account1});
+
+    let comp_airdrop = expandTo18Decimals(10);
+    await COMP.allocateTo(compound_handler.address, comp_airdrop);
+    //console.log((await COMP.balanceOf(compound_handler.address)).toString());
+
+    // mint again to claim comp
+    await dUSDC.mint(account1, 10e6, {from: account1});
+
+    let comp_claimed = await COMP.balanceOf(dUSDC.address);
+
+    assert.equal(comp_airdrop.toString(), comp_claimed.toString());
   });
 
-  describe("CompoundHandler claimComp()", function () {
-    it("Should claim some COMP", async function () {
-      dUSDC.mint(account1, 1000e6, {from: account1});
-
-      let comp_airdrop = expandTo18Decimals(10);
-      await COMP.allocateTo(compound_handler.address, comp_airdrop);
-      console.log((await COMP.balanceOf(compound_handler.address)).toString());
-
-      // mint again to claim comp
-      await dUSDC.mint(account1, 10e6, {from: account1});
-
-      let comp_claimed = await COMP.balanceOf(dUSDC.address);
-
-      assert.equal(comp_airdrop.toString(), comp_claimed.toString());
-    });
+  it("Should deploy UniswapSwapModel (Skipped in coverage)", async function () {
+    await setupUniswapAndSwapModel();
   });
 
-  describe("DToken Swap COMP into underlying token", function () {
-    it("Should set the Swap Model", async function () {
-      await dUSDC.setSwapModel(swap_model.address);
-      assert.equal((await dUSDC.swapModel()).toString(), swap_model.address);
-    });
+  it("Should set the Swap Model (Skipped in coverage)", async function () {
+    await dUSDC.setSwapModel(swap_model.address);
+    assert.equal((await dUSDC.swapModel()).toString(), swap_model.address);
+  });
 
-    it("Can swap some COMP into underlying tokens and put them into internal handler", async function () {
-      let exchange_rate_before = await dUSDC.getExchangeRate();
-      let total_before = await dUSDC.getTotalBalance();
+  it("Can swap some COMP into underlying tokens and put them into internal handler (Skipped in coverage)", async function () {
+    let exchange_rate_before = await dUSDC.getExchangeRate();
+    let total_before = await dUSDC.getTotalBalance();
 
-      let comp_balance = await COMP.balanceOf(dUSDC.address);
-      let tx = await dUSDC.swap(COMP.address, comp_balance);
+    let comp_balance = await COMP.balanceOf(dUSDC.address);
+    let tx = await dUSDC.swap(COMP.address, comp_balance);
 
-      let exchange_rate_after = await dUSDC.getExchangeRate();
-      let total_after = await dUSDC.getTotalBalance();
+    let exchange_rate_after = await dUSDC.getExchangeRate();
+    let total_after = await dUSDC.getTotalBalance();
 
-      console.log(tx.logs);
+    console.log(tx);
+
+    //console.log(tx.receipt.rawLogs);
+
+    let swapped;
+    truffleAssert.eventEmitted(tx, "Swap", (ev) => {
+      console.log(ev);
+      swapped = ev.amountOut;
 
       console.log(
-        "\tExchange Rate: \t",
-        exchange_rate_before.toString(),
-        " to ",
-        exchange_rate_after.toString()
+        "\tSwapped ",
+        ev.amountIn.div(new BN(10).pow(new BN(18))).toString(),
+        " COMP for ",
+        ev.amountOut.div(new BN(1e6)).toString(),
+        " USDC"
       );
-
-      console.log(
-        "\tTotal Underlying Balance: \t",
-        total_before.toString(),
-        " to ",
-        total_after.toString()
-      );
+      return true;
     });
+
+    console.log(
+      "\tExchange Rate: \t",
+      exchange_rate_before.toString(),
+      " to ",
+      exchange_rate_after.toString()
+    );
+
+    console.log(
+      "\tTotal Underlying Balance: \t",
+      total_before.toString(),
+      " to ",
+      total_after.toString()
+    );
+
+    assert.equal(total_before.add(swapped).toString(), total_after.toString());
   });
 });
