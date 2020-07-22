@@ -23,6 +23,11 @@ contract CompoundHandler is Handler, ReentrancyGuard {
         address indexed mappingcToken
     );
 
+    event CompClaimed(
+        address indexed _underlyingToken,
+        uint256 indexed compBalance
+    );
+
     constructor(address _dTokenController, address _compAddress) public {
         initialize(_dTokenController, _compAddress);
     }
@@ -91,6 +96,7 @@ contract CompoundHandler is Handler, ReentrancyGuard {
                 doTransferOut(compAddress, _dToken, compBalance),
                 "deposit: Comp transfer out of contract failed."
             );
+            emit CompClaimed(_underlyingToken, compBalance);
         }
     }
 
