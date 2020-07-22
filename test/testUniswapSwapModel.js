@@ -93,7 +93,7 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     // Allocate some token to all accounts
     let accounts = [account1, account2, account3, account4];
     for (const account of accounts) {
-      await USDC.allocateTo(account, 100000e6);
+      await USDC.allocateTo(account, 1000000e6);
       await COMP.allocateTo(account, expandTo18Decimals(100000));
       USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
     }
@@ -123,12 +123,18 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
 
   async function setupUniswap() {
     uniswap_factory = await UniswapV2Factory.new(owner);
-
-    await uniswap_factory.createPair(COMP.address, USDC.address);
-    let pair = await uniswap_factory.getPair(COMP.address, USDC.address);
-
-    uniswap_pair = await UniswapV2Pair.at(pair);
     weth = await WETH.new();
+
+    let pair;
+    // COMP Pair
+    await uniswap_factory.createPair(COMP.address, weth.address);
+    //pair = await uniswap_factory.getPair(COMP.address, WETH.address);
+    //uniswap_pair = await UniswapV2Pair.at(pair);
+
+    // USDC Pair
+    await uniswap_factory.createPair(USDC.address, weth.address);
+    //pair = await uniswap_factory.getPair(USDC.address, WETH.address);
+    //uniswap_pair = await UniswapV2Pair.at(pair);
 
     // Use the last account to deploy router to get a fixed address
     let accounts = await web3.eth.getAccounts();
@@ -147,7 +153,7 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     console.log("\tROUTER:\t", uniswap_router.address);
     console.log("\tCOMP:\t", COMP.address);
     console.log("\tUSDC:\t", USDC.address);
-    console.log("\tTOKEN0:\t", await uniswap_pair.token0());
+    //console.log("\tTOKEN0:\t", await uniswap_pair.token0());
 
     await COMP.approve(uniswap_router.address, UINT256_MAX, {
       from: account1,
@@ -156,17 +162,25 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
       from: account1,
     });
 
-    // Setting up the ratio to COMP:USDC to 1:30
-    await uniswap_router.addLiquidity(
+    // Setting up the ratio to COMP:USDC to 1:150
+    await uniswap_router.addLiquidityETH(
       COMP.address,
-      USDC.address,
       expandTo18Decimals(1000),
-      30000e6,
-      0,
-      0,
+      expandTo18Decimals(1000),
+      expandTo18Decimals(1),
       account1,
       UINT256_MAX,
-      {from: account1}
+      {from: account1, value: expandTo18Decimals(1)}
+    );
+
+    await uniswap_router.addLiquidityETH(
+      USDC.address,
+      150000e6,
+      150000e6,
+      expandTo18Decimals(1),
+      account1,
+      UINT256_MAX,
+      {from: account1, value: expandTo18Decimals(1)}
     );
 
     let swap_amount = expandTo18Decimals(1);
@@ -179,7 +193,7 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     await uniswap_router.swapExactTokensForTokens(
       swap_amount,
       0,
-      [COMP.address, USDC.address],
+      [COMP.address, weth.address, USDC.address],
       account2,
       UINT256_MAX,
       {from: account2}
@@ -257,7 +271,6 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
 
     let swapped;
     truffleAssert.eventEmitted(tx, "Swap", (ev) => {
-      console.log(ev);
       swapped = ev.amountOut;
 
       console.log(
