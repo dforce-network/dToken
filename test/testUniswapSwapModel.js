@@ -229,11 +229,18 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     assert.equal(comp_airdrop.toString(), comp_claimed.toString());
   });
 
-  it("Should deploy UniswapSwapModel (Skipped in coverage)", async function () {
+  it("Should deploy UniswapSwapModel", async function () {
     await setupUniswapAndSwapModel();
   });
 
-  it("Should set the Swap Model (Skipped in coverage)", async function () {
+  it("Should failed when no swap model was set", async function () {
+    await truffleAssert.reverts(
+      dUSDC.swap(COMP.address, expandTo18Decimals(1)),
+      "swap: no swap model available!"
+    );
+  });
+
+  it("Should set the Swap Model", async function () {
     await dUSDC.setSwapModel(swap_model.address);
     assert.equal((await dUSDC.swapModel()).toString(), swap_model.address);
   });
@@ -247,10 +254,6 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
 
     let exchange_rate_after = await dUSDC.getExchangeRate();
     let total_after = await dUSDC.getTotalBalance();
-
-    console.log(tx);
-
-    //console.log(tx.receipt.rawLogs);
 
     let swapped;
     truffleAssert.eventEmitted(tx, "Swap", (ev) => {
