@@ -115,6 +115,16 @@ export default class App extends React.Component {
         get_tokens_status(this);
       }, 1000 * 10);
     })
+
+    if (window.ethereum) {
+      window.ethereum.autoRefreshOnNetworkChange = false;
+      window.ethereum.on("chainChanged", (_chainId) => {
+        if (window.sessionStorage.getItem("chainId") !== _chainId) {
+          window.sessionStorage.setItem("chainId", _chainId);
+          window.location.reload();
+        }
+      });
+    }
   }
 
 
