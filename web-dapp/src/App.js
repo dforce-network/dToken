@@ -63,10 +63,10 @@ export default class App extends React.Component {
     super(porps);
 
     this.state = {
-      token_name: ['USDT', 'USDC', 'DAI', 'TUSD'],
-      token_d_name: ['dUSDT', 'dUSDC', 'dDAI', 'dTUSD'],
-      // token_name: ['USDT'],
-      // token_d_name: ['dUSDT'],
+      // token_name: ['USDT', 'USDC', 'DAI', 'TUSD'],
+      // token_d_name: ['dUSDT', 'dUSDC', 'dDAI', 'dTUSD'],
+      token_name: ['USDT'],
+      token_d_name: ['dUSDT'],
       token_logo: [USDT_logo, USDC_logo, DAI_logo, TUSD_logo],
       // token_decimals: [18, 6],
       token_decimals: [],

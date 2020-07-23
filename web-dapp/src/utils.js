@@ -784,6 +784,8 @@ export const get_tokens_status = (that) => {
   if (that.state.net_type && that.state.net_type !== 'main') {
     // console.log('?net=rinkeby');
     url = url + '?net=' + that.state.net_type;
+  } else {
+    url = url + '?net=main';
   }
 
   fetch(url).then(res => res.text()).then((data) => {
