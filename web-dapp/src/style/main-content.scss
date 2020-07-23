@@ -22,18 +22,35 @@ $theme-color: #D4A454;
         transition: 0.3s;
     }
 
-    button:hover {
+    .ant-tabs-tab-btn:hover {
         color: $theme-color !important;
     }
 
     button:nth-child(1) {
         margin-right: 50px !important;
     }
+
+    .ant-tabs-tab {
+        margin-right: 0 !important;
+    }
+
+    .ant-tabs-tab-btn {
+        width: 100%;
+        text-align: center !important;
+    }
+
+    .ant-tabs-tab-active {
+        .ant-tabs-tab-btn {
+            color: $theme-color !important;
+        }
+    }
 }
 
 .ant-tabs-tab.ant-tabs-tab-active {
     color: $theme-color !important;
 }
+
+
 
 .ant-tabs-ink-bar,
 .ant-tabs-ink-bar-animated {
