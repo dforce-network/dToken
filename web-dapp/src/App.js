@@ -65,8 +65,8 @@ export default class App extends React.Component {
     this.state = {
       // token_name: ['USDT', 'USDC', 'DAI', 'TUSD'],
       // token_d_name: ['dUSDT', 'dUSDC', 'dDAI', 'dTUSD'],
-      token_name: ['USDT'],
-      token_d_name: ['dUSDT'],
+      token_name: ['USDT', 'USDC', 'DAI'],
+      token_d_name: ['dUSDT', 'dUSDC', 'dDAI'],
       token_logo: [USDT_logo, USDC_logo, DAI_logo, TUSD_logo],
       // token_decimals: [18, 6],
       token_decimals: [],
@@ -79,6 +79,7 @@ export default class App extends React.Component {
       cur_index_mint: 0,
       cur_index_redeem: 0,
       token_status: [],
+      token_status_apy: [],
       cur_show_data_index: 0,
       options: {},
       token_d_balance__prev: [0, 0],
@@ -110,10 +111,10 @@ export default class App extends React.Component {
     }, () => {
       get_tokens_status(this);
 
-      window.timer_10s = setInterval(() => {
-        // console.log('window.timer_10s......');
-        get_tokens_status(this);
-      }, 1000 * 10);
+      // window.timer_10s = setInterval(() => {
+      //   // console.log('window.timer_10s......');
+      //   get_tokens_status(this);
+      // }, 1000 * 10);
     })
 
     if (window.ethereum) {
@@ -151,7 +152,7 @@ export default class App extends React.Component {
       is_already_set_count: false
     }, () => {
       set_show_data(this);
-      get_tokens_status(this);
+      // get_tokens_status(this);
     })
   }
 
@@ -179,7 +180,7 @@ export default class App extends React.Component {
       is_already_set_count: false
     }, () => {
       set_show_data(this);
-      get_tokens_status(this);
+      // get_tokens_status(this);
     })
   }
 
@@ -770,7 +771,7 @@ export default class App extends React.Component {
 
                 <div className="token-status-body">
                   {
-                    this.state.token_status.length > 0 &&
+                    this.state.token_status_apy.length > 0 &&
                     <div
                       className={"token-status-body-item"}
                     // key={index}
@@ -780,9 +781,10 @@ export default class App extends React.Component {
                         <span className="token-title"><FormattedMessage id='net_value' /></span>
                         <span className="token-balance">
                           <span style={{ fontWeight: 500 }}>
-                            {format_num_to_K(format_bn(this.state.token_status[this.state.cur_index_mint].net_value, 0, 2))}
+                            {format_num_to_K(format_bn(this.state.token_status_apy[this.state.cur_index_mint].net_value, 0, 2))}
                           </span>
-                          {' ' + this.state.token_status[this.state.cur_index_mint].asset}
+                          {/* {' ' + this.state.token_status_apy[this.state.cur_index_mint].asset} */}
+                          {' ' + this.state.token_name[this.state.cur_index_mint]}
                         </span>
                       </div>
                       <div className="pool-wrap">
@@ -791,7 +793,7 @@ export default class App extends React.Component {
                         </span>
                         <span className="token-rate">
                           <span style={{ fontWeight: 500 }}>
-                            {this.state.token_status[this.state.cur_index_mint].apy}
+                            {this.state.token_status_apy[this.state.cur_index_mint].now_apy}
                           </span>
                           {'%'}
                         </span>
