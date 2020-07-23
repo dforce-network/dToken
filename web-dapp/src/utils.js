@@ -781,8 +781,10 @@ export const get_tokens_status = (that) => {
 
   // let url = constance.url;
   let url = constance.url;
+
   if (that.state.net_type && that.state.net_type !== 'main') {
     // console.log('?net=rinkeby');
+    url = constance.url_test;
     url = url + '?net=' + that.state.net_type;
   } else {
     url = url + '?net=main';
