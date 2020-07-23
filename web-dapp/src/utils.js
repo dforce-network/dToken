@@ -430,36 +430,42 @@ export const redeem_click = (that) => {
 
   that.state.token_d_contract[that.state.cur_index_redeem].methods[to_action](
     that.state.my_account, that.state.i_redeem_max ? that.state.token_d_balance_origin[that.state.cur_index_redeem] : that.state.value_redeem_bn
-  ).send(
-    {
-      from: that.state.my_account,
-      gas: constance.gas
-    }, (reject, res_hash) => {
-      if (reject) {
-        that.setState({
-          is_btn_disabled_redeem: false,
-        })
+  ).estimateGas({
+    from: that.state.my_account,
+  }, (err, gasLimit) => {
+    that.state.token_d_contract[that.state.cur_index_redeem].methods[to_action](
+      that.state.my_account, that.state.i_redeem_max ? that.state.token_d_balance_origin[that.state.cur_index_redeem] : that.state.value_redeem_bn
+    ).send(
+      {
+        from: that.state.my_account,
+        gas: Math.floor(gasLimit * 1.2)
+      }, (reject, res_hash) => {
+        if (reject) {
+          that.setState({
+            is_btn_disabled_redeem: false,
+          })
+        }
+        if (res_hash) {
+          console.log(res_hash);
+          i_got_hash(
+            that,
+            'Withdraw',
+            cur_redeem_token,
+            that.state.value_redeem_bn.toLocaleString(),
+            cur_redeem_token.slice(1),
+            that.state.redeem_to_receive_bn.toLocaleString(),
+            res_hash,
+            'pendding'
+          );
+          that.setState({
+            is_btn_disabled_redeem: false,
+            value_redeem: '',
+            redeem_to_receive_bn: ''
+          })
+        }
       }
-      if (res_hash) {
-        console.log(res_hash);
-        i_got_hash(
-          that,
-          'Withdraw',
-          cur_redeem_token,
-          that.state.value_redeem_bn.toLocaleString(),
-          cur_redeem_token.slice(1),
-          that.state.redeem_to_receive_bn.toLocaleString(),
-          res_hash,
-          'pendding'
-        );
-        that.setState({
-          is_btn_disabled_redeem: false,
-          value_redeem: '',
-          redeem_to_receive_bn: ''
-        })
-      }
-    }
-  )
+    )
+  })
 }
 export const approve_click = (that) => {
   let cur_mint_token = that.state.token_name[that.state.cur_index_mint];
