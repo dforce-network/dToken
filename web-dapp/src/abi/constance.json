@@ -1,5 +1,6 @@
 {
 	"gas": 1250000,
 	"url": "https://markets.dforce.network/api/v1/getBanlanceInfo/",
-	"url_test": "https://testapi.dforce.network/api/v1/getBanlanceInfo/"
+	"url_test": "https://testapi.dforce.network/api/v1/getBanlanceInfo/",
+	"url_apy": "https://markets.dforce.network/api/v1/getApy/?net="
 }
