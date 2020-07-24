@@ -1,4 +1,5 @@
 const en_US = {
+    Enabling: 'Enabling…',
     withdraw_balance: 'Available to Withdraw',
     ENABLE: 'ENABLE',
     brewing: ' brewing.',

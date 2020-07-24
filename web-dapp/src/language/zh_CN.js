@@ -1,4 +1,5 @@
 const zh_CN = {
+    Enabling: '授权中…',
     withdraw_balance: '可取数量',
     ENABLE: '授权',
     brewing: ' 正在计息',

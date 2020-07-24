@@ -67,6 +67,7 @@ export default class App extends React.Component {
       // token_d_name: ['dUSDT', 'dUSDC', 'dDAI', 'dTUSD'],
       token_name: ['USDT', 'USDC', 'DAI'],
       token_d_name: ['dUSDT', 'dUSDC', 'dDAI'],
+      token_d_balance__prev: [0, 0, 0],
       token_logo: [USDT_logo, USDC_logo, DAI_logo, TUSD_logo],
       // token_decimals: [18, 6],
       token_decimals: [],
@@ -82,7 +83,6 @@ export default class App extends React.Component {
       token_status_apy: [],
       cur_show_data_index: 0,
       options: {},
-      token_d_balance__prev: [0, 0],
 
       cur_language: navigator.language === 'zh-CN' ? '中文' : 'English',
       showonly: false,
@@ -130,8 +130,8 @@ export default class App extends React.Component {
 
 
   set_mint_token = (index) => {
-    if (!this.state.is_already) {
-      return console.log('no is_already');
+    if (!this.state.is_already && !this.state.token_status_is_ready) {
+      return console.log('not already');
     }
     if (!Web3.givenProvider) {
       return console.log('no web3 provider');
@@ -576,10 +576,9 @@ export default class App extends React.Component {
                           className={this.state.is_btn_disabled_mint ? 'btn_disabled' : ''}
                           onClick={() => { mint_click(this) }}
                         >
-                          <FormattedMessage id='DEPOSIT' />
                           {
-                            !this.state.token_is_approve[this.state.cur_index_mint] &&
-                            <FormattedMessage id='ENABLE' />
+                            this.state.is_approving ?
+                              <FormattedMessage id='Enabling' /> : <FormattedMessage id='DEPOSIT' />
                           }
                         </Button>
                       </div>
@@ -592,7 +591,10 @@ export default class App extends React.Component {
                           className={this.state.is_btn_disabled_mint ? 'btn_disabled' : ''}
                           onClick={() => { approve_click(this) }}
                         >
-                          <FormattedMessage id='ENABLE' />
+                          {
+                            this.state.is_approving ?
+                              <FormattedMessage id='Enabling' /> : <FormattedMessage id='ENABLE' />
+                          }
                         </Button>
                       </div>
                     }
@@ -739,8 +741,12 @@ export default class App extends React.Component {
                       this.state.token_d_balance[this.state.cur_index_redeem] ?
                         <CountUp
                           className="account-balance"
-                          start={Number(format_bn(this.state.token_d_balance__prev[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))}
-                          end={Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))}
+                          start={
+                            Number(format_bn(this.state.token_d_balance__prev[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                          }
+                          end={
+                            Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                          }
                           duration={Number(10)}
                           useGrouping={true}
                           separator=","
@@ -771,7 +777,7 @@ export default class App extends React.Component {
 
                 <div className="token-status-body">
                   {
-                    this.state.token_status_apy.length > 0 &&
+                    // this.state.token_status_apy.length > 0 &&
                     <div
                       className={"token-status-body-item"}
                     // key={index}
@@ -781,7 +787,11 @@ export default class App extends React.Component {
                         <span className="token-title"><FormattedMessage id='net_value' /></span>
                         <span className="token-balance">
                           <span style={{ fontWeight: 500 }}>
-                            {format_num_to_K(format_bn(this.state.token_status_apy[this.state.cur_index_mint].net_value, 0, 2))}
+                            {
+                              this.state.token_status_apy[this.state.cur_index_mint] ?
+                                format_num_to_K(format_bn(this.state.token_status_apy[this.state.cur_index_mint].net_value, 0, 2))
+                                : '...'
+                            }
                           </span>
                           {/* {' ' + this.state.token_status_apy[this.state.cur_index_mint].asset} */}
                           {' ' + this.state.token_name[this.state.cur_index_mint]}
@@ -793,7 +803,11 @@ export default class App extends React.Component {
                         </span>
                         <span className="token-rate">
                           <span style={{ fontWeight: 500 }}>
-                            {this.state.token_status_apy[this.state.cur_index_mint].now_apy}
+                            {
+                              this.state.token_status_apy[this.state.cur_index_mint] ?
+                                this.state.token_status_apy[this.state.cur_index_mint].now_apy
+                                : '...'
+                            }
                           </span>
                           {'%'}
                         </span>
