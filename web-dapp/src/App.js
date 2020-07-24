@@ -756,16 +756,22 @@ export default class App extends React.Component {
                           start={
                             Number(format_bn(this.state.token_d_balance__prev[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
                           }
+                          // start={
+                          //   Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                          // }
                           end={
                             Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
                           }
-                          duration={Number(10)}
+                          duration={Number(2)}
                           useGrouping={true}
                           separator=","
                           decimals={6}
                           decimal="."
-                          update={Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))}
-                        /> : '...'
+                          update={
+                            Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                          }
+                        />
+                        : '...'
                     }
 
                     {
