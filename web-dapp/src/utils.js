@@ -314,7 +314,8 @@ export const mint_click = (that) => {
   let max_num = that.bn(2).pow(that.bn(256)).sub(that.bn(1));
 
   that.setState({
-    is_btn_disabled_mint: true
+    is_btn_disabled_mint: true,
+    is_approving: false
   })
 
   // alert(that.state.value_mint_bn.toLocaleString())
@@ -472,7 +473,8 @@ export const approve_click = (that) => {
   let max_num = that.bn(2).pow(that.bn(256)).sub(that.bn(1));
 
   that.setState({
-    is_btn_disabled_mint: true
+    is_btn_disabled_mint: true,
+    is_approving: true
   })
 
   that.state.token_contract[that.state.cur_index_mint].methods.approve(address_map[that.state.net_type]['d' + cur_mint_token], max_num).estimateGas({
@@ -486,6 +488,46 @@ export const approve_click = (that) => {
       }, (rej, res_hash) => {
         if (res_hash) {
           console.log('approveing...');
+          if (!that.state.value_mint_bn) {
+            let t_token_is_approve = that.state.token_is_approve;
+            t_token_is_approve[that.state.cur_index_mint] = true;
+            that.setState({
+              token_is_approve: t_token_is_approve,
+              is_btn_disabled_mint: false,
+              is_approving: false
+            })
+            return false
+          }
+          setTimeout(() => {
+            let timer_trigger = setInterval(() => {
+              console.log('i am checking approve_click...');
+              that.new_web3.eth.getTransactionReceipt(res_hash, (err, data) => {
+                console.log(data);
+                if (data && data.status === true) {
+                  clearInterval(timer_trigger);
+                  console.log('mint_click...');
+                  that.setState({
+                    is_approving: false
+                  }, () => {
+                    mint_click(that);
+                  })
+                }
+                if (data && data.status === false) {
+                  clearInterval(timer_trigger);
+                  let t_token_is_approve = that.state.token_is_approve;
+                  t_token_is_approve[that.state.cur_index_mint] = false;
+                  that.setState({
+                    token_is_approve: t_token_is_approve,
+                    is_btn_disabled_mint: false,
+                    is_approving: false
+                  })
+                }
+              })
+            }, 2000);
+          }, 1000)
+
+
+          return;
           let t_token_is_approve = that.state.token_is_approve;
           t_token_is_approve[that.state.cur_index_mint] = true;
           that.setState({
@@ -494,7 +536,8 @@ export const approve_click = (that) => {
             setTimeout(() => {
               if (!that.state.value_mint_bn) {
                 that.setState({
-                  is_btn_disabled_mint: false
+                  is_btn_disabled_mint: false,
+                  is_approving: false
                 })
                 return false
               }
@@ -524,7 +567,8 @@ export const approve_click = (that) => {
         }
         if (rej) {
           that.setState({
-            is_btn_disabled_mint: false
+            is_btn_disabled_mint: false,
+            is_approving: false
           })
         }
       })
@@ -814,7 +858,7 @@ export const get_tokens_status_apy = (that) => {
       // Object.keys(JSON.parse(data)).includes(that.state.token_name[i])
       t_data_arr[i] = JSON.parse(data)[that.state.token_name[i]][that.state.token_name[i]]
     }
-    console.log(t_data_arr);
+    // console.log(t_data_arr);
 
     that.setState({
       token_status_apy: t_data_arr,
