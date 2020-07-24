@@ -126,6 +126,8 @@ interface IDToken {
 
     function swapModel() external view returns (address);
 
+    function dfDistributor() external view returns (address);
+
     function balances(address _owner)
         external
         view
@@ -145,6 +147,8 @@ interface IDToken {
     function updateDispatcher(address _newDispatcher) external;
 
     function setSwapModel(address _newSwapModel) external;
+
+    function setDFDistributor(address _newDFDistributor) external;
 
     function setFeeRecipient(address _newFeeRecipient) external;
 

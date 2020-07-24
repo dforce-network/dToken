@@ -6,6 +6,7 @@ import "./library/ERC20SafeTransfer.sol";
 import "./library/SafeMath.sol";
 import "./interface/IDispatcher.sol";
 import "./interface/IHandler.sol";
+import "./interface/IDFDistributor.sol";
 
 contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     using SafeMath for uint256;
@@ -25,6 +26,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
     address public dispatcher;
     address public token;
     address public swapModel;
+    address public dfDistributor;
 
     uint256 constant BASE = 10**18;
 
@@ -83,6 +85,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
 
     event NewDispatcher(address oldDispatcher, address Dispatcher);
     event NewSwapModel(address _oldSwapModel, address _newSwapModel);
+    event NewDFDistributor(
+        address _oldDFDistributor,
+        address _newDFDistributor
+    );
 
     event NewOriginationFee(
         bytes4 sig,
@@ -158,6 +164,21 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
         swapModel = _newSwapModel;
         emit NewSwapModel(_oldSwapModel, _newSwapModel);
+    }
+
+    /**
+     * @dev Authorized function to set a new DF Distributor contract.
+     * @param _newDFDistributor New DF Distributor contract address.
+     */
+    function setDFDistributor(address _newDFDistributor) external auth {
+        address _oldDFDistributor = dfDistributor;
+        require(
+            _newDFDistributor != address(0) &&
+                _newDFDistributor != _oldDFDistributor,
+            "setSwapModel: swap model can be not set to 0 or the current one."
+        );
+        dfDistributor = _newDFDistributor;
+        emit NewDFDistributor(_oldDFDistributor, _newDFDistributor);
     }
 
     /**
@@ -553,6 +574,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         updateInterest(_dst, _mintLocal.exchangeRate);
+        IDFDistributor(dfDistributor).claimDF(address(this), _dst);
 
         Balance storage _balance = balances[_dst];
         _balance.value = _balance.value.add(_mintLocal.wad);
@@ -642,6 +664,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         updateInterest(_src, _redeemLocal.exchangeRate);
+        IDFDistributor(dfDistributor).claimDF(address(this), _src);
 
         // Update the balance and totalSupply
         _balance.value = _balance.value.sub(_wad);
@@ -777,6 +800,7 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         updateInterest(_src, _redeemLocal.exchangeRate);
+        IDFDistributor(dfDistributor).claimDF(address(this), _src);
 
         // Check the balance and allowance
         Balance storage _balance = balances[_src];

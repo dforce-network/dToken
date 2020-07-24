@@ -81,7 +81,7 @@ describe("DF Distributor Contract", function () {
     for (const account of accounts) {
       await USDC.allocateTo(account, 100000e6);
       await COMP.allocateTo(account, expandTo18Decimals(100000));
-      USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
+      await USDC.approve(dUSDC.address, UINT256_MAX, {from: account});
     }
 
     dUSDC = await IDToken.at(dUSDC.address);
@@ -89,7 +89,11 @@ describe("DF Distributor Contract", function () {
 
   async function setupDFDistributor() {
     DF = await TetherToken.new("0", "DF", "DF", 18);
+    console.log("\t DF: ", DF.address);
+
     df_distributor = await DFDistributor.new();
+
+    await DF.allocateTo(df_distributor.address, expandTo18Decimals(1e9));
   }
 
   before(async function () {
@@ -104,7 +108,76 @@ describe("DF Distributor Contract", function () {
     await setupDToken();
   });
 
-  it("Should deploy", async function () {
-    setupDFDistributor();
+  describe("Deployment", function () {
+    it("Should deploy", async function () {
+      await setupDFDistributor();
+    });
+  });
+
+  describe("Add DTokens", function () {
+    it("Should add some dToken into distribution", async function () {
+      await df_distributor.addDTokens([dUSDC.address]);
+
+      let dToken = await df_distributor.dTokens(0);
+      assert.equal(dToken, dUSDC.address);
+    });
+  });
+
+  describe("set DToken DFDistributor", function () {
+    it("Should set DToken DF Distributor", async function () {
+      await dUSDC.setDFDistributor(df_distributor.address);
+
+      let distributor = await dUSDC.dfDistributor();
+      assert.equal(distributor, df_distributor.address);
+    });
+  });
+
+  describe("Set distribution speed", function () {
+    it("Should set global speed", async function () {
+      let speed = expandTo18Decimals(10);
+      await df_distributor.setGlobalSpeed(speed);
+
+      let token_speed = await df_distributor.tokenSpeed(dUSDC.address);
+      assert.equal(speed.toString(), token_speed.toString());
+    });
+  });
+
+  describe("Update DToken Index", function () {
+    it("Should update DToken speed", async function () {
+      let speed = expandTo18Decimals(10);
+      await df_distributor.setGlobalSpeed(speed);
+
+      let token_speed = await df_distributor.tokenSpeed(dUSDC.address);
+      assert.equal(speed.toString(), token_speed.toString());
+    });
+  });
+
+  describe("Claim DF", function () {
+    it("Should claim some DF", async function () {
+      let tx1 = await dUSDC.mint(account1, 10000e6, {from: account1});
+      let tx2 = await dUSDC.mint(account2, 10000e6, {from: account2});
+
+      await df_distributor.claimDF(dUSDC.address, account1);
+      await df_distributor.claimDF(dUSDC.address, account2);
+
+      let tx3 = await df_distributor.claimDF(dUSDC.address, account1);
+      let tx4 = await df_distributor.claimDF(dUSDC.address, account2);
+
+      let df_claimed1 = await DF.balanceOf(account1);
+      let df_claimed2 = await DF.balanceOf(account2);
+
+      console.log(
+        "\tAfter ",
+        tx3.receipt.blockNumber - tx1.receipt.blockNumber,
+        " blocks, claimed ",
+        df_claimed1.div(expandTo18Decimals(1)).toString()
+      );
+      console.log(
+        "\tAfter ",
+        tx4.receipt.blockNumber - tx2.receipt.blockNumber,
+        " blocks, claimed ",
+        df_claimed2.div(expandTo18Decimals(1)).toString()
+      );
+    });
   });
 });

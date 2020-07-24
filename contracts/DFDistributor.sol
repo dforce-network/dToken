@@ -9,6 +9,8 @@ import "./interface/IDToken.sol";
 contract DFDistributor is DSAuth, ERC20SafeTransfer {
     using SafeMath for uint256;
 
+    uint256 constant BASE = 10**18;
+
     address[] public dTokens;
 
     /// @notice The DF distribution speed for each DToken
@@ -22,27 +24,31 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
     }
 
     /// @notice The DF distribution index for each DToken
-    mapping(address => DTokenState) public tokenState;
+    mapping(address => DTokenState) public dTokenState;
 
     /// @notice The DF distribution index for each user of each DToken
     mapping(address => mapping(address => uint256)) public userIndex;
 
     /**
-     * @dev Authorized function to set DTokens
+     * @dev Authorized function to add DTokens
      * @param _dTokens the list of dTokens for DF distribution.
      */
-    function setDTokens(address[] calldata _dTokens) external auth {
-        delete dTokens;
-
+    function addDTokens(address[] calldata _dTokens) external auth {
         for (uint256 i = 0; i < _dTokens.length; i++) {
+            address dToken = _dTokens[i];
+            require(dToken != address(0), "setDTokens: dToken address invalid");
+
+            DTokenState storage state = dTokenState[dToken];
+
             require(
-                _dTokens[i] != address(0),
-                "setDTokens: dToken address invalid"
+                state.index == 0 && state.block == 0,
+                "setDTokens: dToken has already been added to distribution list"
             );
 
-            //TODO: Do not allow to set the same address twice
+            dTokens.push(dToken);
 
-            dTokens.push(_dTokens[i]);
+            // Update the storage
+            dTokenState[dToken] = DTokenState({block: block.number, index: 0});
         }
     }
 
@@ -53,6 +59,7 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
     function setGlobalSpeed(uint256 speed) external auth {
         address[] memory _dTokens = dTokens;
 
+        // TODO: Set speed base on the interest contribution
         // Now just distribute evenly
         uint256 _tokenSpeed = speed.div(dTokens.length);
 
@@ -66,7 +73,7 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
      *      This will overwrite the speed set by `setGlobalSpeed()`
      * @param speeds the list of speeds for each dToken.
      */
-    function updateDTokenSpeeds(uint256[] memory speeds) public auth {
+    function updateDTokenSpeeds(uint256[] calldata speeds) external auth {
         address[] memory _dTokens = dTokens;
 
         require(
@@ -84,18 +91,25 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
      * @param dToken the dToken to be updated.
      */
     function updateDTokenIndex(address dToken) internal {
-        DTokenState storage state = tokenState[dToken];
+        DTokenState storage state = dTokenState[dToken];
         uint256 index;
 
-        if (state.block != 0) {
+        require(
+            state.block > 0,
+            "updateDTokenIndex: dToken is not in distribution list"
+        );
+
+        uint256 totalSupply = IDToken(dToken).totalSupply();
+
+        if (totalSupply > 0) {
             uint256 blockDelta = block.number - state.block;
             uint256 accrued = tokenSpeed[dToken] * blockDelta;
-            index = state.index + accrued.div(IDToken(dToken).totalSupply());
+            index = state.index + rdiv(accrued, totalSupply);
+            state.index = index;
         }
 
         // Update the storage
         state.block = block.number;
-        state.index = index;
     }
 
     /**
@@ -108,8 +122,12 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
         external
         auth
     {
-        DTokenState storage state = tokenState[dToken];
-        state.index = state.index + extra.div(IDToken(dToken).totalSupply());
+        DTokenState storage state = dTokenState[dToken];
+
+        uint256 totalSupply = IDToken(dToken).totalSupply();
+        if (totalSupply > 0) {
+            state.index = state.index + rdiv(extra, totalSupply);
+        }
     }
 
     /**
@@ -123,17 +141,17 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
     {
         updateDTokenIndex(dToken);
 
-        uint256 indexDelta = tokenState[dToken].index -
+        uint256 indexDelta = dTokenState[dToken].index -
             userIndex[dToken][account];
 
-        accrued = IDToken(dToken).balanceOf(account).mul(indexDelta);
+        accrued = rmul(IDToken(dToken).balanceOf(account), indexDelta);
     }
 
     function updateUserIndex(address dToken, address account)
         internal
         returns (uint256)
     {
-        userIndex[dToken][account] = tokenState[dToken].index;
+        userIndex[dToken][account] = dTokenState[dToken].index;
     }
 
     function claimDF(address dToken, address account) external {
@@ -141,7 +159,7 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
         updateUserIndex(dToken, account);
 
         //Transfer accrued DF
-        address DF = 0x4607B8eBBC7953d709238937844327EA107462F9;
+        address DF = 0x6082731fdAba4761277Fb31299ebC782AD3bCf24;
 
         // TODO: Where should we transfer DF from or where should we store the DF
         // Should store the accured DF in case that there is not enough DF to transfer
@@ -149,5 +167,13 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
             doTransferOut(DF, account, accrued),
             "claimDF: transfer to target handler failed"
         );
+    }
+
+    function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x.mul(BASE).div(y);
+    }
+
+    function rmul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        z = x.mul(y) / BASE;
     }
 }
