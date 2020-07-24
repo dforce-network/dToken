@@ -19,11 +19,19 @@ export const get_balance__mint = async (that) => {
 }
 export const get_balance__redeem = async (that) => {
   let pre_arr = JSON.parse(JSON.stringify(that.state.token_d_balance)) || [];
+  // if (pre_arr.length > 0) {
+  //   that.setState({
+  //     has_set_num: true
+  //   })
+  // }
   let temp_balance_d_arr = [];
   let temp_balance_d_arr_origin = [];
   for (let i = 0; i < that.state.token_name.length; i++) {
     temp_balance_d_arr.push(await get_my_balance(that.state.token_d_contract[i], that.state.my_account, that.state.net_type))
   }
+
+  // if (!(pre_arr.length > 0)) { pre_arr = JSON.parse(JSON.stringify(that.state.token_d_balance)) }
+
   temp_balance_d_arr_origin = temp_balance_d_arr.toLocaleString().split(',');
   // console.log(temp_balance_d_arr);
   for (let i = 0; i < that.state.token_d_name.length; i++) {
@@ -776,6 +784,7 @@ export const accounts_changed = async (that) => {
 
 export const set_show_data = (that) => {
   let temp_data = that.state.token_status[that.state.cur_index_mint];
+  // console.log(temp_data);
   if (!temp_data.date) {
     return console.log('not ready...')
   }
@@ -862,10 +871,7 @@ export const get_tokens_status_apy = (that) => {
     // return;
     let t_data_arr = [];
     for (let i = 0; i < that.state.token_name.length; i++) {
-      // console.log(JSON.parse(data)[that.state.token_name[i]][that.state.token_name[i]]);
-      // net_value: "18020.7709",now_apy: "0.0339"
-      // Object.keys(JSON.parse(data)).includes(that.state.token_name[i])
-      t_data_arr[i] = JSON.parse(data)[that.state.token_name[i]][that.state.token_name[i]]
+      t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
     }
     // console.log(t_data_arr);
 
@@ -885,11 +891,12 @@ export const get_tokens_status = (that) => {
 
   if (that.state.net_type && that.state.net_type !== 'main') {
     // console.log('?net=rinkeby');
-    url = constance.url_test;
+    // url = constance.url_apy;
     url = url + '?net=' + that.state.net_type;
   } else {
     url = url + '?net=main';
   }
+  console.log(url);
 
   fetch(url).then(res => res.text()).then((data) => {
     if (!(data && Object.keys(data).length > 0)) {
@@ -898,10 +905,10 @@ export const get_tokens_status = (that) => {
 
     let t_data_arr = [];
     for (let i = 0; i < that.state.token_name.length; i++) {
-      t_data_arr[i] = JSON.parse(data)[that.state.token_name[i]]
+      t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
     }
 
-    // console.log(t_data_arr);
+    console.log(t_data_arr);
     if (!t_data_arr[0]) { return console.log('no. data.') }
 
     // return;
