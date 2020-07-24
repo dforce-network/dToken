@@ -33,6 +33,8 @@
 		"baseData": "0x80df99FAeaD7BDcf54FF18554860b3A24e4D68B5",
 		"Aave_Handler": "0xAfA9171828d3B2345638021647598F15F77c0e3A",
 		"Compound_Handler": "0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1",
-		"Internal_Handler": "0xe5683ccab068627d9EA9a35f988c371Fc1727aF5"
+		"Internal_Handler": "0xe5683ccab068627d9EA9a35f988c371Fc1727aF5",
+
+		"DTokenCommonData":"0xdfad38b0e85712a8dd1928842ef2eec45eddcfe3"
 	}
 }

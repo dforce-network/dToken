@@ -6,9 +6,6 @@ import Web3 from 'web3';
 import {
     get_nettype,
     init_baseData_contract,
-    admin_getBaseData,
-    admin_getCompoundData,
-    admin_getAaveData,
     format_bn,
     format_num_to_K,
     init_contract,
@@ -26,97 +23,50 @@ class Admin extends Component {
         this.state = {
             active_index: 0,
             token_name: ['USDT', 'USDC'],
-            USDT_status: {},
-            USDC_status: {},
-            show_rebalance: false
+            show_rebalance: false,
+            token_status: {}
         }
 
         this.new_web3 = window.new_web3 = new Web3(Web3.givenProvider || null);
         this.bn = this.new_web3.utils.toBN;
     }
 
+
+
     init_status = async () => {
         let nettype = await get_nettype(this.new_web3);
         let baseData_contract = await init_baseData_contract(this.new_web3, nettype);
-
-        let contract_d_USDT = await init_contract(this.new_web3, nettype, 'dUSDT', true);
-        let contract_d_USDC = await init_contract(this.new_web3, nettype, 'dUSDC', true);
-        let contract_USDT = await init_contract(this.new_web3, nettype, 'USDT');
-        let contract_USDC = await init_contract(this.new_web3, nettype, 'USDC');
-
-        let decimals_USDT = await get_decimals(contract_USDT);
-        let decimals_USDC = await get_decimals(contract_USDC);
-
-        // Aave USDT
-        let res_admin_getBaseData = await admin_getBaseData(baseData_contract, nettype, 'USDT');
-        let res_get_AaveData = await admin_getAaveData(baseData_contract, nettype, 'USDT');
-
-        // Compound USDC
-        let res_admin_getBaseData_USDC = await admin_getBaseData(baseData_contract, nettype, 'USDC');
-        let res_get_CompoundData = await admin_getCompoundData(baseData_contract, nettype, 'USDC');
-
-        if (!res_admin_getBaseData || !res_get_AaveData || !res_admin_getBaseData_USDC || !res_get_CompoundData) {
-            return console.log('err to get data');
+        let decimals_arr = [];
+        for (let i = 0; i < this.state.token_name.length; i++) {
+            let t_contract = await init_contract(this.new_web3, nettype, this.state.token_name[i]);
+            decimals_arr.push(await get_decimals(t_contract))
         }
+        console.log(decimals_arr);
+
+
         let my_account = await get_my_account(this.new_web3);
+        console.log(my_account);
 
-        this.setState({
-            my_account: my_account,
-            is_ok: true,
-            net_type: nettype,
-            baseData_contract: baseData_contract,
-            USDT_status: {
-                part_top: res_admin_getBaseData,
-                part_aave: res_get_AaveData
-            },
-            USDC_status: {
-                part_top: res_admin_getBaseData_USDC,
-                part_compound: res_get_CompoundData
-            },
-            contract_d: {
-                dUSDT: contract_d_USDT,
-                dUSDC: contract_d_USDC
-            },
-            decimals: {
-                dUSDT: decimals_USDT,
-                dUSDC: decimals_USDC
-            }
-        }, () => {
-            window.timer = setInterval(() => {
-                console.log('timer...')
-                this.get_USDT_status();
-                this.get_USDC_status();
-            }, 1000 * 5);
+
+
+        baseData_contract.methods.getDTokenData(address_map[nettype]['dUSDT']).call((err, res_tokenData) => {
+            let total = res_tokenData[0];
+            let dtoken_total = res_tokenData[1];
+            let handle_arr = res_tokenData[2];
+
+            let percent_arr = res_tokenData[3];
+            let cash_arr = res_tokenData[4];
+            let supply_arr = res_tokenData[5];
+            let borrow_arr = res_tokenData[6];
+
+            let dUSDT = { total, dtoken_total, handle_arr, percent_arr, cash_arr, supply_arr, borrow_arr }
+
+            this.setState({
+                token_status: { dUSDT }
+            })
         })
     }
 
-
-    get_USDT_status = async () => {
-        if (!this.state.is_ok) {
-            return console.log('not ok...');
-        }
-        let res_admin_getBaseData = await admin_getBaseData(this.state.baseData_contract, this.state.net_type, 'USDT');
-        let res_get_AaveData = await admin_getAaveData(this.state.baseData_contract, this.state.net_type, 'USDT');
-        this.setState({
-            USDT_status: {
-                part_top: res_admin_getBaseData,
-                part_aave: res_get_AaveData
-            }
-        })
-    }
-    get_USDC_status = async () => {
-        if (!this.state.is_ok) {
-            return console.log('not ok...');
-        }
-        let res_admin_getBaseData = await admin_getBaseData(this.state.baseData_contract, this.state.net_type, 'USDC');
-        let res_get_CompoundData = await admin_getCompoundData(this.state.baseData_contract, this.state.net_type, 'USDC');
-        this.setState({
-            USDC_status: {
-                part_top: res_admin_getBaseData,
-                part_compound: res_get_CompoundData
-            }
-        })
-    }
     open_show_rebalance = (token) => {
         this.setState({
             show_rebalance: true,
@@ -295,6 +245,7 @@ class Admin extends Component {
 
 
     render() {
+        return false;
         return (
             <>
                 <Modal
