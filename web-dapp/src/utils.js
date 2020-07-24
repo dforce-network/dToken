@@ -1,7 +1,7 @@
 let address_map = require('./abi/address_map.json');
 let token_abi = require('./abi/tokensABI.json');
 let token_abi_d = require('./abi/tokensABI_d.json');
-let token_basedata_abi = require('./abi/baseData.json');
+let token_basedata_abi = require('./abi/DTokenCommonDataABI.json');
 let constance = require('./abi/constance.json');
 
 
@@ -91,7 +91,7 @@ export const init_contract = (instance_web3, nettype, token, is_dtoken = false) 
 }
 export const init_baseData_contract = (instance_web3, nettype) => {
   return new Promise((resolve, reject) => {
-    let contract = new instance_web3.eth.Contract(token_basedata_abi, address_map[nettype]['baseData']);
+    let contract = new instance_web3.eth.Contract(token_basedata_abi, address_map[nettype]['DTokenCommonData']);
     resolve(contract);
   })
 }
@@ -1011,24 +1011,3 @@ export const format_num_to_K = (str_num) => {
 
 
 // in admin
-export const admin_getBaseData = (admin_contract, nettype, token) => {
-  return new Promise((resolve, reject) => {
-    admin_contract.methods.getBaseData(address_map[nettype][token]).call((err, res_admin_getBaseData) => {
-      resolve(res_admin_getBaseData);
-    })
-  })
-}
-export const admin_getCompoundData = (admin_contract, nettype, token) => {
-  return new Promise((resolve, reject) => {
-    admin_contract.methods.getCompoundData(address_map[nettype][token]).call((err, res_get_CompoundData) => {
-      resolve(res_get_CompoundData);
-    })
-  })
-}
-export const admin_getAaveData = (admin_contract, nettype, token) => {
-  return new Promise((resolve, reject) => {
-    admin_contract.methods.getAaveData(address_map[nettype][token]).call((err, res_get_AaveData) => {
-      resolve(res_get_AaveData);
-    })
-  })
-}
