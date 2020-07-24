@@ -569,6 +569,18 @@ export default class App extends React.Component {
                     </div>
 
                     {
+                      !Web3.givenProvider &&
+                      <div className="btn-wrap">
+                        <Button
+                          disabled={this.state.is_btn_disabled_mint}
+                          className={this.state.is_btn_disabled_mint ? 'btn_disabled' : ''}
+                        >
+                          <FormattedMessage id='ENABLE' />
+                        </Button>
+                      </div>
+                    }
+
+                    {
                       this.state.show_btn && this.state.token_is_approve[this.state.cur_index_mint] &&
                       <div className="btn-wrap">
                         <Button
@@ -808,7 +820,7 @@ export default class App extends React.Component {
                                 : '...'
                             }
                           </span>
-                          {'%'}
+                          {this.state.token_status_apy[this.state.cur_index_mint] && '%'}
                         </span>
                       </div>
                     </div>
