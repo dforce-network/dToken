@@ -800,11 +800,17 @@ export const set_show_data = (that) => {
         data: []
       },
       xAxis: {
+        splitLine: {
+          show: false
+        },
         type: 'category',
         boundaryGap: false,
-        data: temp_data.date,
+        data: temp_data.date
       },
       yAxis: {
+        splitLine: {
+          show: false
+        },
         axisLabel: {
           formatter: '{value} %',
           // padding: [0,0,0,10]
