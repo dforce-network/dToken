@@ -895,7 +895,14 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         // Update the accured interest for both
         uint256 _exchangeRate = getCurrentExchangeRate();
         updateInterest(_src, _exchangeRate);
+        if (dfDistributor != address(0)) {
+            IDFDistributor(dfDistributor).claimDF(address(this), _src);
+        }
+
         updateInterest(_dst, _exchangeRate);
+        if (dfDistributor != address(0)) {
+            IDFDistributor(dfDistributor).claimDF(address(this), _dst);
+        }
 
         // Finally update the balance
         Balance storage _dstBalance = balances[_dst];
