@@ -574,7 +574,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         updateInterest(_dst, _mintLocal.exchangeRate);
-        IDFDistributor(dfDistributor).claimDF(address(this), _dst);
+
+        if (dfDistributor != address(0)) {
+            IDFDistributor(dfDistributor).claimDF(address(this), _dst);
+        }
 
         Balance storage _balance = balances[_dst];
         _balance.value = _balance.value.add(_mintLocal.wad);
@@ -664,7 +667,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         updateInterest(_src, _redeemLocal.exchangeRate);
-        IDFDistributor(dfDistributor).claimDF(address(this), _src);
+
+        if (dfDistributor != address(0)) {
+            IDFDistributor(dfDistributor).claimDF(address(this), _src);
+        }
 
         // Update the balance and totalSupply
         _balance.value = _balance.value.sub(_wad);
@@ -800,7 +806,10 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         );
 
         updateInterest(_src, _redeemLocal.exchangeRate);
-        IDFDistributor(dfDistributor).claimDF(address(this), _src);
+
+        if (dfDistributor != address(0)) {
+            IDFDistributor(dfDistributor).claimDF(address(this), _src);
+        }
 
         // Check the balance and allowance
         Balance storage _balance = balances[_src];
