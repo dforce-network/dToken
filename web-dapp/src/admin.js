@@ -22,7 +22,7 @@ class Admin extends Component {
 
         this.state = {
             active_index: 0,
-            token_name: ['USDT', 'USDC'],
+            token_name: ['USDT', 'USDC', 'DAI'],
             show_rebalance: false,
             token_status: {}
         }
@@ -32,49 +32,69 @@ class Admin extends Component {
     }
 
 
-
     init_status = async () => {
         let nettype = await get_nettype(this.new_web3);
+        for (let i = 0; i < this.state.token_name.length; i++) {
+            // console.log(address_map[nettype][this.state.token_name[i]]);
+            if (!address_map[nettype][this.state.token_name[i]]) {
+                return console.log('no this address');
+            }
+        }
+        if (!address_map[nettype]['DTokenCommonData']) {
+            return console.log('no this address');
+        }
+
         let baseData_contract = await init_baseData_contract(this.new_web3, nettype);
         let decimals_arr = [];
         for (let i = 0; i < this.state.token_name.length; i++) {
             let t_contract = await init_contract(this.new_web3, nettype, this.state.token_name[i]);
             decimals_arr.push(await get_decimals(t_contract))
         }
-        console.log(decimals_arr);
-
-
         let my_account = await get_my_account(this.new_web3);
-        console.log(my_account);
 
-
-
-        baseData_contract.methods.getDTokenData(address_map[nettype]['dUSDT']).call((err, res_tokenData) => {
-            let total = res_tokenData[0];
-            let dtoken_total = res_tokenData[1];
-            let handle_arr = res_tokenData[2];
-
-            let percent_arr = res_tokenData[3];
-            let cash_arr = res_tokenData[4];
-            let supply_arr = res_tokenData[5];
-            let borrow_arr = res_tokenData[6];
-
-            let dUSDT = { total, dtoken_total, handle_arr, percent_arr, cash_arr, supply_arr, borrow_arr }
-
-            this.setState({
-                token_status: { dUSDT }
-            })
-        })
-    }
-
-    open_show_rebalance = (token) => {
         this.setState({
-            show_rebalance: true,
-            cur_contract: this.state.contract_d[token],
-            cur_decimals: this.state.decimals[token],
-            cur_token: token
+            net_type: nettype,
+            baseData_contract: baseData_contract,
+            decimals_arr: decimals_arr,
+            my_account: my_account
+        }, () => {
+            for (let i = 0; i < this.state.token_name.length; i++) {
+                this.get_token_BaseData(this.state.token_name[i], i);
+            }
         })
     }
+    get_token_BaseData = async (token, idx) => {
+        let res_tokenData = await this.state.baseData_contract.methods.getDTokenData(address_map[this.state.net_type]['d' + token]).call();
+        // console.log(res_tokenData);
+        let total = res_tokenData[0];
+        let dtoken_total = res_tokenData[1];
+        let address_arr = res_tokenData[2];
+        let percent_arr = res_tokenData[3];
+        let cash_arr = res_tokenData[4];
+        let supply_arr = res_tokenData[5];
+        let borrow_arr = res_tokenData[6];
+        let token_decimal = this.state.decimals_arr[idx];
+        let t_obj = { total, dtoken_total, address_arr, percent_arr, cash_arr, supply_arr, borrow_arr, token_decimal }
+
+        this.setState({
+            token_status: {
+                ...this.state.token_status,
+                [token]: t_obj
+            }
+        }, () => {
+            // console.log(Object.keys(this.state.token_status).length);
+            if (Object.keys(this.state.token_status).length === this.state.token_name.length) {
+                this.setState({
+                    is_ok: true
+                })
+            }
+        })
+    }
+
+
+
+    open_show_rebalance = () => { }
+
     click_confirm = () => {
         if (!((this.state.passed_part1 && this.state.passed_part2) || (this.state.passed_part3 && this.state.passed_part4))) {
             return console.log('not passed.');
@@ -239,13 +259,30 @@ class Admin extends Component {
             return console.log('no web3 provider');
         }
         this.init_status();
+
+        setInterval(() => {
+            console.log('setInterval');
+            if (!this.state.is_ok) { return console.log('not ok') }
+            for (let i = 0; i < this.state.token_name.length; i++) {
+                this.get_token_BaseData(this.state.token_name[i], i);
+            }
+        }, 1000 * 10);
+
+        if (window.ethereum) {
+            window.ethereum.autoRefreshOnNetworkChange = false;
+            window.ethereum.on("chainChanged", (_chainId) => {
+                if (window.sessionStorage.getItem("chainId") !== _chainId) {
+                    window.sessionStorage.setItem("chainId", _chainId);
+                    window.location.reload();
+                }
+            });
+        }
     }
 
 
 
 
     render() {
-        return false;
         return (
             <>
                 <Modal
@@ -403,31 +440,55 @@ class Admin extends Component {
 
                 <div className='admin'>
                     <div className='admin-left'>
-                        <div className={this.state.active_index === 0 ? 'token-item active' : 'token-item'} onClick={() => { this.setState({ active_index: 0 }) }}>
-                            {this.state.token_name[0]}
-                        </div>
-                        <div className='line'></div>
-
-                        <div className={this.state.active_index === 1 ? 'token-item active' : 'token-item'} onClick={() => { this.setState({ active_index: 1 }) }}>
-                            {this.state.token_name[1]}
-                        </div>
+                        {
+                            this.state.token_name.map((item, idx) => {
+                                return (
+                                    <>
+                                        <div
+                                            key={idx}
+                                            className={this.state.active_index === idx ? 'token-item active' : 'token-item'}
+                                            onClick={() => { this.setState({ active_index: idx }) }}
+                                        >
+                                            {item}
+                                        </div>
+                                        {(idx !== this.state.token_name.length - 1) && <div className='line'></div>}
+                                    </>
+                                )
+                            })
+                        }
                     </div>
 
                     <div className='admin-right'>
                         {
-                            this.state.USDT_status.part_top && this.state.active_index === 0 &&
+                            this.state.token_status[this.state.token_name[this.state.active_index]] &&
                             <>
                                 <div className='top'>
                                     <div className='total'>
                                         <span className='title'>Total: </span>
-                                        <span className='value'> {format_num_to_K(format_bn(this.state.USDT_status.part_top[0], 6, 2))}</span>
+                                        <span className='value'>
+                                            {
+                                                format_num_to_K(format_bn(
+                                                    this.state.token_status[this.state.token_name[this.state.active_index]].total,
+                                                    this.state.token_status[this.state.token_name[this.state.active_index]].token_decimal,
+                                                    2
+                                                ))
+                                            }
+                                        </span>
                                     </div>
                                     <div className='dtoken-total'>
                                         <span className='title'>dToken Total: </span>
-                                        <span className='value'> {format_num_to_K(format_bn(this.state.USDT_status.part_top[1], 6, 2))}</span>
+                                        <span className='value'>
+                                            {
+                                                format_num_to_K(format_bn(
+                                                    this.state.token_status[this.state.token_name[this.state.active_index]].dtoken_total,
+                                                    this.state.token_status[this.state.token_name[this.state.active_index]].token_decimal,
+                                                    2
+                                                ))
+                                            }
+                                        </span>
                                     </div>
                                     <div className='btn-wrap'>
-                                        <Button onClick={() => { this.open_show_rebalance('dUSDT') }}>Rebalance</Button>
+                                        <Button disabled={true} onClick={() => { this.open_show_rebalance() }}>Rebalance</Button>
                                     </div>
                                 </div>
 
@@ -436,94 +497,90 @@ class Admin extends Component {
                                     <div className='pool'>
                                         <div className='pool-item'>
                                             <span className='pool-item-1'>Internal Pool</span>
-                                            <span className='pool-item-2'>{format_num_to_K(format_bn(this.state.USDT_status.part_top[2], 6, 2))}</span>
-                                            <span className='pool-item-3'>{format_num_to_K(Number(format_bn(this.state.USDT_status.part_top[3], 16, 3)).toFixed(2))}%</span>
+                                            <span className='pool-item-2'>
+                                                {
+                                                    format_num_to_K(format_bn(
+                                                        this.state.token_status[this.state.token_name[this.state.active_index]].percent_arr[0],
+                                                        this.state.token_status[this.state.token_name[this.state.active_index]].token_decimal,
+                                                        2
+                                                    ))
+                                                }
+                                            </span>
+                                            <span className='pool-item-3'>
+                                                {
+                                                    Number(
+                                                        this.state.token_status[this.state.token_name[this.state.active_index]].percent_arr[0] /
+                                                        this.state.token_status[this.state.token_name[this.state.active_index]].total *
+                                                        100
+                                                    ).toFixed(2)
+                                                }%
+                                            </span>
                                         </div>
                                     </div>
 
                                     <div className='card'>
+                                        {
+                                            this.state.token_status[this.state.token_name[this.state.active_index]].address_arr.map((item, idx) => {
+                                                if (idx === 0) { return false }
+                                                return (
+                                                    <div className='card-item' key={idx}>
+                                                        <div className='card-item-top'>
+                                                            {/* <span className='card-item-1'>{item}</span> */}
+                                                            <AddressToTokenName address={item} net={this.state.net_type} />
+                                                            <span className='card-item-2'>
+                                                                {format_num_to_K(format_bn(
+                                                                    this.state.token_status[this.state.token_name[this.state.active_index]].percent_arr[idx],
+                                                                    this.state.token_status[this.state.token_name[this.state.active_index]].token_decimal,
+                                                                    2
+                                                                ))}
+                                                            </span>
+                                                            <span className='card-item-3'>
+                                                                {
+                                                                    Number(
+                                                                        this.state.token_status[this.state.token_name[this.state.active_index]].percent_arr[idx] /
+                                                                        this.state.token_status[this.state.token_name[this.state.active_index]].total *
+                                                                        100
+                                                                    ).toFixed(2)
+                                                                }%
+                                                            </span>
+                                                        </div>
+                                                        <div className='card-item-bottom'>
+                                                            <span className='card-item-1'>
+                                                                <span className='title'>Cash</span>
+                                                                <span className='value'>
+                                                                    {format_num_to_K(format_bn(
+                                                                        this.state.token_status[this.state.token_name[this.state.active_index]].cash_arr[idx],
+                                                                        this.state.token_status[this.state.token_name[this.state.active_index]].token_decimal,
+                                                                        2
+                                                                    ))}
+                                                                </span>
+                                                            </span>
+                                                            <span className='card-item-2'>
+                                                                <span className='title'>Supply APR</span>
+                                                                <span className='value'>
+                                                                    {format_num_to_K(format_bn(
+                                                                        this.state.token_status[this.state.token_name[this.state.active_index]].supply_arr[idx],
+                                                                        16,
+                                                                        2
+                                                                    ))}%
+                                                                </span>
+                                                            </span>
+                                                            <span className='card-item-3'>
+                                                                <span className='title'>Borrow APR</span>
+                                                                <span className='value'>
+                                                                    {format_num_to_K(format_bn(
+                                                                        this.state.token_status[this.state.token_name[this.state.active_index]].borrow_arr[idx],
+                                                                        16,
+                                                                        2
+                                                                    ))}%
+                                                                </span>
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            })
+                                        }
 
-                                        <div className='card-item'>
-                                            <div className='card-item-top'>
-                                                <span className='card-item-1'>Aave</span>
-                                                <span className='card-item-2'>{format_num_to_K(format_bn(this.state.USDT_status.part_aave[0], 6, 2))}</span>
-                                                <span className='card-item-3'>{format_num_to_K(format_bn(this.state.USDT_status.part_aave[2], 16, 2))}%</span>
-                                            </div>
-                                            <div className='card-item-bottom'>
-                                                <span className='card-item-1'>
-                                                    <span className='title'>Cash</span>
-                                                    <span className='value'>{format_num_to_K(format_bn(this.state.USDT_status.part_aave[1], 6, 2))}</span>
-                                                </span>
-                                                <span className='card-item-2'>
-                                                    <span className='title'>Supply APR</span>
-                                                    <span className='value'>{format_num_to_K(format_bn(this.state.USDT_status.part_aave[3], 25, 2))}%</span>
-                                                </span>
-                                                <span className='card-item-3'>
-                                                    <span className='title'>Borrow APR</span>
-                                                    <span className='value'>{format_num_to_K(format_bn(this.state.USDT_status.part_aave[4], 25, 2))}%</span>
-                                                </span>
-                                            </div>
-                                        </div>
-                                        <div className='clear'></div>
-
-                                    </div>
-                                </div>
-                            </>
-                        }
-
-
-
-
-                        {
-                            this.state.USDC_status.part_top && this.state.active_index === 1 &&
-                            <>
-                                <div className='top'>
-                                    <div className='total'>
-                                        <span className='title'>Total: </span>
-                                        <span className='value'> {format_num_to_K(format_bn(this.state.USDC_status.part_top[0], 6, 2))}</span>
-                                    </div>
-                                    <div className='dtoken-total'>
-                                        <span className='title'>dToken Total: </span>
-                                        <span className='value'> {format_num_to_K(format_bn(this.state.USDC_status.part_top[1], 6, 2))}</span>
-                                    </div>
-                                    <div className='btn-wrap'>
-                                        <Button onClick={() => { this.open_show_rebalance('dUSDC') }}>Rebalance</Button>
-                                    </div>
-                                </div>
-
-
-                                <div className='bottom'>
-                                    <div className='pool'>
-                                        <div className='pool-item'>
-                                            <span className='pool-item-1'>Internal Pool</span>
-                                            <span className='pool-item-2'>{format_num_to_K(format_bn(this.state.USDC_status.part_top[2], 6, 2))}</span>
-                                            <span className='pool-item-3'>{format_num_to_K(Number(format_bn(this.state.USDC_status.part_top[3], 16, 3)).toFixed(2))}%</span>
-                                        </div>
-                                    </div>
-
-                                    <div className='card'>
-
-                                        <div className='card-item'>
-                                            <div className='card-item-top'>
-                                                <span className='card-item-1'>Compound</span>
-                                                <span className='card-item-2'>{format_num_to_K(format_bn(this.state.USDC_status.part_compound[0], 6, 2))}</span>
-                                                <span className='card-item-3'>{format_num_to_K(format_bn(this.state.USDC_status.part_compound[2], 16, 2))}%</span>
-                                            </div>
-                                            <div className='card-item-bottom'>
-                                                <span className='card-item-1'>
-                                                    <span className='title'>Cash</span>
-                                                    <span className='value'>{format_num_to_K(format_bn(this.state.USDC_status.part_compound[1], 6, 2))}</span>
-                                                </span>
-                                                <span className='card-item-2'>
-                                                    <span className='title'>Supply APR</span>
-                                                    <span className='value'>{format_num_to_K(format_bn(this.state.USDC_status.part_compound[3], 16, 2))}%</span>
-                                                </span>
-                                                <span className='card-item-3'>
-                                                    <span className='title'>Borrow APR</span>
-                                                    <span className='value'>{format_num_to_K(format_bn(this.state.USDC_status.part_compound[4], 16, 2))}%</span>
-                                                </span>
-                                            </div>
-                                        </div>
                                         <div className='clear'></div>
 
                                     </div>
@@ -598,3 +655,11 @@ class Admin extends Component {
     }
 }
 export default Admin;
+
+function AddressToTokenName(props) {
+    return (
+        <span className='card-item-1'>
+            {address_map[props.net]['Handler'][props.address]}
+        </span>
+    )
+}
