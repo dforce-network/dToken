@@ -783,7 +783,7 @@ export default class App extends React.Component {
                     // key={index}
                     // onClick={() => { this.set_show_index(index) }}
                     >
-                      <div className="pool-wrap">
+                      {/* <div className="pool-wrap">
                         <span className="token-title"><FormattedMessage id='net_value' /></span>
                         <span className="token-balance">
                           <span style={{ fontWeight: 500 }}>
@@ -793,10 +793,9 @@ export default class App extends React.Component {
                                 : '...'
                             }
                           </span>
-                          {/* {' ' + this.state.token_status_apy[this.state.cur_index_mint].asset} */}
                           {' ' + this.state.token_name[this.state.cur_index_mint]}
                         </span>
-                      </div>
+                      </div> */}
                       <div className="pool-wrap">
                         <span className="token-title">
                           <FormattedMessage id='APY' />

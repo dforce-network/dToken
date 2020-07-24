@@ -506,7 +506,10 @@ export const approve_click = (that) => {
                 if (data && data.status === true) {
                   clearInterval(timer_trigger);
                   console.log('mint_click...');
+                  let t_token_is_approve = that.state.token_is_approve;
+                  t_token_is_approve[that.state.cur_index_mint] = true;
                   that.setState({
+                    token_is_approve: t_token_is_approve,
                     is_approving: false
                   }, () => {
                     mint_click(that);
