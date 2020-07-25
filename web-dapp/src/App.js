@@ -70,7 +70,6 @@ export default class App extends React.Component {
       token_d_name: ['dUSDT', 'dUSDC', 'dDAI'],
       token_d_balance__prev: [0, 0, 0],
       token_logo: [USDT_logo, USDC_logo, DAI_logo, TUSD_logo],
-      // token_decimals: [18, 6],
       token_decimals: [],
       token_contract: [],
       token_d_contract: [],
@@ -113,10 +112,30 @@ export default class App extends React.Component {
       get_tokens_status(this);
       get_tokens_status_apy(this);
 
-      // window.timer_10s = setInterval(() => {
-      //   // console.log('window.timer_10s......');
-      //   get_tokens_status(this);
-      // }, 1000 * 10);
+      window.timer_10s = setInterval(() => {
+        return console.log('window.timer_5s......');
+        if (
+          (
+            this.state.start_arr.length !== this.state.token_name.length ||
+            this.state.end_arr.length !== this.state.token_name.length ||
+            this.state.token_d_balance.length !== this.state.token_name.length
+          )
+        ) { return console.log('not ready'); }
+        let need_update = false;
+        for (let i = 0; i < this.state.start_arr.length; i++) {
+          if (this.bn(this.state.token_d_balance[i]).gt(this.bn(this.state.end_arr[i]))) {
+            need_update = true;
+          }
+        }
+        if (need_update) {
+          console.log('need_update******...');
+          this.setState({
+            is_already_set_count: false
+          }, () => {
+            get_tokens_status_apy(this);
+          })
+        }
+      }, 1000 * 5);
     })
 
     if (window.ethereum) {
@@ -154,7 +173,8 @@ export default class App extends React.Component {
       is_already_set_count: false
     }, () => {
       set_show_data(this);
-      // get_tokens_status(this);
+      get_tokens_status_apy(this);
+      console.log(this.state.start_arr, this.state.end_arr)
     })
   }
 
@@ -182,7 +202,7 @@ export default class App extends React.Component {
       is_already_set_count: false
     }, () => {
       set_show_data(this);
-      // get_tokens_status(this);
+      get_tokens_status_apy(this);
     })
   }
 
@@ -752,32 +772,33 @@ export default class App extends React.Component {
                   <div className="token-status-header-child">
                     <FormattedMessage id='You_have' />
                     {
-                      this.state.token_d_balance[this.state.cur_index_redeem] ?
-                        <CountUp
-                          className="account-balance"
-                          start={
-                            Number(format_bn(this.state.token_d_balance__prev[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
-                          }
-                          // start={
-                          //   Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
-                          // }
-                          end={
-                            Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
-                          }
-                          duration={Number(2)}
-                          useGrouping={true}
-                          separator=","
-                          decimals={6}
-                          decimal="."
-                          update={
-                            Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
-                          }
-                        />
-                        : '...'
+                      // this.state.token_d_balance[this.state.cur_index_redeem] ?
+                      //   <CountUp
+                      //     className="account-balance"
+                      //     start={
+                      //       Number(format_bn(this.state.token_d_balance__prev[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                      //     }
+                      //     // start={
+                      //     //   Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                      //     // }
+                      //     end={
+                      //       Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                      //     }
+                      //     duration={Number(2)}
+                      //     useGrouping={true}
+                      //     separator=","
+                      //     decimals={6}
+                      //     decimal="."
+                      //     update={
+                      //       Number(format_bn(this.state.token_d_balance[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))
+                      //     }
+                      //   />
+                      //   : '...'
                     }
 
                     {
                       // this.state.token_d_balance[this.state.cur_index_redeem] && this.state.is_already_set_count ?
+                      // this.state.is_already_set_count ?
                       //   <CountUp
                       //     className="account-balance"
                       //     start={Number(format_bn(this.state.start_arr[this.state.cur_index_mint], this.state.token_decimals[this.state.cur_index_mint], 6))}
@@ -788,6 +809,19 @@ export default class App extends React.Component {
                       //     decimals={6}
                       //     decimal="."
                       //   /> : '...'
+                    }
+
+                    {
+                      this.state.token_d_balance[this.state.cur_index_redeem] ?
+                        <span className="account-balance">
+                          {
+                            format_num_to_K(format_bn(
+                              this.state.token_d_balance[this.state.cur_index_mint],
+                              this.state.token_decimals[this.state.cur_index_mint],
+                              6
+                            ))
+                          }
+                        </span> : '...'
                     }
                   &nbsp;
                   {this.state.token_name[this.state.cur_index_redeem]}

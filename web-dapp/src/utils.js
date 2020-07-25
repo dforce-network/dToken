@@ -1,4 +1,6 @@
-let address_map = require('./abi/address_map.json');
+import env from './abi/env';
+
+let address_map = env.ADDRESS;
 let token_abi = require('./abi/tokensABI.json');
 let token_abi_d = require('./abi/tokensABI_d.json');
 let token_basedata_abi = require('./abi/DTokenCommonDataABI.json');
@@ -18,7 +20,7 @@ export const get_balance__mint = async (that) => {
   })
 }
 export const get_balance__redeem = async (that) => {
-  let pre_arr = JSON.parse(JSON.stringify(that.state.token_d_balance)) || [];
+  // let pre_arr = JSON.parse(JSON.stringify(that.state.token_d_balance)) || [];
   // if (pre_arr.length > 0) {
   //   that.setState({
   //     has_set_num: true
@@ -48,7 +50,7 @@ export const get_balance__redeem = async (that) => {
   }
 
   that.setState({
-    token_d_balance__prev: pre_arr,
+    // token_d_balance__prev: pre_arr,
     token_d_balance: temp_balance_d_arr,
     token_d_balance_origin: temp_balance_d_arr_origin,
   })
@@ -590,49 +592,38 @@ export const approve_click = (that) => {
 
 // init metamask wallet
 export const init_metamask_wallet = async (that) => {
-  that.setState({
-    show_wallets: false
-  })
-
   let nettype = await get_nettype(that.new_web3);
   if (!(nettype === 'main' || nettype === 'kovan')) {
     return console.log('wrong net work');
   }
-  // get account
   let my_account = await get_my_account(that.new_web3);
 
-  // init contract
   let temp_contract_arr = [];
   for (let i = 0; i < that.state.token_name.length; i++) {
     temp_contract_arr.push(await init_contract(that.new_web3, nettype, that.state.token_name[i]))
   }
 
-  // debugger;
-  // console.log(temp_contract_arr);
   let temp_decimals_arr = [];
   for (let i = 0; i < that.state.token_name.length; i++) {
-    temp_decimals_arr.push(await get_decimals(temp_contract_arr[i]))
+    temp_decimals_arr.push(env['DECIMALS'][nettype][that.state.token_name[i]])
   }
-  // console.log(temp_decimals_arr);
 
   // init contract_d
   let temp_contract_d_arr = [];
   for (let i = 0; i < that.state.token_d_name.length; i++) {
     temp_contract_d_arr.push(await init_contract(that.new_web3, nettype, that.state.token_d_name[i], true))
   }
-  // console.log(temp_contract_d_arr);
-  // get approve
+
   let temp_approve_arr = [];
   for (let i = 0; i < that.state.token_d_name.length; i++) {
     temp_approve_arr.push(await check_approve(temp_contract_arr[i], that.state.token_d_name[i], my_account, nettype, that.bn))
   }
-  // console.log(temp_approve_arr);
+
   // get balance
   let temp_balance_arr = [];
   for (let i = 0; i < that.state.token_name.length; i++) {
     temp_balance_arr.push(await get_my_balance(temp_contract_arr[i], my_account, nettype))
   }
-  // console.log(temp_balance_arr);
   that.setState({
     my_account: my_account,
     token_decimals: temp_decimals_arr,
@@ -694,6 +685,8 @@ export const init_metamask_wallet = async (that) => {
       console.log('accounts changed');
       accounts_changed(that);
     }
+
+    get_tokens_status_apy(that);
 
     window.timer_5s = setInterval(() => {
       // console.log('window.timer_5s......');
@@ -849,38 +842,53 @@ export const get_tokens_status_apy = (that) => {
   if (!(that.state.net_type === 'main' || that.state.net_type === 'kovan')) {
     return console.log('wrong net work');
   }
-
-  // console.log(address_map[that.state.net_type][that.state.token_name[that.state.cur_mint_index]]);
-  // console.log(address_map[that.state.net_type][that.state.token_name[that.state.cur_index_mint]]);
-
-  // that.state.token_name[that.state.cur_mint_index]
   let url_apy = constance.url_apy;
   if (that.state.net_type && that.state.net_type !== 'main') {
     url_apy = url_apy + that.state.net_type;
   } else {
-    // url_apy = url_apy + '?net=main';
     url_apy = url_apy + that.state.net_type;
   }
-  // console.log(url_apy);
 
   fetch(url_apy).then(res => res.text()).then((data) => {
     if (!(data && Object.keys(data).length > 0)) {
       return console.log('no data return...');
     }
 
-    // console.log(JSON.parse(data));
-    // console.log(Object.keys(JSON.parse(data)).includes(that.state.token_name[i]));
-    // return;
     let t_data_arr = [];
     for (let i = 0; i < that.state.token_name.length; i++) {
       t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
     }
-    // console.log(t_data_arr);
-
     that.setState({
       token_status_apy: t_data_arr,
     })
 
+    // check if set count
+    return false;
+    if (that.state.token_d_balance.length === 0) {
+      return console.log('token_d_balance.length===0')
+    }
+    if (that.state.is_already_set_count) {
+      return console.log('is_already_set_count')
+    }
+    let apy_arr = [];
+    for (let i = 0; i < t_data_arr.length; i++) {
+      apy_arr[i] = t_data_arr[i].now_apy || 0;
+    }
+
+    // console.log(apy_arr)
+    // console.log(that.state.token_d_balance)
+    let start_arr = JSON.parse(JSON.stringify(that.state.token_d_balance));
+    let end_arr = [];
+    for (let i = 0; i < start_arr.length; i++) {
+      end_arr[i] = that.bn(start_arr[i]).mul(that.bn(Number(apy_arr[i] * 10000).toFixed())).div(that.bn(360)).div(that.bn(1000000)).add(that.bn(start_arr[i])).toLocaleString();
+    }
+
+    console.log(start_arr, end_arr)
+    that.setState({
+      start_arr: start_arr,
+      end_arr: end_arr,
+      is_already_set_count: true
+    })
   })
 }
 
@@ -922,33 +930,6 @@ export const get_tokens_status = (that) => {
       token_status_is_ready: true
     }, () => {
       set_show_data(that);
-    })
-
-
-    // check if set count
-    return false;
-    if (that.state.token_d_balance.length === 0) {
-      return console.log('token_d_balance.length===0')
-    }
-    if (that.state.is_already_set_count) {
-      return console.log('is_already_set_count')
-    }
-    let apy_arr = [];
-    for (let i = 0; i < data.length; i++) {
-      apy_arr[i] = data[i].apy || 0;
-    }
-
-    console.log(that.state.token_d_balance)
-    let start_arr = JSON.parse(JSON.stringify(that.state.token_d_balance));
-    let end_arr = [];
-    for (let i = 0; i < start_arr.length; i++) {
-      end_arr[i] = that.bn(start_arr[i]).mul(that.bn(apy_arr[i] * 100)).div(that.bn(360)).div(that.bn(10000)).add(that.bn(start_arr[i])).toLocaleString();
-    }
-
-    that.setState({
-      start_arr: start_arr,
-      end_arr: end_arr,
-      is_already_set_count: true
     })
   })
 }
