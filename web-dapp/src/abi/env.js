@@ -12,7 +12,12 @@ function env() {
           dUSDC: "0x16c9cF62d8daC4a38FB50Ae5fa5d51E9170F3179",
           DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
           dDAI: "0x02285AcaafEB533e03A7306C55EC031297df9224",
-          DTokenCommonData: "0xd407884f6d74eb1b62680901e2ec6d14009b270e",
+          DTokenCommonData: "0xbD27cE697a32476098b788b239e57AacC6dFCF72",
+          Handler: {
+            '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "InternalHandler",
+            '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "CompoundHandler",
+            '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "AaveHandler",
+          }
         },
         kovan: {
           USDT: "0x07de306FF27a2B630B1141956844eB1552B956B5",
@@ -60,7 +65,12 @@ function env() {
           dUSDC: "0x16c9cF62d8daC4a38FB50Ae5fa5d51E9170F3179",
           DAI: "0x6B175474E89094C44Da98b954EedeAC495271d0F",
           dDAI: "0x02285AcaafEB533e03A7306C55EC031297df9224",
-          DTokenCommonData: "0xd407884f6d74eb1b62680901e2ec6d14009b270e",
+          DTokenCommonData: "0xbD27cE697a32476098b788b239e57AacC6dFCF72",
+          Handler: {
+            '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "InternalHandler",
+            '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "CompoundHandler",
+            '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "AaveHandler",
+          }
         },
         kovan: {
           USDT: "0x07de306FF27a2B630B1141956844eB1552B956B5",
@@ -77,10 +87,10 @@ function env() {
           Internal_Handler: "0xe5683ccab068627d9EA9a35f988c371Fc1727aF5",
           DTokenCommonData: "0xdfad38b0e85712a8dd1928842ef2eec45eddcfe3",
           Handler: {
-            0xe5683ccab068627d9EA9a35f988c371Fc1727aF5: "Internal",
-            0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1: "Compound",
-            0x0d4c0A915c933FA197B965C294c933514CCCf4B1: "Compound1",
-            0xAfA9171828d3B2345638021647598F15F77c0e3A: "Aave"
+            '0xe5683ccab068627d9EA9a35f988c371Fc1727aF5': "Internal",
+            '0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1': "Compound",
+            '0x0d4c0A915c933FA197B965C294c933514CCCf4B1': "Compound1",
+            '0xAfA9171828d3B2345638021647598F15F77c0e3A': "Aave"
           }
         },
       },
