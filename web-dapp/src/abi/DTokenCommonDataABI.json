@@ -206,9 +206,9 @@
 		"name": "handlers",
 		"outputs": [
 			{
-				"internalType": "string",
+				"internalType": "bytes4",
 				"name": "",
-				"type": "string"
+				"type": "bytes4"
 			}
 		],
 		"payable": false,
@@ -279,12 +279,32 @@
 				"type": "address"
 			},
 			{
-				"internalType": "string",
-				"name": "_funName",
-				"type": "string"
+				"internalType": "bytes4",
+				"name": "_sig",
+				"type": "bytes4"
 			}
 		],
 		"name": "setHandler",
+		"outputs": [],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "_handlers",
+				"type": "address[]"
+			},
+			{
+				"internalType": "bytes4[]",
+				"name": "_sigs",
+				"type": "bytes4[]"
+			}
+		],
+		"name": "setHandlers",
 		"outputs": [],
 		"payable": false,
 		"stateMutability": "nonpayable",
