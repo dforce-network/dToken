@@ -598,6 +598,8 @@ export const init_metamask_wallet = async (that) => {
   if (!(nettype === 'main' || nettype === 'kovan')) {
     return console.log('wrong net work');
   }
+  // get account
+  let my_account = await get_my_account(that.new_web3);
 
   // init contract
   let temp_contract_arr = [];
@@ -619,8 +621,6 @@ export const init_metamask_wallet = async (that) => {
     temp_contract_d_arr.push(await init_contract(that.new_web3, nettype, that.state.token_d_name[i], true))
   }
   // console.log(temp_contract_d_arr);
-  // get account
-  let my_account = await get_my_account(that.new_web3);
   // get approve
   let temp_approve_arr = [];
   for (let i = 0; i < that.state.token_d_name.length; i++) {
@@ -632,6 +632,12 @@ export const init_metamask_wallet = async (that) => {
   for (let i = 0; i < that.state.token_name.length; i++) {
     temp_balance_arr.push(await get_my_balance(temp_contract_arr[i], my_account, nettype))
   }
+  // console.log(temp_balance_arr);
+  that.setState({
+    my_account: my_account,
+    token_decimals: temp_decimals_arr,
+    token_balance: temp_balance_arr,
+  })
 
   let temp_balance_d_arr = [];
   let temp_balance_d_arr_origin = [];
@@ -644,13 +650,11 @@ export const init_metamask_wallet = async (that) => {
   for (let i = 0; i < that.state.token_d_name.length; i++) {
     temp_basedata_arr.push(await getBaseData(temp_contract_d_arr[i]))
   }
+  // console.log(temp_basedata_arr);
 
   if (!temp_contract_arr
-    || !temp_decimals_arr
     || !temp_contract_d_arr
-    || !my_account
     || !temp_approve_arr
-    || !temp_balance_arr
     || !temp_balance_d_arr
     || !temp_balance_d_arr_origin
     || !temp_basedata_arr) {
@@ -675,13 +679,10 @@ export const init_metamask_wallet = async (that) => {
 
   that.setState({
     show_btn: true,
-    my_account: my_account,
     net_type: nettype,
     token_contract: temp_contract_arr,
-    token_decimals: temp_decimals_arr,
     token_d_contract: temp_contract_d_arr,
     token_is_approve: temp_approve_arr,
-    token_balance: temp_balance_arr,
     token_d_balance: temp_balance_d_arr,
     token_d_balance_origin: temp_balance_d_arr_origin,
     token_BaseData: temp_basedata_arr,
@@ -764,6 +765,7 @@ export const accounts_changed = async (that) => {
       is_already_set_count: false
     }, () => {
       get_tokens_status(that);
+      get_tokens_status_apy(that);
     })
 
     if (window.timer_5s) {
@@ -854,10 +856,10 @@ export const get_tokens_status_apy = (that) => {
   // that.state.token_name[that.state.cur_mint_index]
   let url_apy = constance.url_apy;
   if (that.state.net_type && that.state.net_type !== 'main') {
-    url_apy = url_apy + that.state.net_type + '&token=' + address_map[that.state.net_type][that.state.token_name[that.state.cur_index_mint]];
+    url_apy = url_apy + that.state.net_type;
   } else {
     // url_apy = url_apy + '?net=main';
-    url_apy = url_apy + that.state.net_type + '&token=' + address_map[that.state.net_type][that.state.token_name[that.state.cur_index_mint]];
+    url_apy = url_apy + that.state.net_type;
   }
   // console.log(url_apy);
 
@@ -908,7 +910,7 @@ export const get_tokens_status = (that) => {
       t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
     }
 
-    console.log(t_data_arr);
+    // console.log(t_data_arr);
     if (!t_data_arr[0]) { return console.log('no. data.') }
 
     // return;

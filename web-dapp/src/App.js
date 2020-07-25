@@ -43,6 +43,7 @@ import {
   mint_change,
   mint_click,
   get_tokens_status,
+  get_tokens_status_apy,
   format_bn,
   format_num_to_K,
   redeem_change,
@@ -110,6 +111,7 @@ export default class App extends React.Component {
       net_type: nettype,
     }, () => {
       get_tokens_status(this);
+      get_tokens_status_apy(this);
 
       // window.timer_10s = setInterval(() => {
       //   // console.log('window.timer_10s......');
