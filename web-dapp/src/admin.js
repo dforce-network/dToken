@@ -12,8 +12,10 @@ import {
     get_decimals,
     get_my_account,
 } from './utils.js';
+import env from './abi/env';
 
-let address_map = require('./abi/address_map.json');
+let address_map = env.ADDRESS;
+// let address_map = require('./abi/address_map.json');
 
 
 class Admin extends Component {
@@ -443,16 +445,15 @@ class Admin extends Component {
                         {
                             this.state.token_name.map((item, idx) => {
                                 return (
-                                    <>
+                                    <React.Fragment key={idx}>
                                         <div
-                                            key={idx}
                                             className={this.state.active_index === idx ? 'token-item active' : 'token-item'}
                                             onClick={() => { this.setState({ active_index: idx }) }}
                                         >
                                             {item}
                                         </div>
                                         {(idx !== this.state.token_name.length - 1) && <div className='line'></div>}
-                                    </>
+                                    </React.Fragment>
                                 )
                             })
                         }
