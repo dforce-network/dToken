@@ -14,9 +14,9 @@ function env() {
           dDAI: "0x02285AcaafEB533e03A7306C55EC031297df9224",
           DTokenCommonData: "0xbD27cE697a32476098b788b239e57AacC6dFCF72",
           Handler: {
-            '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "InternalHandler",
-            '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "CompoundHandler",
-            '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "AaveHandler",
+            '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "Internal",
+            '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "Compound",
+            '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "Aave",
           }
         },
         kovan: {
@@ -67,9 +67,9 @@ function env() {
           dDAI: "0x02285AcaafEB533e03A7306C55EC031297df9224",
           DTokenCommonData: "0xbD27cE697a32476098b788b239e57AacC6dFCF72",
           Handler: {
-            '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "InternalHandler",
-            '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "CompoundHandler",
-            '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "AaveHandler",
+            '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "Internal",
+            '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "Compound",
+            '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "Aave",
           }
         },
         kovan: {
