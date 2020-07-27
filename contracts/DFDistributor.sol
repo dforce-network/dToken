@@ -13,6 +13,9 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
 
     address[] public dTokens;
 
+    /// @notice The DF distribution speed for all DTokens in total
+    uint256 public totalSpeed;
+
     /// @notice The DF distribution speed for each DToken
     mapping(address => uint256) public tokenSpeed;
 
@@ -28,6 +31,8 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
 
     /// @notice The DF distribution index for each user of each DToken
     mapping(address => mapping(address => uint256)) public userIndex;
+
+    mapping(address => uint256) public userAccrued;
 
     /**
      * @dev Authorized function to add DTokens
@@ -50,18 +55,32 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
             // Update the storage
             dTokenState[dToken] = DTokenState({block: block.number, index: 0});
         }
+
+        updateDTokenSpeedByInterestContribution();
     }
 
     /**
      * @dev Authorized function to set how much DF will be distributed to all DTokens
      * @param speed the speed of DF distribution.
      */
-    function setGlobalSpeed(uint256 speed) external auth {
+    function setTotalSpeed(uint256 speed) external auth {
+        uint256 oldSpeed = totalSpeed;
+        totalSpeed = speed;
+
+        updateDTokenSpeedByInterestContribution();
+    }
+
+    function updateDTokenSpeedByInterestContribution() internal {
         address[] memory _dTokens = dTokens;
+
+        // Update all indexes, new speed will be used to calculate new indexes
+        for (uint256 i = 0; i < _dTokens.length; i++) {
+            updateDTokenIndex(_dTokens[i]);
+        }
 
         // TODO: Set speed base on the interest contribution
         // Now just distribute evenly
-        uint256 _tokenSpeed = speed.div(dTokens.length);
+        uint256 _tokenSpeed = totalSpeed.div(dTokens.length);
 
         for (uint256 i = 0; i < dTokens.length; i++) {
             tokenSpeed[_dTokens[i]] = _tokenSpeed;
@@ -73,7 +92,7 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
      *      This will overwrite the speed set by `setGlobalSpeed()`
      * @param speeds the list of speeds for each dToken.
      */
-    function updateDTokenSpeeds(uint256[] calldata speeds) external auth {
+    function setDTokenSpeeds(uint256[] calldata speeds) external auth {
         address[] memory _dTokens = dTokens;
 
         require(
@@ -99,16 +118,19 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
             "updateDTokenIndex: dToken is not in distribution list"
         );
 
-        uint256 totalSupply = IDToken(dToken).totalSupply();
+        uint256 blockDelta = block.number - state.block;
 
-        if (totalSupply > 0) {
-            uint256 blockDelta = block.number - state.block;
-            uint256 accrued = tokenSpeed[dToken] * blockDelta;
+        // Nothing to update
+        if (blockDelta == 0) return;
+
+        uint256 totalSupply = IDToken(dToken).totalSupply();
+        uint256 speed = tokenSpeed[dToken];
+        if (totalSupply > 0 && speed > 0) {
+            uint256 accrued = speed * blockDelta;
             index = state.index + rdiv(accrued, totalSupply);
             state.index = index;
         }
 
-        // Update the storage
         state.block = block.number;
     }
 
@@ -135,38 +157,26 @@ contract DFDistributor is DSAuth, ERC20SafeTransfer {
      * @param dToken the dToken to query.
      * @param account the account to query.
      */
-    function calculateAccruedDF(address dToken, address account)
-        public
-        returns (uint256 accrued)
-    {
+    function updateAccruedDF(address dToken, address account) public {
         updateDTokenIndex(dToken);
 
         uint256 indexDelta = dTokenState[dToken].index -
             userIndex[dToken][account];
+        uint256 accrued = rmul(IDToken(dToken).balanceOf(account), indexDelta);
 
-        accrued = rmul(IDToken(dToken).balanceOf(account), indexDelta);
-    }
-
-    function updateUserIndex(address dToken, address account)
-        internal
-        returns (uint256)
-    {
         userIndex[dToken][account] = dTokenState[dToken].index;
+        userAccrued[account] = userAccrued[account] + accrued;
     }
 
     function claimDF(address dToken, address account) external {
-        uint256 accrued = calculateAccruedDF(dToken, account);
-        updateUserIndex(dToken, account);
+        updateAccruedDF(dToken, account);
 
         //Transfer accrued DF
         address DF = 0x6082731fdAba4761277Fb31299ebC782AD3bCf24;
-
-        // TODO: Where should we transfer DF from or where should we store the DF
-        // Should store the accured DF in case that there is not enough DF to transfer
-        require(
-            doTransferOut(DF, account, accrued),
-            "claimDF: transfer to target handler failed"
-        );
+        uint256 accrued = userAccrued[account];
+        if (doTransferOut(DF, account, accrued)) {
+            userAccrued[account] = 0;
+        }
     }
 
     function rdiv(uint256 x, uint256 y) internal pure returns (uint256 z) {

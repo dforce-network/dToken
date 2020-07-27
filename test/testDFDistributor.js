@@ -132,28 +132,16 @@ describe("DF Distributor Contract", function () {
     });
   });
 
-  describe("Set distribution speed", function () {
-    it("Should set global speed", async function () {
+  describe("Set total distribution speed", function () {
+    it("Should set total speed", async function () {
       let speed = expandTo18Decimals(10);
-      await df_distributor.setGlobalSpeed(speed);
+      await df_distributor.setTotalSpeed(speed);
 
       let token_speed = await df_distributor.tokenSpeed(dUSDC.address);
       assert.equal(speed.toString(), token_speed.toString());
     });
-  });
 
-  describe("Update DToken Index", function () {
-    it("Should update DToken speed", async function () {
-      let speed = expandTo18Decimals(10);
-      await df_distributor.setGlobalSpeed(speed);
-
-      let token_speed = await df_distributor.tokenSpeed(dUSDC.address);
-      assert.equal(speed.toString(), token_speed.toString());
-    });
-  });
-
-  describe("Claim DF", function () {
-    it("Should claim some DF", async function () {
+    it("Should claim some DF according to global speed", async function () {
       let tx1 = await dUSDC.mint(account1, 10000e6, {from: account1});
       let tx2 = await dUSDC.mint(account2, 10000e6, {from: account2});
 
@@ -179,5 +167,9 @@ describe("DF Distributor Contract", function () {
         df_claimed2.div(expandTo18Decimals(1)).toString()
       );
     });
+  });
+
+  describe("Set distribution speed respectively", function () {
+    it("Should update DToken speed", async function () {});
   });
 });
