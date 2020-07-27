@@ -60,8 +60,8 @@ const { TabPane } = Tabs;
 
 
 export default class App extends React.Component {
-  constructor(porps) {
-    super(porps);
+  constructor(props) {
+    super(props);
 
     this.state = {
       // token_name: ['USDT', 'USDC', 'DAI', 'TUSD'],
@@ -77,11 +77,15 @@ export default class App extends React.Component {
       token_balance: [],
       token_d_balance: [],
       token_BaseData: [],
-      cur_index_mint: 0,
-      cur_index_redeem: 0,
+      // cur_index_mint: 0,
+      // cur_index_redeem: 0,
+      // cur_show_data_index: 0,
+      cur_index_mint: props.location.state && props.location.state.cur_index || 0,
+      cur_index_redeem: props.location.state && props.location.state.cur_index || 0,
+      cur_show_data_index: props.location.state && props.location.state.cur_index || 0,
+      is_withdraw: props.location.state && props.location.state.is_withdraw || false,
       token_status: [],
       token_status_apy: [],
-      cur_show_data_index: 0,
       options: {},
 
       cur_language: navigator.language === 'zh-CN' ? '中文' : 'English',
@@ -93,6 +97,8 @@ export default class App extends React.Component {
 
     this.new_web3 = window.new_web3 = new Web3(Web3.givenProvider || null);
     this.bn = this.new_web3.utils.toBN;
+
+    // console.log(props.location.state.cur_index)
   }
 
 
@@ -482,7 +488,7 @@ export default class App extends React.Component {
             <div className="content-left">
               <div className="action">
                 <Tabs
-                  defaultActiveKey={'1'}
+                  defaultActiveKey={this.state.is_withdraw ? '2' : '1'}
                   tabBarStyle={{ fontSize: '16px', fontWeight: 'bold' }}
                   onChange={(activeKey) => { this.empty_state(activeKey) }}
                 >
