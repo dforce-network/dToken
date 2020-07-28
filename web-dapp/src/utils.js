@@ -1,4 +1,5 @@
 import env from './abi/env';
+import moment from 'moment';
 
 let address_map = env.ADDRESS;
 let token_abi = require('./abi/tokensABI.json');
@@ -779,10 +780,20 @@ export const accounts_changed = async (that) => {
 
 export const set_show_data = (that) => {
   let temp_data = that.state.token_status[that.state.cur_index_mint];
-  // console.log(temp_data);
+
   if (!temp_data.date) {
     return console.log('not ready...')
   }
+
+  // date_arr
+  // let date_arr = [];
+  // for (let i = 0; i < temp_data.date.length; i++) {
+  //   date_arr[i] = moment(temp_data.date[i] * 1000).format('YYYY/M/DD');
+  // }
+  // console.log(date_arr);
+
+  let date_arr = temp_data.date;
+
   that.setState({
     options: {
       grid: {
@@ -809,7 +820,7 @@ export const set_show_data = (that) => {
         },
         type: 'category',
         boundaryGap: false,
-        data: temp_data.date
+        data: date_arr
       },
       yAxis: {
         splitLine: {
@@ -849,47 +860,51 @@ export const get_tokens_status_apy = (that) => {
     url_apy = url_apy + that.state.net_type;
   }
 
-  fetch(url_apy).then(res => res.text()).then((data) => {
-    if (!(data && Object.keys(data).length > 0)) {
-      return console.log('no data return...');
-    }
+  fetch(url_apy).then(res => res.text())
+    .then((data) => {
+      if (!(data && Object.keys(data).length > 0)) {
+        return console.log('no data return...');
+      }
 
-    let t_data_arr = [];
-    for (let i = 0; i < that.state.token_name.length; i++) {
-      t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
-    }
-    that.setState({
-      token_status_apy: t_data_arr,
+      let t_data_arr = [];
+      for (let i = 0; i < that.state.token_name.length; i++) {
+        t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
+      }
+      that.setState({
+        token_status_apy: t_data_arr,
+      })
+
+      // check if set count
+      return false;
+      if (that.state.token_d_balance.length === 0) {
+        return console.log('token_d_balance.length===0')
+      }
+      if (that.state.is_already_set_count) {
+        return console.log('is_already_set_count')
+      }
+      let apy_arr = [];
+      for (let i = 0; i < t_data_arr.length; i++) {
+        apy_arr[i] = t_data_arr[i].now_apy || 0;
+      }
+
+      // console.log(apy_arr)
+      // console.log(that.state.token_d_balance)
+      let start_arr = JSON.parse(JSON.stringify(that.state.token_d_balance));
+      let end_arr = [];
+      for (let i = 0; i < start_arr.length; i++) {
+        end_arr[i] = that.bn(start_arr[i]).mul(that.bn(Number(apy_arr[i] * 10000).toFixed())).div(that.bn(360)).div(that.bn(1000000)).add(that.bn(start_arr[i])).toLocaleString();
+      }
+
+      console.log(start_arr, end_arr)
+      that.setState({
+        start_arr: start_arr,
+        end_arr: end_arr,
+        is_already_set_count: true
+      })
     })
-
-    // check if set count
-    return false;
-    if (that.state.token_d_balance.length === 0) {
-      return console.log('token_d_balance.length===0')
-    }
-    if (that.state.is_already_set_count) {
-      return console.log('is_already_set_count')
-    }
-    let apy_arr = [];
-    for (let i = 0; i < t_data_arr.length; i++) {
-      apy_arr[i] = t_data_arr[i].now_apy || 0;
-    }
-
-    // console.log(apy_arr)
-    // console.log(that.state.token_d_balance)
-    let start_arr = JSON.parse(JSON.stringify(that.state.token_d_balance));
-    let end_arr = [];
-    for (let i = 0; i < start_arr.length; i++) {
-      end_arr[i] = that.bn(start_arr[i]).mul(that.bn(Number(apy_arr[i] * 10000).toFixed())).div(that.bn(360)).div(that.bn(1000000)).add(that.bn(start_arr[i])).toLocaleString();
-    }
-
-    console.log(start_arr, end_arr)
-    that.setState({
-      start_arr: start_arr,
-      end_arr: end_arr,
-      is_already_set_count: true
+    .catch(err => {
+      console.log(err)
     })
-  })
 }
 
 
@@ -897,16 +912,17 @@ export const get_tokens_status = (that) => {
   if (!(that.state.net_type === 'main' || that.state.net_type === 'kovan')) {
     return console.log('wrong net work');
   }
-  let url = constance.url;
+
+  // let url = constance.url;
+  // URL_getBanlanceInfo
+  let url = env.URL_getBanlanceInfo;
 
   if (that.state.net_type && that.state.net_type !== 'main') {
-    // console.log('?net=rinkeby');
-    // url = constance.url_apy;
     url = url + '?net=' + that.state.net_type;
   } else {
     url = url + '?net=main';
   }
-  console.log(url);
+  // console.log(url);
 
   fetch(url).then(res => res.text())
     .then((data) => {

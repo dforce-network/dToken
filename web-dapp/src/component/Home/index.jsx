@@ -118,7 +118,7 @@ export default class Home extends React.Component {
             <IntlProvider locale={'en'} messages={this.state.cur_language === '中文' ? zh_CN : en_US} >
                 {/* menu */}
                 <div className={'header'}>
-                    <a href="/" className={'header__logo'}>
+                    <a href="https://dforce.network/" className={'header__logo'}>
                         <img src={logo_xswap} alt="logo" />
                     </a>
 
@@ -217,7 +217,10 @@ export default class Home extends React.Component {
                 <div className={this.state.showonly ? 'mobile-only' : 'disn'}>
                     <div className='wrap-mob'>
                         <div className='only-left'>
-                            <img src={logo_xswap} alt='' />
+                            {/* <img src={logo_xswap} alt='' /> */}
+                            <a href="https://dforce.network/" className={'header__logo'}>
+                                <img src={logo_xswap} alt="logo" />
+                            </a>
                         </div>
                         <div className='only-right'>
                             <img src={close_new} alt='' onClick={() => { this.setState({ showonly: false }) }} />
@@ -304,7 +307,10 @@ export default class Home extends React.Component {
                 <div className="App">
                     <div className='wrap-mob'>
                         <div className='only-left'>
-                            <img src={logo_xswap} alt='' />
+                            {/* <img src={logo_xswap} alt='' /> */}
+                            <a href="https://dforce.network/" className={'header__logo'}>
+                                <img src={logo_xswap} alt="logo" />
+                            </a>
                         </div>
                         <div className='only-right'>
                             <img src={close} alt='' onClick={() => { this.setState({ showonly: true }) }} />

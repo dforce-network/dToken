@@ -1,6 +1,7 @@
 function env() {
   if (process.env.NODE_ENV === "development") {
     return {
+      URL_getBanlanceInfo: "https://markets.dforce.network/api/v1/getBanlanceInfo/",
       ENV: "development",
       ADDRESS: {
         main: {
@@ -56,6 +57,7 @@ function env() {
     };
   } else {
     return {
+      URL_getBanlanceInfo: "https://markets.dforce.network/api/v1/getBanlanceInfo/",
       ENV: "production",
       ADDRESS: {
         main: {
