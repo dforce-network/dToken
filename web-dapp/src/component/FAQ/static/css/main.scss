@@ -115,7 +115,8 @@
 @media screen and (max-width: 767px) {
   .faq {
     width: 94%;
-    padding: 0.7em 0.5em 1.5em;
+    margin: 0 auto;
+    padding: 0.7em 0em 1.5em;
 
     ul {
       background-color: #fff;
@@ -227,8 +228,8 @@
       }
 
       p {
-        font-size: 0.6em;
-        line-height: 1.8em;
+        font-size: 0.8em;
+        line-height: 1.6em;
         padding: 10px 28px 0 20px;
         color: #898c9d;
         height: 0;

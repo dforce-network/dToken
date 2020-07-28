@@ -908,30 +908,35 @@ export const get_tokens_status = (that) => {
   }
   console.log(url);
 
-  fetch(url).then(res => res.text()).then((data) => {
-    if (!(data && Object.keys(data).length > 0)) {
-      return console.log('no data return...');
-    }
+  fetch(url).then(res => res.text())
+    .then((data) => {
+      // console.log(data)
+      if (!(data && Object.keys(data).length > 0)) {
+        return console.log('no data return...');
+      }
 
-    let t_data_arr = [];
-    for (let i = 0; i < that.state.token_name.length; i++) {
-      t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
-    }
+      let t_data_arr = [];
+      for (let i = 0; i < that.state.token_name.length; i++) {
+        t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
+      }
 
-    // console.log(t_data_arr);
-    if (!t_data_arr[0]) { return console.log('no. data.') }
+      // console.log(t_data_arr);
+      if (!t_data_arr[0]) { return console.log('no. data.') }
 
-    // return;
+      // return;
 
-    // data = JSON.parse(data).reverse();
+      // data = JSON.parse(data).reverse();
 
-    that.setState({
-      token_status: t_data_arr,
-      token_status_is_ready: true
-    }, () => {
-      set_show_data(that);
+      that.setState({
+        token_status: t_data_arr,
+        token_status_is_ready: true
+      }, () => {
+        set_show_data(that);
+      })
     })
-  })
+    .catch(err => {
+      console.log(err)
+    })
 }
 
 
