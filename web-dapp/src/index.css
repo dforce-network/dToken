@@ -86,6 +86,7 @@ input[type="text"] {
   z-index: 9999 !important;
   width: 0 !important;
 }
+
 .ant-tabs-nav-wrap::before {
   /* content: ''; */
   z-index: 9999 !important;

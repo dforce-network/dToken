@@ -159,11 +159,15 @@ export default class Item extends Component {
                       <span className={"btn-wrap"}>
 
                         <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]) } }}>
-                          <Button>DEPOSIT</Button>
+                          <Button>
+                            <FormattedMessage id='DEPOSIT' />
+                          </Button>
                         </Link>
 
                         <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]), is_withdraw: true } }}>
-                          <Button>WITHDRAW</Button>
+                          <Button>
+                            <FormattedMessage id='WITHDRAW' />
+                          </Button>
                         </Link>
                       </span>
                     </dd>
