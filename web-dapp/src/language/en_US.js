@@ -1,4 +1,8 @@
 const en_US = {
+    goldx: 'GOLDx',
+    goldx_detail: 'Token backed by physical gold',
+    Yield_Markets: 'Yield Markets',
+    Yield_Markets_detail: 'A yield aggregator',
     slogan_title_plus: 'The Most Accessible High Yield Aggregator',
     slogan_title: 'dForce Yield Markets',
     Market_Size: 'Market Size',
@@ -17,7 +21,7 @@ const en_US = {
     title1: 'All-in-One Farming',
     Highlights: 'Highlights of Yield Market?',
     Frequently: 'Frequently Asked Questions',
-    how_does_detail: 'The Yield Market is a yield aggregator that connects lending/liquidity protocols in the background in order to provide users with the best return on their assets. It aims to farm the most attractive risk-adjusted yield by supplying pooled capital to lending protocols (Compound, Aave, dForce Lending etc) and automatically rebalance to ensure that assets are being lent to the one with the best yield. We will evaluate and integrate with more DeFi protocols in the future, including dForce lending protocol and our hybrid lending platform, ',
+    how_does_detail: 'The Yield Market is a yield aggregator that connects lending/liquidity protocols in the background in order to provide users with the best return on their assets. It aims to farm the most attractive risk-adjusted yield by supplying pooled capital to lending protocols (Compound, Aave, dForce Lending etc) and automatically rebalance to ensure that assets are being lent to the one with the best yield. We will evaluate and integrate with more DeFi protocols in the future, including dForce lending protocol and our hybrid lending platform.',
     how_does: 'How does the Yield Market earn interests?',
     what_is_yield_detail: 'The Yield Markets is the market place that provide the best yield tokens and it is the most accessible yield aggregator to farm the most attractive risk-adjusted yield across DeFi protocols. The Yield Markets now supports USDx, GOLDx, USDT, USDX, and DAI. Depositing supported tokens into the Yield Markets, you will receive corresponding dToken on a pro rata basis (i.e. depositing USDT to receive dUSDT).  Each dToken represents a pro rata claim of the underlying token plus yields generated.',
     what_is_yield: 'What is the Yield Market?',

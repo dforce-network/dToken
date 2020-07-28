@@ -295,6 +295,26 @@ export default class App extends React.Component {
                       </label>
                     </a>
                   </Menu.Item>
+                  <Menu.Item>
+                    <a target="_blank" rel="noopener noreferrer" href="https://markets.dforce.network/" className={'header__overlay_item'}>
+                      <span>
+                        <FormattedMessage id='Yield_Markets' />
+                      </span>
+                      <label>
+                        <FormattedMessage id='Yield_Markets_detail' />
+                      </label>
+                    </a>
+                  </Menu.Item>
+                  <Menu.Item>
+                    <a target="_blank" rel="noopener noreferrer" href="https://goldx.dforce.network/" className={'header__overlay_item'}>
+                      <span>
+                        <FormattedMessage id='goldx' />
+                      </span>
+                      <label>
+                        <FormattedMessage id='goldx_detail' />
+                      </label>
+                    </a>
+                  </Menu.Item>
                 </Menu>
               }
             >
@@ -433,6 +453,26 @@ export default class App extends React.Component {
               </a>
               <span className='details'>
                 <FormattedMessage id='Portal' />
+              </span>
+            </div>
+            <div className='m-item'>
+              <a href='https://markets.dforce.network/' rel="noopener noreferrer">
+                <span className='title'>
+                  <FormattedMessage id='Yield_Markets' />
+                </span>
+              </a>
+              <span className='details'>
+                <FormattedMessage id='Yield_Markets_detail' />
+              </span>
+            </div>
+            <div className='m-item'>
+              <a href='https://goldx.dforce.network/' rel="noopener noreferrer">
+                <span className='title'>
+                  <FormattedMessage id='goldx' />
+                </span>
+              </a>
+              <span className='details'>
+                <FormattedMessage id='goldx_detail' />
               </span>
             </div>
           </div>
