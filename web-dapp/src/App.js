@@ -408,7 +408,10 @@ export default class App extends React.Component {
         <div className={this.state.showonly ? 'mobile-only' : 'disn'}>
           <div className='wrap-mob'>
             <div className='only-left'>
-              <img src={logo_xswap} alt='' />
+              <a href="/" className={'header__logo'}>
+                <img src={logo_xswap} alt="logo" />
+              </a>
+              {/* <img src={logo_xswap} alt='' /> */}
             </div>
             <div className='only-right'>
               <img src={close_new} alt='' onClick={() => { this.setState({ showonly: false }) }} />
@@ -475,7 +478,10 @@ export default class App extends React.Component {
         <div className="App">
           <div className='wrap-mob'>
             <div className='only-left'>
-              <img src={logo_xswap} alt='' />
+              {/* <img src={logo_xswap} alt='' /> */}
+              <a href="/" className={'header__logo'}>
+                <img src={logo_xswap} alt="logo" />
+              </a>
             </div>
             <div className='only-right'>
               <img src={close} alt='' onClick={() => { this.setState({ showonly: true }) }} />
@@ -598,7 +604,7 @@ export default class App extends React.Component {
 
                     {
                       !Web3.givenProvider &&
-                      <div className="btn-wrap">
+                      <div className="btn-wrap btn-wrap-plus">
                         <Button
                           disabled={this.state.is_btn_disabled_mint}
                           className={this.state.is_btn_disabled_mint ? 'btn_disabled' : ''}
@@ -610,7 +616,7 @@ export default class App extends React.Component {
 
                     {
                       this.state.show_btn && this.state.token_is_approve[this.state.cur_index_mint] &&
-                      <div className="btn-wrap">
+                      <div className="btn-wrap btn-wrap-plus">
                         <Button
                           disabled={this.state.is_btn_disabled_mint}
                           className={this.state.is_btn_disabled_mint ? 'btn_disabled' : ''}
@@ -625,7 +631,7 @@ export default class App extends React.Component {
                     }
                     {
                       this.state.show_btn && !this.state.token_is_approve[this.state.cur_index_mint] &&
-                      <div className="btn-wrap">
+                      <div className="btn-wrap btn-wrap-plus">
                         <Button
                           disabled={this.state.is_btn_disabled_mint}
                           className={this.state.is_btn_disabled_mint ? 'btn_disabled' : ''}
@@ -741,7 +747,7 @@ export default class App extends React.Component {
                       </span> */}
                     </div>
 
-                    <div className="btn-wrap">
+                    <div className="btn-wrap btn-wrap-plus">
                       {
                         this.state.show_btn &&
                         <Button

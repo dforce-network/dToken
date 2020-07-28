@@ -5,6 +5,10 @@ import USDT_logo from '../../images/USDT.svg';
 import USDC_logo from '../../images/USDC.svg';
 import no_history from '../../images/no-history.svg';
 import { Button, } from 'antd';
+// add i18n.
+import { IntlProvider, FormattedMessage } from 'react-intl';
+import en_US from '../../language/en_US.js';
+import zh_CN from '../../language/zh_CN';
 
 import './home.scss';
 
@@ -97,24 +101,37 @@ export default class Item extends Component {
 
   componentDidMount = () => {
     this.get_token_status();
+
+    setInterval(() => {
+      this.get_token_status();
+    }, 1000 * 5);
   }
 
 
 
   render() {
     return (
-      <div className={"warp"}>
-        <section className={"content"}>
-          <h3 className={"tabTitle"}>All Markets</h3>
-          <dl>
-            <dt style={{ fontWeight: 'bold', fontSize: '18px' }}>
-              <span className={"leftColumn"}>Asset</span>
-              <span>Market Size</span>
-              <span>APY</span>
-              <span className={"btn-wrap"}></span>
-            </dt>
+      <IntlProvider locale={'en'} messages={this.props.language === '中文' ? zh_CN : en_US} >
+        <div className={"warp"}>
+          <section className={"content"}>
+            <h3 className={"tabTitle"}>
+              <FormattedMessage id='All_Markets' />
+            </h3>
+            <dl>
+              <dt style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                <span className={"leftColumn"}>
+                  <FormattedMessage id='Asset' />
+                </span>
+                <span>
+                  <FormattedMessage id='Market_Size' />
+                </span>
+                <span>
+                  <FormattedMessage id='APY' />
+                </span>
+                <span className={"btn-wrap"}></span>
+              </dt>
 
-            {/* <div className="nodata-wrap">
+              {/* <div className="nodata-wrap">
               <img alt='' src={no_history} />
               <span className="no-data-span">
                 <FormattedMessage id='no_data' />
@@ -122,40 +139,41 @@ export default class Item extends Component {
               </span>
             </div> */}
 
-            {
-              this.state.token_arr && this.state.token_arr.length > 0 &&
-              this.state.token_arr.map((item, index) => {
-                return (
-                  <dd key={index} style={{ fontWeight: 'bold', fontSize: '18px' }}>
-                    <div className={"leftColumn"}>
-                      <img src={this.state.logo[this.state.token_arr[index].slice(1)]} />
-                      <div className={"rightText"}>
-                        <h3>{this.state.token_arr[index].slice(1)}</h3>
+              {
+                this.state.token_arr && this.state.token_arr.length > 0 &&
+                this.state.token_arr.map((item, index) => {
+                  return (
+                    <dd key={index} style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                      <div className={"leftColumn"}>
+                        <img src={this.state.logo[this.state.token_arr[index].slice(1)]} />
+                        <div className={"rightText"}>
+                          <h3>{this.state.token_arr[index].slice(1)}</h3>
+                        </div>
                       </div>
-                    </div>
-                    <span>
-                      {this.format_str_to_kmb(this.state.token_data_arr[index].net_value)}
+                      <span>
+                        {this.format_str_to_kmb(this.state.token_data_arr[index].net_value)}
+                      </span>
+                      <span>
+                        {this.state.token_data_arr[index].now_apy}%
                     </span>
-                    <span>
-                      {this.state.token_data_arr[index].now_apy}%
-                    </span>
-                    <span className={"btn-wrap"}>
+                      <span className={"btn-wrap"}>
 
-                      <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]) } }}>
-                        <Button>DEPOSIT</Button>
-                      </Link>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]) } }}>
+                          <Button>DEPOSIT</Button>
+                        </Link>
 
-                      <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]), is_withdraw: true } }}>
-                        <Button>WITHDRAW</Button>
-                      </Link>
-                    </span>
-                  </dd>
-                )
-              })
-            }
-          </dl>
-        </section>
-      </div>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]), is_withdraw: true } }}>
+                          <Button>WITHDRAW</Button>
+                        </Link>
+                      </span>
+                    </dd>
+                  )
+                })
+              }
+            </dl>
+          </section>
+        </div>
+      </IntlProvider>
     );
   }
 }

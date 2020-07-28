@@ -126,28 +126,28 @@ export default class FAQ1 extends Component {
                                 <img className={"faq_r"} src={isCollapsed.includes("4") ? this.state.icon.unfold : this.state.icon.collapse} />
                             </div>
                             <div className="collapse-content">
-                                <p>
+                                <p className="collapse-content-title">
                                     <FormattedMessage id='title1' />
                                 </p>
                                 <p>
                                     <FormattedMessage id='detail1' />
                                 </p>
 
-                                <p>
+                                <p className="collapse-content-title">
                                     <FormattedMessage id='title2' />
                                 </p>
                                 <p>
                                     <FormattedMessage id='detail2' />
                                 </p>
 
-                                <p>
+                                <p className="collapse-content-title">
                                     <FormattedMessage id='title3' />
                                 </p>
                                 <p>
                                     <FormattedMessage id='detail3' />
                                 </p>
 
-                                <p>
+                                <p className="collapse-content-title">
                                     <FormattedMessage id='title4' />
                                 </p>
                                 <p>
@@ -170,7 +170,16 @@ export default class FAQ1 extends Component {
                             </div>
                             <div className="collapse-content">
                                 <p>
-                                    <FormattedMessage id='it_is_detail1' />
+                                    {
+                                        this.props.language === '中文' ?
+                                            <span>
+                                                生息市场是部署在以太坊上的智能合约，安全审计由Trail of Bits完成，请点击<a target='_blank' href='https://github.com/dforce-network/documents/blob/master/audit_report/dToken/dToken_Assessment_Summary.pdf'>这里</a>查看完整报告。
+                                        </span>
+                                            :
+                                            <span>
+                                                The Yield Markets is a smart contract deployed on Ethereum, with security audit conducted by Trail of Bits. Please click <a target='_blank' href='https://github.com/dforce-network/documents/blob/master/audit_report/dToken/dToken_Assessment_Summary.pdf'>here</a> to view the full report.
+                                        </span>
+                                    }
                                 </p>
                                 <p>
                                     <FormattedMessage id='it_is_detail2' />

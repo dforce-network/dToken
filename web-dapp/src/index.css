@@ -80,3 +80,18 @@ input[type="text"] {
   margin-right: 6px;
   margin-top: -2px;
 }
+
+.ant-tabs-nav-wrap::after {
+  /* content: ''; */
+  z-index: 9999 !important;
+  width: 0 !important;
+}
+.ant-tabs-nav-wrap::before {
+  /* content: ''; */
+  z-index: 9999 !important;
+  width: 0 !important;
+}
+
+.ant-tabs-nav-more {
+  display: none !important;
+}
