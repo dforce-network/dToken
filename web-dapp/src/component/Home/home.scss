@@ -297,7 +297,7 @@
           align-items: center;
           border-bottom: 1px solid #eaeaf3;
           line-height: 40px;
-          padding: 10px 15px;
+          padding: 10px 28px;
           flex-wrap: wrap;
           font-size: 14px !important;
           padding-bottom: 14px;
@@ -430,11 +430,13 @@
     display: flex;
     justify-content: space-between;
     // justify-content: center;
+    // justify-content: space-around;
     padding-top: 10px;
 
     a {
-      flex: 1;
-      padding: 0 10px;
+      width: 47%;
+      // flex: 1;
+      // padding: 0 10px;
     }
 
     button {
