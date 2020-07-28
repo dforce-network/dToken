@@ -88,7 +88,7 @@ export default class App extends React.Component {
       token_status_apy: [],
       options: {},
 
-      cur_language: navigator.language === 'zh-CN' ? '中文' : 'English',
+      cur_language: props.location.state && props.location.state.cur_language === '中文' ? '中文' : 'English',
       showonly: false,
       meun1: true,
       meun2: true,
@@ -98,7 +98,7 @@ export default class App extends React.Component {
     this.new_web3 = window.new_web3 = new Web3(Web3.givenProvider || null);
     this.bn = this.new_web3.utils.toBN;
 
-    // console.log(props.location.state.cur_index)
+    // console.log(props.location.state)
   }
 
 

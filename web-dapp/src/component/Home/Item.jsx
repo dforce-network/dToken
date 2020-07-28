@@ -10,6 +10,8 @@ import { IntlProvider, FormattedMessage } from 'react-intl';
 import en_US from '../../language/en_US.js';
 import zh_CN from '../../language/zh_CN';
 
+import { format_num_to_K } from '../../utils';
+
 import './home.scss';
 
 let constance = require('../../abi/constance.json');
@@ -32,6 +34,7 @@ export default class Item extends Component {
 
   get_token_status = () => {
     let url_apy = constance.url_apy + 'main';
+    // console.log(url_apy);
 
     fetch(url_apy).then(res => res.text()).then((data) => {
       if (!(data && Object.keys(data).length > 0)) {
@@ -39,14 +42,16 @@ export default class Item extends Component {
       }
 
       let obj_data = JSON.parse(data);
-      let token_arr = Object.keys(obj_data);
+
+      // console.log(obj_data);
 
       let token_data_arr = [];
-      for (let i = 0; i < token_arr.length; i++) {
-        token_data_arr[i] = obj_data[token_arr[i]]
+      for (let i = 0; i < this.state.token_d_name.length; i++) {
+        token_data_arr[i] = obj_data[this.state.token_d_name[i]]
       }
+      // console.log(token_data_arr);
 
-      this.setState({ token_arr, token_data_arr })
+      this.setState({ token_data_arr })
     })
   }
 
@@ -131,40 +136,32 @@ export default class Item extends Component {
                 <span className={"btn-wrap"}></span>
               </dt>
 
-              {/* <div className="nodata-wrap">
-              <img alt='' src={no_history} />
-              <span className="no-data-span">
-                <FormattedMessage id='no_data' />
-                no_data
-              </span>
-            </div> */}
-
               {
-                this.state.token_arr && this.state.token_arr.length > 0 &&
-                this.state.token_arr.map((item, index) => {
+                this.state.token_data_arr && this.state.token_data_arr.length > 0 &&
+                this.state.token_data_arr.map((item, index) => {
                   return (
                     <dd key={index} style={{ fontWeight: 'bold', fontSize: '18px' }}>
                       <div className={"leftColumn"}>
-                        <img src={this.state.logo[this.state.token_arr[index].slice(1)]} />
+                        <img src={this.state.logo[this.state.token_d_name[index].slice(1)]} />
                         <div className={"rightText"}>
-                          <h3>{this.state.token_arr[index].slice(1)}</h3>
+                          <h3>{this.state.token_d_name[index].slice(1)}</h3>
                         </div>
                       </div>
                       <span>
-                        {this.format_str_to_kmb(this.state.token_data_arr[index].net_value)}
+                        {format_num_to_K(this.state.token_data_arr[index].net_value)}
                       </span>
                       <span>
                         {this.state.token_data_arr[index].now_apy}%
                     </span>
                       <span className={"btn-wrap"}>
 
-                        <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]) } }}>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: index, cur_language: this.props.language } }}>
                           <Button>
                             <FormattedMessage id='DEPOSIT' />
                           </Button>
                         </Link>
 
-                        <Link to={{ pathname: '/dapp', state: { cur_index: this.state.token_d_name.indexOf(this.state.token_arr[index]), is_withdraw: true } }}>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: index, is_withdraw: true, cur_language: this.props.language } }}>
                           <Button>
                             <FormattedMessage id='WITHDRAW' />
                           </Button>
@@ -173,6 +170,68 @@ export default class Item extends Component {
                     </dd>
                   )
                 })
+              }
+
+              {
+                !(this.state.token_data_arr && this.state.token_data_arr.length > 0) &&
+                <>
+                  <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                    <div className={"leftColumn"}>
+                      <img src={this.state.logo.USDT} />
+                      <div className={"rightText"}>
+                        <h3>{'USDT'}</h3>
+                      </div>
+                    </div>
+                    <span>{'...'}</span>
+                    <span>{'...'}</span>
+                    <span className={"btn-wrap"}>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 0, cur_language: this.props.language } }}>
+                        <Button><FormattedMessage id='DEPOSIT' /></Button>
+                      </Link>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 0, is_withdraw: true, cur_language: this.props.language } }}>
+                        <Button><FormattedMessage id='WITHDRAW' /></Button>
+                      </Link>
+                    </span>
+                  </dd>
+
+                  <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                    <div className={"leftColumn"}>
+                      <img src={this.state.logo.USDC} />
+                      <div className={"rightText"}>
+                        <h3>{'USDC'}</h3>
+                      </div>
+                    </div>
+                    <span>{'...'}</span>
+                    <span>{'...'}</span>
+                    <span className={"btn-wrap"}>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 1, cur_language: this.props.language } }}>
+                        <Button><FormattedMessage id='DEPOSIT' /></Button>
+                      </Link>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 1, is_withdraw: true, cur_language: this.props.language } }}>
+                        <Button><FormattedMessage id='WITHDRAW' /></Button>
+                      </Link>
+                    </span>
+                  </dd>
+
+                  <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                    <div className={"leftColumn"}>
+                      <img src={this.state.logo.DAI} />
+                      <div className={"rightText"}>
+                        <h3>{'DAI'}</h3>
+                      </div>
+                    </div>
+                    <span>{'...'}</span>
+                    <span>{'...'}</span>
+                    <span className={"btn-wrap"}>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 2, cur_language: this.props.language } }}>
+                        <Button><FormattedMessage id='DEPOSIT' /></Button>
+                      </Link>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 2, is_withdraw: true, cur_language: this.props.language } }}>
+                        <Button><FormattedMessage id='WITHDRAW' /></Button>
+                      </Link>
+                    </span>
+                  </dd>
+                </>
               }
             </dl>
           </section>
