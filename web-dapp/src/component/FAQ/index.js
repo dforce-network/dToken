@@ -108,7 +108,7 @@ export default class FAQ1 extends Component {
                             </div>
                             <div className="collapse-content">
                                 <p>
-                                    <FormattedMessage id='what_is_yield_detail' />
+                                    <FormattedMessage id='how_does_detail' />
                                 </p>
                             </div>
                         </li>

@@ -1,4 +1,8 @@
 const zh_CN = {
+    goldx: '黄金代币',
+    goldx_detail: '锚定实物黄金的代币',
+    Yield_Markets: '生息市场',
+    Yield_Markets_detail: '利息聚合器',
     slogan_title_plus: '轻松上手的高收益稳定币余额宝',
     slogan_title: 'dForce生息市场',
     Market_Size: '存款总量',
