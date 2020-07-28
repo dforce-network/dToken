@@ -269,7 +269,15 @@ export default class Home extends React.Component {
                         </div>
                         <div className='clear'></div>
                     </div>
-                    <Item />
+
+                    <div className='dtoken-slogan'>
+                        <FormattedMessage id='slogan_title' />
+                    </div>
+                    <div className='dtoken-slogan-plus'>
+                        <FormattedMessage id='slogan_title_plus' />
+                    </div>
+
+                    <Item language={this.state.cur_language} />
 
                     <FAQ language={this.state.cur_language} />
 
