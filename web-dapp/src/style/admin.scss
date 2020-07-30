@@ -199,3 +199,64 @@ $theme-color: #D4A454;
         }
     }
 }
+
+.InternalItem {
+    border: 1px solid #e7e8f3;
+    width: 450px;
+    margin: 0 auto;
+    border-radius: 6px;
+    padding: 10px;
+
+    .Item-wrap {
+        display: flex;
+        justify-content: space-around;
+    }
+
+}
+
+.HandlerItem {
+    border: 1px solid #e7e8f3;
+    width: 450px;
+    margin: 0 auto;
+    border-radius: 6px;
+    padding: 10px;
+
+    .Item-wrap {
+        display: flex;
+        justify-content: space-around;
+    }
+
+    .Reset-wrap {
+        display: flex;
+        width: 80%;
+        margin: 0 auto;
+
+        .reset-btn {
+            margin-right: 5px;
+
+            .btn-active {
+                background-color: $theme-color !important;
+                border: none;
+            }
+
+            .btn-active-not {
+                background-color: #999 !important;
+                border: none;
+            }
+
+            button {
+                margin-right: 5px;
+            }
+        }
+
+        .reset-input {
+            flex: 1;
+        }
+
+        .reset-ok {
+            padding: 0 15px;
+            line-height: 34px;
+            cursor: pointer;
+        }
+    }
+}

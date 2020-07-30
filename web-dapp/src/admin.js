@@ -94,8 +94,119 @@ class Admin extends Component {
     }
 
 
+    open_show_rebalance = (index) => {
+        // console.log(this.state.token_status[this.state.token_name[index]]);
+        let rebalance_data = JSON.parse(JSON.stringify(this.state.token_status[this.state.token_name[index]]));
+        let action_arr = [];
+        let action_arr__number = [];
+        let action_arr__number__tobe = JSON.parse(JSON.stringify(rebalance_data.percent_arr));
+        for (let i = 0; i < rebalance_data.percent_arr.length; i++) {
+            if (i === 0) {
+                action_arr[0] = 'internal';
+                action_arr__number[0] = 'internal';
+            } else {
+                action_arr[i] = 'supply';
+                action_arr__number[i] = '0';
+            }
+        }
+        rebalance_data.action_arr = action_arr;
+        rebalance_data.action_arr__number = action_arr__number;
+        rebalance_data.action_arr__number__tobe = action_arr__number__tobe;
+        this.setState({
+            rebalance_data: rebalance_data,
+            show_rebalance: true
+        }, () => {
+            console.log(this.state.rebalance_data)
+        })
+    }
 
-    open_show_rebalance = () => { }
+    i_will_widthdraw = (index) => {
+        console.log('withdraw', index)
+        console.log(this.state.rebalance_data)
+        let action_arr = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr));
+        action_arr[index] = 'withdraw';
+
+        this.setState({
+            rebalance_data: {
+                ...this.state.rebalance_data,
+                action_arr
+            }
+        }, () => {
+            console.log(this.state.rebalance_data)
+        })
+    }
+
+    i_will_supply = (index) => {
+        console.log('supply', index)
+        console.log(this.state.rebalance_data)
+        let action_arr = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr));
+        action_arr[index] = 'supply';
+
+        this.setState({
+            rebalance_data: {
+                ...this.state.rebalance_data,
+                action_arr
+            }
+        }, () => {
+            console.log(this.state.rebalance_data)
+        })
+    }
+
+    number_changed = (value, index) => {
+        // console.log(value, index)
+        // console.log(this.state.rebalance_data.action_arr[index])
+        // console.log(this.state.rebalance_data.token_decimal)
+        let t_decimal = this.state.rebalance_data.token_decimal;
+
+        value = this.bn(value).mul(this.bn(10).pow(this.bn(t_decimal))).toString();
+
+        let action_arr__number = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number));
+        action_arr__number[index] = value;
+
+        this.setState({
+            rebalance_data: {
+                ...this.state.rebalance_data,
+                action_arr__number
+            }
+        }, () => {
+            // console.log(this.state.rebalance_data);
+            this.handle__tobe_data();
+        })
+    }
+
+    handle__tobe_data = () => {
+        let action_arr__number__tobe = [];
+
+        for (let i = 0; i < this.state.rebalance_data.action_arr.length; i++) {
+            if (i === 0) {
+                console.log('i===0')
+            } else {
+                if (this.state.rebalance_data.action_arr[i] === 'supply') {
+                    let supply__amount = this.state.rebalance_data.action_arr__number[i];
+                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.action_arr__number__tobe[0]).sub(this.bn(supply__amount)).toString();
+                    action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.action_arr__number__tobe[i]).add(this.bn(supply__amount)).toString();
+                } else {
+                    let withdraw__amount = this.state.rebalance_data.action_arr__number[i];
+                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.action_arr__number__tobe[0]).add(this.bn(withdraw__amount)).toString();
+                    action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.action_arr__number__tobe[i]).sub(this.bn(withdraw__amount)).toString();
+                }
+            }
+        }
+
+        this.setState({
+            rebalance_data: {
+                ...this.state.rebalance_data,
+                action_arr__number__tobe
+            }
+        }, () => {
+            console.log(this.state.rebalance_data);
+        })
+    }
+
+
+
+
+
 
     click_confirm = () => {
         if (!((this.state.passed_part1 && this.state.passed_part2) || (this.state.passed_part3 && this.state.passed_part4))) {
@@ -282,161 +393,48 @@ class Admin extends Component {
     }
 
 
-
-
     render() {
         return (
             <>
                 <Modal
                     visible={this.state.show_rebalance}
-                    onCancel={() => {
-                        this.setState({
-                            show_rebalance: false,
-                            show_next: false,
-                            withdraw_amount_str: '',
-                            supply_amount_str: '',
-                            // supply_str: '',
-                            // withdraw_str: '',
-                            passed_part2: false,
-                            passed_part4: false,
-                        })
-                    }}
+                    onCancel={() => { this.setState({ show_rebalance: false }) }}
                     footer={false}
                     maskClosable={false}
                 >
                     <div className='modal-title'>Rebalance</div>
 
+                    <InternalItem rebalance_data={this.state.rebalance_data} />
+
+                    {
+                        this.state.rebalance_data &&
+                        this.state.rebalance_data.address_arr.map((address_item, index) => {
+                            if (index === 0) { return false }
+                            return (
+                                <HandlerItem
+                                    key={address_item}
+                                    address_item={address_item}
+                                    rebalance_data={this.state.rebalance_data}
+                                    index={index}
+                                    net_type={this.state.net_type}
+                                    i_will_widthdraw={(index) => { this.i_will_widthdraw(index) }}
+                                    i_will_supply={(index) => { this.i_will_supply(index) }}
+                                    number_changed={(val, index) => { this.number_changed(val, index) }}
+                                />
+                            )
+                        })
+                    }
+
                     {
                         !this.state.show_next &&
                         <>
-                            <div className='item-addr'>
-                                <span className='item-num-span'>Withdraw:</span>
-                                <textarea
-                                    placeholder='输入地址，英文逗号隔开'
-                                    onChange={(e) => { this.withdraw_change(e.target.value) }}>
-                                </textarea>
-                            </div>
-                            <div className='item-num'>
-                                <span className='item-num-span'>WithdrawAmount:</span>
-                                <Input
-                                    placeholder='输入数量，英文逗号隔开'
-                                    value={this.state.withdraw_amount_str}
-                                    onChange={(e) => { this.withdraw_amount_change(e.target.value) }}
-                                />
-                            </div>
-
-
-                            <div className='item-addr'>
-                                <span className='item-num-span'>Supply:</span>
-                                <textarea
-                                    placeholder='输入地址，英文逗号隔开'
-                                    onChange={(e) => { this.supply_change(e.target.value) }}>
-                                </textarea>
-                            </div>
-                            <div className='item-num'>
-                                <span className='item-num-span'>SupplyAmount:</span>
-                                <Input
-                                    placeholder='输入数量，英文逗号隔开'
-                                    value={this.state.supply_amount_str}
-                                    onChange={(e) => { this.supply_amount_change(e.target.value) }}
-                                />
-                            </div>
-
                             <div className='item-btn-wrap'>
-                                <Button
-                                    // disabled={(!this.state.passed_part1 || !this.state.passed_part2 || !this.state.passed_part3 || !this.state.passed_part4) ? true : false}
-                                    disabled={
-                                        !((this.state.passed_part1 && this.state.passed_part2) || (this.state.passed_part3 && this.state.passed_part4))
-                                    }
-                                    onClick={() => { this.click_confirm() }}
-                                >
+                                <Button onClick={() => { this.click_confirm() }}>
                                     Confirm
                                 </Button>
                             </div>
-
                         </>
                     }
-
-
-                    {
-                        this.state.show_next &&
-                        <>
-                            <div className='item-addr'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>Withdraw:</span>
-                                <div className='item-right-value'>
-                                    {
-                                        this.state.withdraw_str__to_arr.map((item, index) => {
-                                            return (<span key={index} className='item-right-value-span'>{item}</span>)
-                                        })
-                                    }
-                                </div>
-                            </div>
-                            <div className='item-addr'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>WithdrawAmount:</span>
-                                <div className='item-right-value'>
-                                    {
-                                        this.state.withdraw_amount_str__to_arr.map((item, index) => {
-                                            return (<span key={index} className='item-right-value-span'>{format_num_to_K(format_bn(item, 0, 2))}</span>)
-                                        })
-                                    }
-
-                                    <div style={{ height: 0, borderBottom: '1px dashed #E0E1EC', marginTop: '25px', marginBottom: '10px' }}></div>
-                                </div>
-                            </div>
-
-                            <div className='item-addr'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>Supply:</span>
-                                <div className='item-right-value'>
-                                    {
-                                        this.state.supply_str__to_arr.map((item, index) => {
-                                            return (<span key={index} className='item-right-value-span'>{item}</span>)
-                                        })
-                                    }
-                                </div>
-                            </div>
-                            <div className='item-addr'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>SupplyAmount:</span>
-                                <div className='item-right-value'>
-                                    {
-                                        this.state.supply_amount_str__to_arr.map((item, index) => {
-                                            return (<span key={index} className='item-right-value-span'>{format_num_to_K(format_bn(item, 0, 2))}</span>)
-                                        })
-                                    }
-
-                                    <div style={{ height: 0, borderBottom: '1px dashed #E0E1EC', marginTop: '25px', marginBottom: '10px' }}></div>
-                                </div>
-                            </div>
-
-                            {/* <div className='item-msg'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>Internal Pool:</span>
-                                <div className='item-right-value'>
-                                    <span className='item-right-value1'>123,456,123.12</span>
-                                    <span className='item-right-value2'>12.12%</span>
-                                </div>
-                            </div>
-                            <div className='item-msg'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>Compound:</span>
-                                <div className='item-right-value'>
-                                    <span className='item-right-value1'>123,456,123.12</span>
-                                    <span className='item-right-value2'>12.12%</span>
-                                </div>
-                            </div>
-                            <div className='item-msg'>
-                                <span className='item-num-span' style={{ color: '#7B7D8F' }}>Aave:</span>
-                                <div className='item-right-value'>
-                                    <span className='item-right-value1'>123,456,123.12</span>
-                                    <span className='item-right-value2'>12.12%</span>
-                                </div>
-                            </div> */}
-
-
-                            <div className='item-btn-wrap'>
-                                <Button onClick={() => { this.click_confirm_final() }}>Confirm</Button>
-                            </div>
-                        </>
-                    }
-
-
                 </Modal>
 
 
@@ -488,8 +486,8 @@ class Admin extends Component {
                                             }
                                         </span>
                                     </div>
-                                    <div className='btn-wrap'>
-                                        <Button disabled={true} onClick={() => { this.open_show_rebalance() }}>Rebalance</Button>
+                                    <div className='btn-wrap-admin'>
+                                        <Button onClick={() => { this.open_show_rebalance(this.state.active_index) }}>Rebalance</Button>
                                     </div>
                                 </div>
 
@@ -662,5 +660,95 @@ function AddressToTokenName(props) {
         <span className='card-item-1'>
             {address_map[props.net]['Handler'][props.address]}
         </span>
+    )
+}
+function InternalItem(props) {
+    return (
+        <div className='InternalItem'>
+            <div className='Item-wrap'>
+                <span className='Item-1'>Internal Pool</span>
+                <span className='Item-2'>
+                    {
+                        format_num_to_K(format_bn(props.rebalance_data.percent_arr[0], props.rebalance_data.token_decimal, 2))
+                    }
+                </span>
+                <span className='Item-3'>
+                    {
+                        Number(props.rebalance_data.percent_arr[0] / props.rebalance_data.total * 100).toFixed(2)
+                    }%
+                </span>
+            </div>
+            {
+                props.rebalance_data.percent_arr__to_be &&
+                <div className='Item-wrap'>
+                    <span className='Item-1' style={{ opacity: 0 }}>Internal Pool</span>
+                    <span className='Item-2'>
+                        {
+                            format_num_to_K(format_bn(props.rebalance_data.percent_arr__to_be[0], props.rebalance_data.token_decimal, 2))
+                        }
+                    </span>
+                    <span className='Item-3'>
+                        {
+                            Number(props.rebalance_data.percent_arr__to_be[0] / props.rebalance_data.total * 100).toFixed(2)
+                        }%
+                </span>
+                </div>
+            }
+        </div>
+    )
+}
+function HandlerItem(props) {
+    return (
+        <div className='HandlerItem'>
+            <div className='Item-wrap'>
+                <span className='Item-1'>
+                    <AddressToTokenName address={props.address_item} net={props.net_type} />
+                </span>
+                <span className='Item-2'>
+                    {
+                        format_num_to_K(format_bn(props.rebalance_data.percent_arr[props.index], props.rebalance_data.token_decimal, 2))
+                    }
+                </span>
+                <span className='Item-3'>
+                    {
+                        Number(props.rebalance_data.percent_arr[props.index] / props.rebalance_data.total * 100).toFixed(2)
+                    }%
+                    </span>
+            </div>
+            {
+                props.rebalance_data.percent_arr__to_be &&
+                <div className='Item-wrap'>
+                    <span className='Item-1' style={{ opacity: 0 }}>Handler</span>
+                    <span className='Item-2'>
+                        {
+                            format_num_to_K(format_bn(props.rebalance_data.percent_arr__to_be[props.index], props.rebalance_data.token_decimal, 2))
+                        }
+                    </span>
+                    <span className='Item-3'>
+                        {
+                            Number(props.rebalance_data.percent_arr__to_be[props.index] / props.rebalance_data.total * 100).toFixed(2)
+                        }%
+                    </span>
+                </div>
+            }
+            <div className='Reset-wrap'>
+                <div className='reset-btn'>
+                    <Button
+                        className={props.rebalance_data.action_arr[props.index] === 'supply' ? 'btn-active' : 'btn-active-not'}
+                        onClick={() => { props.i_will_supply(props.index) }}
+                    >+</Button>
+                    <Button
+                        className={props.rebalance_data.action_arr[props.index] === 'withdraw' ? 'btn-active' : 'btn-active-not'}
+                        onClick={() => { props.i_will_widthdraw(props.index) }}
+                    >-</Button>
+                </div>
+                <div className='reset-input'>
+                    <Input type='number' onChange={(e) => { props.number_changed(e.target.value, props.index) }} />
+                </div>
+                <div className='reset-ok'>
+                    OK
+                </div>
+            </div>
+        </div>
     )
 }
