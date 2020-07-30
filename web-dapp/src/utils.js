@@ -786,13 +786,13 @@ export const set_show_data = (that) => {
   }
 
   // date_arr
-  // let date_arr = [];
-  // for (let i = 0; i < temp_data.date.length; i++) {
-  //   date_arr[i] = moment(temp_data.date[i] * 1000).format('YYYY/M/DD');
-  // }
+  let date_arr = [];
+  for (let i = 0; i < temp_data.date.length; i++) {
+    date_arr[i] = moment(temp_data.date[i] * 1000).format('YYYY/M/DD');
+  }
   // console.log(date_arr);
 
-  let date_arr = temp_data.date;
+  // let date_arr = temp_data.date;
 
   that.setState({
     options: {
