@@ -183,12 +183,12 @@ class Admin extends Component {
             } else {
                 if (this.state.rebalance_data.action_arr[i] === 'supply') {
                     let supply__amount = this.state.rebalance_data.action_arr__number[i];
-                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.action_arr__number__tobe[0]).sub(this.bn(supply__amount)).toString();
-                    action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.action_arr__number__tobe[i]).add(this.bn(supply__amount)).toString();
+                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.percent_arr[0]).sub(this.bn(supply__amount)).toString();
+                    action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.percent_arr[i]).add(this.bn(supply__amount)).toString();
                 } else {
                     let withdraw__amount = this.state.rebalance_data.action_arr__number[i];
-                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.action_arr__number__tobe[0]).add(this.bn(withdraw__amount)).toString();
-                    action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.action_arr__number__tobe[i]).sub(this.bn(withdraw__amount)).toString();
+                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.percent_arr[0]).add(this.bn(withdraw__amount)).toString();
+                    action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.percent_arr[i]).sub(this.bn(withdraw__amount)).toString();
                 }
             }
         }
