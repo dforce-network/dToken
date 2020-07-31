@@ -254,6 +254,28 @@ $theme-color: #D4A454;
 
         .reset-input {
             flex: 1;
+            position: relative;
+
+            .reset-input-max {
+                position: absolute;
+                color: $theme-color;
+                // background-color: red;
+                right: 5px;
+                padding: 5px;
+                cursor: pointer;
+            }
+
+            input {
+                box-shadow: none;
+
+                &:hover {
+                    border: 1px solid $theme-color;
+                }
+
+                &:focus {
+                    border: 1px solid $theme-color;
+                }
+            }
         }
 
         .reset-ok {

@@ -16,7 +16,6 @@ import env from './abi/env';
 
 let token_abi_d = require('./abi/tokensABI_d.json');
 let address_map = env.ADDRESS;
-// let address_map = require('./abi/address_map.json');
 
 
 class Admin extends Component {
@@ -103,6 +102,7 @@ class Admin extends Component {
         // console.log(this.state.token_status[this.state.token_name[index]]);
         let rebalance_data = JSON.parse(JSON.stringify(this.state.token_status[this.state.token_name[index]]));
         let action_arr = [];
+        let action_arr__isMax = [];
         let action_arr__number = [];
         let action_arr__number__input = [];
 
@@ -112,16 +112,19 @@ class Admin extends Component {
                 action_arr[0] = '0';
                 action_arr__number[0] = '0';
                 action_arr__number__input[0] = '0';
+                action_arr__isMax[0] = '0';
             } else {
                 action_arr[i] = 'supply';
                 action_arr__number[i] = '0';
                 action_arr__number__input[i] = '0';
+                action_arr__isMax[0] = '0';
             }
         }
         rebalance_data.action_arr = action_arr;
         rebalance_data.action_arr__number = action_arr__number;
         rebalance_data.action_arr__number__input = action_arr__number__input;
         rebalance_data.action_arr__number__tobe = action_arr__number__tobe;
+        rebalance_data.action_arr__isMax = action_arr__isMax;
         this.setState({
             rebalance_data: rebalance_data,
             show_rebalance: true,
@@ -153,12 +156,16 @@ class Admin extends Component {
         console.log('supply', index)
         console.log(this.state.rebalance_data)
         let action_arr = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr));
+        let action_arr__isMax = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__isMax));
+
         action_arr[index] = 'supply';
+        action_arr__isMax[index] = '0';
 
         this.setState({
             rebalance_data: {
                 ...this.state.rebalance_data,
-                action_arr
+                action_arr,
+                action_arr__isMax
             }
         }, () => {
             console.log(this.state.rebalance_data)
@@ -183,22 +190,66 @@ class Admin extends Component {
         }
 
 
+        let action_arr__isMax = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__isMax));
         let action_arr__number = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number));
         let action_arr__number__input = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number__input));
+
         action_arr__number[index] = value_bn;
         action_arr__number__input[index] = value;
+        action_arr__isMax[index] = '0';
 
         this.setState({
             rebalance_data: {
                 ...this.state.rebalance_data,
                 action_arr__number,
-                action_arr__number__input
+                action_arr__number__input,
+                action_arr__isMax
             }
         }, () => {
             // console.log(this.state.rebalance_data);
             this.handle__tobe_data();
         })
     }
+
+    number_changed__spe = (index) => {
+        // console.log(value, index)
+        // console.log(this.state.rebalance_data.action_arr[index])
+        // console.log(this.state.rebalance_data.token_decimal)
+        // let value_bn = this.bn(value).mul(this.bn(10).pow(this.bn(t_decimal))).toString();
+        let t_decimal = this.state.rebalance_data.token_decimal;
+
+        // let value_bn;
+        // if (value.indexOf('.') > 0) {
+        //     var sub_num = value.length - value.indexOf('.') - 1; // 3
+        //     value_bn = value.substr(0, value.indexOf('.')) + value.substr(value.indexOf('.') + 1); // '123456'
+        //     value_bn = this.bn(value_bn).mul(this.bn(10 ** (t_decimal - sub_num))).toString(); // bn_'123456'
+        // } else {
+        //     value_bn = this.bn(value).mul(this.bn(10).pow(this.bn(t_decimal))).toString();
+        // }
+
+
+        let action_arr__isMax = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__isMax));
+        let percent_arr = JSON.parse(JSON.stringify(this.state.rebalance_data.percent_arr));
+        let action_arr__number = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number));
+        let action_arr__number__input = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number__input));
+
+        action_arr__isMax[index] = 'max';
+        action_arr__number[index] = percent_arr[index];
+        action_arr__number__input[index] = format_bn(percent_arr[index], t_decimal, 4);
+
+        this.setState({
+            rebalance_data: {
+                ...this.state.rebalance_data,
+                action_arr__number,
+                action_arr__number__input,
+                action_arr__isMax
+            }
+        }, () => {
+            // console.log(this.state.rebalance_data);
+            this.handle__tobe_data();
+        })
+    }
+
 
     handle__tobe_data = () => {
         let action_arr__number__tobe = [];
@@ -270,8 +321,13 @@ class Admin extends Component {
                     supply__arr.push(this.state.rebalance_data.address_arr[i]);
                     supply__arr__amount.push(this.state.rebalance_data.action_arr__number[i]);
                 } else {
-                    withdraw__arr.push(this.state.rebalance_data.address_arr[i]);
-                    withdraw__arr__amount.push(this.state.rebalance_data.action_arr__number[i]);
+                    if (this.state.rebalance_data.action_arr__isMax[i] === 'max') {
+                        withdraw__arr.push(this.state.rebalance_data.address_arr[i]);
+                        withdraw__arr__amount.push('115792089237316195423570985008687907853269984665640564039457584007913129639935');
+                    } else {
+                        withdraw__arr.push(this.state.rebalance_data.address_arr[i]);
+                        withdraw__arr__amount.push(this.state.rebalance_data.action_arr__number[i]);
+                    }
                 }
             }
         }
@@ -289,136 +345,13 @@ class Admin extends Component {
                 if (reject) { }
                 if (res_hash) {
                     console.log(res_hash);
+                    this.setState({
+                        show_rebalance: false,
+                    })
                 }
             }
         )
     }
-
-
-
-
-
-
-    click_confirm = () => {
-        if (!((this.state.passed_part1 && this.state.passed_part2) || (this.state.passed_part3 && this.state.passed_part4))) {
-            return console.log('not passed.');
-        }
-
-        let withdraw_str__to_arr = this.state.withdraw_str && this.state.withdraw_str.split(',') || [];
-        let withdraw_amount_str__to_arr = this.state.withdraw_amount_str && this.state.withdraw_amount_str.split(',') || [];
-        let supply_str__to_arr = this.state.supply_str && this.state.supply_str.split(',') || [];
-        let supply_amount_str__to_arr = this.state.supply_amount_str && this.state.supply_amount_str.split(',') || [];
-
-        this.setState({
-            withdraw_str__to_arr: withdraw_str__to_arr,
-            withdraw_amount_str__to_arr: withdraw_amount_str__to_arr,
-            supply_str__to_arr: supply_str__to_arr,
-            supply_amount_str__to_arr: supply_amount_str__to_arr,
-            show_next: true
-        })
-        console.log('click_confirm')
-    }
-
-
-    // *** change ***
-    withdraw_change = (val) => {
-        // console.log(val)
-        // console.log(val.split(',')) // "↵"
-
-        this.setState({
-            withdraw_str: val
-        })
-
-        if (this.state.cur_token === 'dUSDT') {
-            let addr_Aave = address_map[this.state.net_type]['Aave_Handler'];
-            if (val.split(',')[0] === addr_Aave) {
-                this.setState({
-                    passed_part1: true
-                })
-            } else {
-                this.setState({
-                    passed_part1: false
-                })
-            }
-        } else if (this.state.cur_token === 'dUSDC') {
-            let addr_Compound = address_map[this.state.net_type]['Compound_Handler'];
-            if (val.split(',')[0] === addr_Compound) {
-                this.setState({
-                    passed_part1: true
-                })
-            } else {
-                this.setState({
-                    passed_part1: false
-                })
-            }
-        }
-    }
-    withdraw_amount_change = (val) => {
-        // console.log(val)
-        // console.log(val.split(','))
-        this.setState({
-            withdraw_amount_str: val
-        })
-
-        if (Number(val) > 0) {
-            this.setState({
-                passed_part2: true
-            })
-        } else {
-            this.setState({
-                passed_part2: false
-            })
-        }
-    }
-
-    supply_change = (val) => {
-        // console.log(val)
-        this.setState({
-            supply_str: val
-        })
-
-        if (this.state.cur_token === 'dUSDT') {
-            let addr_Aave = address_map[this.state.net_type]['Aave_Handler'];
-            if (val.split(',')[0] === addr_Aave) {
-                this.setState({
-                    passed_part3: true
-                })
-            } else {
-                this.setState({
-                    passed_part3: false
-                })
-            }
-        } else if (this.state.cur_token === 'dUSDC') {
-            let addr_Compound = address_map[this.state.net_type]['Compound_Handler'];
-            if (val.split(',')[0] === addr_Compound) {
-                this.setState({
-                    passed_part3: true
-                })
-            } else {
-                this.setState({
-                    passed_part3: false
-                })
-            }
-        }
-    }
-    supply_amount_change = (val) => {
-        // console.log(val)
-        this.setState({
-            supply_amount_str: val
-        })
-
-        if (Number(val) > 0) {
-            this.setState({
-                passed_part4: true
-            })
-        } else {
-            this.setState({
-                passed_part4: false
-            })
-        }
-    }
-
-
 
 
 
@@ -475,6 +408,7 @@ class Admin extends Component {
                                     i_will_widthdraw={(index) => { this.i_will_widthdraw(index) }}
                                     i_will_supply={(index) => { this.i_will_supply(index) }}
                                     number_changed={(val, index) => { this.number_changed(val, index) }}
+                                    number_changed__spe={(index) => { this.number_changed__spe(index) }}
                                 />
                             )
                         })
@@ -801,6 +735,10 @@ function HandlerItem(props) {
                         type='number'
                         onChange={(e) => { props.number_changed(e.target.value, props.index) }}
                     />
+                    {
+                        props.rebalance_data.action_arr[props.index] === 'withdraw' &&
+                        <span className='reset-input-max' onClick={() => { props.number_changed__spe(props.index) }}>MAX</span>
+                    }
                 </div>
                 {/* <div className='reset-ok'>
                     OK
