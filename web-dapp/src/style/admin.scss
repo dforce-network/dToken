@@ -184,7 +184,6 @@ $theme-color: #D4A454;
                         .card-item-3 {
                             flex: 2;
 
-                            // background-color: greenyellow;
                             .title {
                                 text-align: left;
                             }
@@ -206,6 +205,8 @@ $theme-color: #D4A454;
     margin: 0 auto;
     border-radius: 6px;
     padding: 10px;
+    margin-bottom: 20px;
+    margin-top: 30px;
 
     .Item-wrap {
         display: flex;
@@ -220,6 +221,7 @@ $theme-color: #D4A454;
     margin: 0 auto;
     border-radius: 6px;
     padding: 10px;
+    margin-bottom: 20px;
 
     .Item-wrap {
         display: flex;
@@ -230,6 +232,7 @@ $theme-color: #D4A454;
         display: flex;
         width: 80%;
         margin: 0 auto;
+        margin-top: 10px;
 
         .reset-btn {
             margin-right: 5px;
@@ -259,4 +262,22 @@ $theme-color: #D4A454;
             cursor: pointer;
         }
     }
+}
+
+.btm-btn-wrap {
+    // display: flex;
+    width: 300px;
+    margin: 0 auto;
+    // background-color: greenyellow;
+    // justify-content: space-between;
+    margin-top: 30px;
+    text-align: center;
+
+    button {
+        width: 120px;
+    }
+}
+
+.tobe__color {
+    color: $theme-color;
 }
