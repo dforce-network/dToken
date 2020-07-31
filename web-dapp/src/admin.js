@@ -14,6 +14,7 @@ import {
 } from './utils.js';
 import env from './abi/env';
 
+let token_abi_d = require('./abi/tokensABI_d.json');
 let address_map = env.ADDRESS;
 // let address_map = require('./abi/address_map.json');
 
@@ -48,17 +49,21 @@ class Admin extends Component {
 
         let baseData_contract = await init_baseData_contract(this.new_web3, nettype);
         let decimals_arr = [];
+        let contract_arr = [];
         for (let i = 0; i < this.state.token_name.length; i++) {
             let t_contract = await init_contract(this.new_web3, nettype, this.state.token_name[i]);
+            contract_arr.push(new this.new_web3.eth.Contract(token_abi_d, address_map[nettype]['d' + this.state.token_name[i]]));
             decimals_arr.push(await get_decimals(t_contract))
         }
+        // console.log(contract_arr);
         let my_account = await get_my_account(this.new_web3);
 
         this.setState({
             net_type: nettype,
             baseData_contract: baseData_contract,
             decimals_arr: decimals_arr,
-            my_account: my_account
+            my_account: my_account,
+            contract_arr: contract_arr
         }, () => {
             for (let i = 0; i < this.state.token_name.length; i++) {
                 this.get_token_BaseData(this.state.token_name[i], i);
@@ -67,7 +72,7 @@ class Admin extends Component {
     }
     get_token_BaseData = async (token, idx) => {
         let res_tokenData = await this.state.baseData_contract.methods.getDTokenData(address_map[this.state.net_type]['d' + token]).call();
-        // console.log(res_tokenData);
+        // console.log(contract);
         let total = res_tokenData[0];
         let dtoken_total = res_tokenData[1];
         let address_arr = res_tokenData[2];
@@ -99,24 +104,31 @@ class Admin extends Component {
         let rebalance_data = JSON.parse(JSON.stringify(this.state.token_status[this.state.token_name[index]]));
         let action_arr = [];
         let action_arr__number = [];
+        let action_arr__number__input = [];
+
         let action_arr__number__tobe = JSON.parse(JSON.stringify(rebalance_data.percent_arr));
         for (let i = 0; i < rebalance_data.percent_arr.length; i++) {
             if (i === 0) {
-                action_arr[0] = 'internal';
-                action_arr__number[0] = 'internal';
+                action_arr[0] = '0';
+                action_arr__number[0] = '0';
+                action_arr__number__input[0] = '0';
             } else {
                 action_arr[i] = 'supply';
                 action_arr__number[i] = '0';
+                action_arr__number__input[i] = '0';
             }
         }
         rebalance_data.action_arr = action_arr;
         rebalance_data.action_arr__number = action_arr__number;
+        rebalance_data.action_arr__number__input = action_arr__number__input;
         rebalance_data.action_arr__number__tobe = action_arr__number__tobe;
         this.setState({
             rebalance_data: rebalance_data,
-            show_rebalance: true
+            show_rebalance: true,
+            cur_contract: this.state.contract_arr[index]
         }, () => {
             console.log(this.state.rebalance_data)
+            this.number_changed('0', 0);
         })
     }
 
@@ -133,6 +145,7 @@ class Admin extends Component {
             }
         }, () => {
             console.log(this.state.rebalance_data)
+            this.number_changed('0', index)
         })
     }
 
@@ -149,6 +162,7 @@ class Admin extends Component {
             }
         }, () => {
             console.log(this.state.rebalance_data)
+            this.number_changed('0', index)
         })
     }
 
@@ -156,17 +170,29 @@ class Admin extends Component {
         // console.log(value, index)
         // console.log(this.state.rebalance_data.action_arr[index])
         // console.log(this.state.rebalance_data.token_decimal)
+        // let value_bn = this.bn(value).mul(this.bn(10).pow(this.bn(t_decimal))).toString();
         let t_decimal = this.state.rebalance_data.token_decimal;
 
-        value = this.bn(value).mul(this.bn(10).pow(this.bn(t_decimal))).toString();
+        let value_bn;
+        if (value.indexOf('.') > 0) {
+            var sub_num = value.length - value.indexOf('.') - 1; // 3
+            value_bn = value.substr(0, value.indexOf('.')) + value.substr(value.indexOf('.') + 1); // '123456'
+            value_bn = this.bn(value_bn).mul(this.bn(10 ** (t_decimal - sub_num))).toString(); // bn_'123456'
+        } else {
+            value_bn = this.bn(value).mul(this.bn(10).pow(this.bn(t_decimal))).toString();
+        }
+
 
         let action_arr__number = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number));
-        action_arr__number[index] = value;
+        let action_arr__number__input = JSON.parse(JSON.stringify(this.state.rebalance_data.action_arr__number__input));
+        action_arr__number[index] = value_bn;
+        action_arr__number__input[index] = value;
 
         this.setState({
             rebalance_data: {
                 ...this.state.rebalance_data,
-                action_arr__number
+                action_arr__number,
+                action_arr__number__input
             }
         }, () => {
             // console.log(this.state.rebalance_data);
@@ -179,15 +205,15 @@ class Admin extends Component {
 
         for (let i = 0; i < this.state.rebalance_data.action_arr.length; i++) {
             if (i === 0) {
-                console.log('i===0')
+                action_arr__number__tobe[0] = '0';
             } else {
                 if (this.state.rebalance_data.action_arr[i] === 'supply') {
                     let supply__amount = this.state.rebalance_data.action_arr__number[i];
-                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.percent_arr[0]).sub(this.bn(supply__amount)).toString();
+                    // action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.percent_arr[0]).sub(this.bn(supply__amount)).toString();
                     action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.percent_arr[i]).add(this.bn(supply__amount)).toString();
                 } else {
                     let withdraw__amount = this.state.rebalance_data.action_arr__number[i];
-                    action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.percent_arr[0]).add(this.bn(withdraw__amount)).toString();
+                    // action_arr__number__tobe[0] = this.bn(this.state.rebalance_data.percent_arr[0]).add(this.bn(withdraw__amount)).toString();
                     action_arr__number__tobe[i] = this.bn(this.state.rebalance_data.percent_arr[i]).sub(this.bn(withdraw__amount)).toString();
                 }
             }
@@ -200,7 +226,72 @@ class Admin extends Component {
             }
         }, () => {
             console.log(this.state.rebalance_data);
+
+            this.check__before_send();
         })
+    }
+
+    check__before_send = () => {
+        let rebalance_data = JSON.parse(JSON.stringify(this.state.rebalance_data));
+
+        let total__exec0 = 0;
+        for (let i = 0; i < rebalance_data.action_arr__number__tobe.length; i++) {
+            if (i !== 0) {
+                total__exec0 = this.bn(total__exec0).add(this.bn(rebalance_data.action_arr__number__tobe[i])).toString();
+            }
+        }
+        // console.log(total__exec0);
+        // console.log(rebalance_data.total);
+        // console.log(this.bn(rebalance_data.total).sub(this.bn(total__exec0)).toString());
+
+        rebalance_data.action_arr__number__tobe[0] = this.bn(rebalance_data.total).sub(this.bn(total__exec0)).toString();
+        rebalance_data.checked = true;
+
+        this.setState({
+            rebalance_data
+        }, () => {
+            // console.log(this.state.rebalance_data);
+            // this.package__data__send();
+        })
+    }
+
+    package__data__send = () => {
+        console.log(this.state.rebalance_data);
+        console.log(this.state.rebalance_data.action_arr);
+
+        let withdraw__arr = [];
+        let withdraw__arr__amount = [];
+        let supply__arr = [];
+        let supply__arr__amount = [];
+
+        for (let i = 0; i < this.state.rebalance_data.action_arr.length; i++) {
+            if (i !== 0) {
+                if (this.state.rebalance_data.action_arr[i] === 'supply') {
+                    supply__arr.push(this.state.rebalance_data.address_arr[i]);
+                    supply__arr__amount.push(this.state.rebalance_data.action_arr__number[i]);
+                } else {
+                    withdraw__arr.push(this.state.rebalance_data.address_arr[i]);
+                    withdraw__arr__amount.push(this.state.rebalance_data.action_arr__number[i]);
+                }
+            }
+        }
+
+        console.log(withdraw__arr)
+        console.log(withdraw__arr__amount)
+        console.log(supply__arr)
+        console.log(supply__arr__amount)
+
+        this.state.cur_contract.methods.rebalance(withdraw__arr, withdraw__arr__amount, supply__arr, supply__arr__amount).send(
+            {
+                from: this.state.my_account,
+                // gas: constance.gas
+            }, (reject, res_hash) => {
+                if (reject) { }
+                if (res_hash) {
+                    console.log(res_hash);
+                }
+            }
+        )
     }
 
 
@@ -328,43 +419,7 @@ class Admin extends Component {
     }
 
 
-    click_confirm_final = () => {
-        // console.log(
-        //     this.state.withdraw_str.split(','),
-        //     this.state.withdraw_amount_str.split(','),
-        //     this.state.supply_str.split(','),
-        //     this.state.supply_amount_str.split(','))
 
-        let arr_1 = this.state.withdraw_str && this.state.withdraw_str.split(',') || [];
-        let arr_2 = this.state.withdraw_amount_str && this.state.withdraw_amount_str.split(',') || [];
-        let arr_3 = this.state.supply_str && this.state.supply_str.split(',') || [];
-        let arr_4 = this.state.supply_amount_str && this.state.supply_amount_str.split(',') || [];
-
-        for (let i = 0; i < arr_2.length; i++) {
-            arr_2[i] = this.bn(arr_2[i]).mul(this.bn(10).pow(this.bn(this.state.cur_decimals))).toString();
-        }
-        for (let i = 0; i < arr_4.length; i++) {
-            arr_4[i] = this.bn(arr_4[i]).mul(this.bn(10).pow(this.bn(this.state.cur_decimals))).toString();
-        }
-
-        console.log(arr_1)
-        console.log(arr_2)
-        console.log(arr_3)
-        console.log(arr_4)
-
-
-        this.state.cur_contract.methods.rebalance(arr_1, arr_2, arr_3, arr_4).send(
-            {
-                from: this.state.my_account,
-                // gas: constance.gas
-            }, (reject, res_hash) => {
-                if (reject) { }
-                if (res_hash) {
-                    console.log(res_hash);
-                }
-            }
-        )
-    }
 
 
     componentDidMount = () => {
@@ -425,16 +480,14 @@ class Admin extends Component {
                         })
                     }
 
-                    {
-                        !this.state.show_next &&
-                        <>
-                            <div className='item-btn-wrap'>
-                                <Button onClick={() => { this.click_confirm() }}>
-                                    Confirm
-                                </Button>
-                            </div>
-                        </>
-                    }
+                    <div className='btm-btn-wrap'>
+                        {/* <Button onClick={() => { this.check__before_send() }}>
+                            check
+                        </Button> */}
+                        <Button onClick={() => { this.package__data__send() }}>
+                            Confirm
+                        </Button>
+                    </div>
                 </Modal>
 
 
@@ -679,17 +732,17 @@ function InternalItem(props) {
                 </span>
             </div>
             {
-                props.rebalance_data.percent_arr__to_be &&
-                <div className='Item-wrap'>
+                props.rebalance_data.checked &&
+                <div className='Item-wrap tobe__color'>
                     <span className='Item-1' style={{ opacity: 0 }}>Internal Pool</span>
                     <span className='Item-2'>
                         {
-                            format_num_to_K(format_bn(props.rebalance_data.percent_arr__to_be[0], props.rebalance_data.token_decimal, 2))
+                            format_num_to_K(format_bn(props.rebalance_data.action_arr__number__tobe[0], props.rebalance_data.token_decimal, 2))
                         }
                     </span>
                     <span className='Item-3'>
                         {
-                            Number(props.rebalance_data.percent_arr__to_be[0] / props.rebalance_data.total * 100).toFixed(2)
+                            Number(props.rebalance_data.action_arr__number__tobe[0] / props.rebalance_data.total * 100).toFixed(2)
                         }%
                 </span>
                 </div>
@@ -716,17 +769,17 @@ function HandlerItem(props) {
                     </span>
             </div>
             {
-                props.rebalance_data.percent_arr__to_be &&
-                <div className='Item-wrap'>
+                props.rebalance_data.checked &&
+                <div className='Item-wrap tobe__color'>
                     <span className='Item-1' style={{ opacity: 0 }}>Handler</span>
                     <span className='Item-2'>
                         {
-                            format_num_to_K(format_bn(props.rebalance_data.percent_arr__to_be[props.index], props.rebalance_data.token_decimal, 2))
+                            format_num_to_K(format_bn(props.rebalance_data.action_arr__number__tobe[props.index], props.rebalance_data.token_decimal, 2))
                         }
                     </span>
                     <span className='Item-3'>
                         {
-                            Number(props.rebalance_data.percent_arr__to_be[props.index] / props.rebalance_data.total * 100).toFixed(2)
+                            Number(props.rebalance_data.action_arr__number__tobe[props.index] / props.rebalance_data.total * 100).toFixed(2)
                         }%
                     </span>
                 </div>
@@ -743,11 +796,15 @@ function HandlerItem(props) {
                     >-</Button>
                 </div>
                 <div className='reset-input'>
-                    <Input type='number' onChange={(e) => { props.number_changed(e.target.value, props.index) }} />
+                    <Input
+                        value={props.rebalance_data.action_arr__number__input[props.index]}
+                        type='number'
+                        onChange={(e) => { props.number_changed(e.target.value, props.index) }}
+                    />
                 </div>
-                <div className='reset-ok'>
+                {/* <div className='reset-ok'>
                     OK
-                </div>
+                </div> */}
             </div>
         </div>
     )
