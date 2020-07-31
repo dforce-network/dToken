@@ -854,11 +854,12 @@ export const get_tokens_status_apy = (that) => {
     return console.log('wrong net work');
   }
   let url_apy = constance.url_apy;
-  if (that.state.net_type && that.state.net_type !== 'main') {
-    url_apy = url_apy + that.state.net_type;
-  } else {
-    url_apy = url_apy + that.state.net_type;
-  }
+  // if (that.state.net_type && that.state.net_type !== 'main') {
+  //   url_apy = url_apy + that.state.net_type;
+  // } else {
+  //   url_apy = url_apy + that.state.net_type;
+  // }
+  url_apy = url_apy + 'main';
 
   fetch(url_apy).then(res => res.text())
     .then((data) => {
@@ -917,11 +918,12 @@ export const get_tokens_status = (that) => {
   // URL_getBanlanceInfo
   let url = env.URL_getBanlanceInfo;
 
-  if (that.state.net_type && that.state.net_type !== 'main') {
-    url = url + '?net=' + that.state.net_type;
-  } else {
-    url = url + '?net=main';
-  }
+  // if (that.state.net_type && that.state.net_type !== 'main') {
+  //   url = url + '?net=' + that.state.net_type;
+  // } else {
+  //   url = url + '?net=main';
+  // }
+  url = url + '?net=main';
   // console.log(url);
 
   fetch(url).then(res => res.text())
@@ -1012,6 +1014,3 @@ export const format_num_to_K = (str_num) => {
   return part_a + '.' + part_b;
 }
 
-
-
-// in admin

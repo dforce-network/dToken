@@ -13,7 +13,7 @@ class Entry extends Component {
                 <Route exact path="/dashboard.html" render={() => <Admin />} /> */}
                 <Route exact path="/" component={Home} />
                 <Route exact path="/dapp" component={App} />
-                <Route exact path="/dashboard.html" component={Admin} />
+                <Route exact path="/dashboard" component={Admin} />
             </Router>
         )
     }
