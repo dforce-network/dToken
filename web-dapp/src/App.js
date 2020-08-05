@@ -80,9 +80,12 @@ export default class App extends React.Component {
       // cur_index_mint: 0,
       // cur_index_redeem: 0,
       // cur_show_data_index: 0,
-      cur_index_mint: props.location.state && props.location.state.cur_index || 0,
-      cur_index_redeem: props.location.state && props.location.state.cur_index || 0,
-      cur_show_data_index: props.location.state && props.location.state.cur_index || 0,
+      // cur_index_mint: props.location.state && props.location.state.cur_index || 0,
+      // cur_index_redeem: props.location.state && props.location.state.cur_index || 0,
+      // cur_show_data_index: props.location.state && props.location.state.cur_index || 0,
+      cur_index_mint: this.getUrl(props),
+      cur_index_redeem: this.getUrl(props),
+      cur_show_data_index: this.getUrl(props),
       is_withdraw: props.location.state && props.location.state.is_withdraw || false,
       token_status: [],
       token_status_apy: [],
@@ -99,8 +102,29 @@ export default class App extends React.Component {
     this.bn = this.new_web3.utils.toBN;
 
     // console.log(props.location.state)
+    // console.log(window.location.href)
   }
 
+  getUrl = (props) => {
+    // console.log(props.location.state && props.location.state.cur_index || 0)
+
+    if (props && props.location.state && props.location.state.cur_index) {
+      console.log('props');
+      return props.location.state && props.location.state.cur_index || 0;
+    }
+
+    if (window.location.href.toLowerCase().includes('dapp/dai')) {
+      console.log('dapp/dai');
+      return 2;
+    } else if (window.location.href.toLowerCase().includes('dapp/usdc')) {
+      console.log('dapp/usdc');
+      return 1;
+    } else {
+      console.log('dapp/usdt');
+      return 0;
+    }
+
+  }
 
 
 
