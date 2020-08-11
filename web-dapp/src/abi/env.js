@@ -18,7 +18,11 @@ function env() {
             '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "Internal",
             '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "Compound",
             '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "Aave",
-          }
+          },
+          TUSD: "0x0000000000085d4780B73119b644AE5ecd22b376",
+          dTUSD: "0x55BCf7173C8840d5517424eD19b7bbF11CFb9F2B",
+          PAX: "0x8E870D67F660D95d5be530380D0eC0bd388289E1",
+          dPAX: "0xF4dFc3Df8C83Be5a2ec2025491fd157c474f438a",
         },
         kovan: {
           USDT: "0x07de306FF27a2B630B1141956844eB1552B956B5",
@@ -29,6 +33,8 @@ function env() {
           dDAI: "0x19205bFDaf1BC9fC8705eA9a73f560572fb8F455",
           TUSD: "0x1c4a937d171752e1313D70fb16Ae2ea02f86303e",
           dTUSD: "0x938C3681fE2Ef6D3A722cb387F4AE79D16911c3A",
+          PAX: "0xfc26E36DA58618b52C14aeB1802E38dc58dFE7b6",
+          dPAX: "0xDbBd202ffb3AD785037c183A8496F403010B8e29",
           baseData: "0x80df99FAeaD7BDcf54FF18554860b3A24e4D68B5",
           Aave_Handler: "0xAfA9171828d3B2345638021647598F15F77c0e3A",
           Compound_Handler: "0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1",
@@ -46,12 +52,16 @@ function env() {
         main: {
           USDT: 6,
           USDC: 6,
-          DAI: 18
+          DAI: 18,
+          TUSD: 18,
+          PAX: 18
         },
         kovan: {
           USDT: 6,
           USDC: 6,
-          DAI: 18
+          DAI: 18,
+          TUSD: 18,
+          PAX: 18
         }
       }
     };
@@ -72,7 +82,11 @@ function env() {
             '0x885dD179c76ee5949B9053F1958bA3a91e4CF592': "Internal",
             '0xBcDD2a069a46E9b5D032D2F99725418508CE6Aee': "Compound",
             '0xbb7D75BE4dc8Eb15FF90422137C0a5BcBd316953': "Aave",
-          }
+          },
+          TUSD: "0x0000000000085d4780B73119b644AE5ecd22b376",
+          dTUSD: "0x55BCf7173C8840d5517424eD19b7bbF11CFb9F2B",
+          PAX: "0x8E870D67F660D95d5be530380D0eC0bd388289E1",
+          dPAX: "0xF4dFc3Df8C83Be5a2ec2025491fd157c474f438a",
         },
         kovan: {
           USDT: "0x07de306FF27a2B630B1141956844eB1552B956B5",
@@ -83,6 +97,8 @@ function env() {
           dDAI: "0x19205bFDaf1BC9fC8705eA9a73f560572fb8F455",
           TUSD: "0x1c4a937d171752e1313D70fb16Ae2ea02f86303e",
           dTUSD: "0x938C3681fE2Ef6D3A722cb387F4AE79D16911c3A",
+          PAX: "0xfc26E36DA58618b52C14aeB1802E38dc58dFE7b6",
+          dPAX: "0xDbBd202ffb3AD785037c183A8496F403010B8e29",
           baseData: "0x80df99FAeaD7BDcf54FF18554860b3A24e4D68B5",
           Aave_Handler: "0xAfA9171828d3B2345638021647598F15F77c0e3A",
           Compound_Handler: "0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1",
@@ -100,12 +116,16 @@ function env() {
         main: {
           USDT: 6,
           USDC: 6,
-          DAI: 18
+          DAI: 18,
+          TUSD: 18,
+          PAX: 18
         },
         kovan: {
           USDT: 6,
           USDC: 6,
-          DAI: 18
+          DAI: 18,
+          TUSD: 18,
+          PAX: 18
         }
       }
     };

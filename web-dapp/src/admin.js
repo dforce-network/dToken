@@ -24,7 +24,7 @@ class Admin extends Component {
 
         this.state = {
             active_index: 0,
-            token_name: ['USDT', 'USDC', 'DAI'],
+            token_name: ['USDT', 'USDC', 'DAI', 'TUSD', 'PAX'],
             show_rebalance: false,
             token_status: {}
         }
