@@ -1,5 +1,6 @@
 import env from './abi/env';
 import moment from 'moment';
+import axios from 'axios';
 
 let address_map = env.ADDRESS;
 let token_abi = require('./abi/tokensABI.json');
@@ -309,6 +310,38 @@ export const redeem_max = (that) => {
   })
 }
 
+const updateDataToServer = (that, action, address) => {
+  const wallet_list = ['imtoken', 'bitpie', 'mykey', 'dapppocket', 'blocto', 'huobiwallet', 'abcwallet', 'tokenpocket', 'dappbirds', 'mathwallet', 'meetone'];
+  // console.log(window.location.href)  // http://localhost:3000/dapp/usdc/?utm_source=imToken123
+
+  let t_url = window.location.href;
+  let arr_url = t_url.split('/');
+  // console.log(arr_url) // ?utm_source=imToken123
+
+  let source = 'web';
+
+  for (let i = 0; i < arr_url.length; i++) {
+    if (arr_url[i].toLowerCase().includes('?utm_source=')) {
+      for (let j = 0; j < wallet_list.length; j++) {
+        if (arr_url[i].toLowerCase().includes(wallet_list[j])) {
+          source = wallet_list[j]
+        }
+      }
+    }
+  }
+
+  let obj = {
+    "sources": source,
+    "operation": action,
+    "platforms": "markets",
+    "address": address
+  }
+
+  console.log(JSON.stringify(obj));
+  axios.post('https://analytics.dforce.network/update', JSON.stringify(obj))
+    .then(res => { console.log(res) })
+    .catch(error => { console.log(error) })
+}
 
 // *** click ***
 export const mint_click = (that) => {
@@ -362,63 +395,11 @@ export const mint_click = (that) => {
             value_mint: '',
             mint_to_receive_bn: ''
           })
+          updateDataToServer(that, 'mint', that.state.my_account);
         }
       }
     )
   })
-
-
-  return;
-  if (!that.state.token_is_approve[that.state.cur_index_mint]) {
-    that.state.token_contract[that.state.cur_index_mint].methods.approve(address_map[that.state.net_type]['d' + cur_mint_token], max_num).send(
-      {
-        from: that.state.my_account,
-      }, (reject, res_hash) => {
-        if (reject) {
-          that.setState({
-            is_btn_disabled_mint: false
-          })
-        }
-        if (res_hash) {
-          let t_token_is_approve = that.state.token_is_approve;
-          t_token_is_approve[that.state.cur_index_mint] = true;
-          that.setState({
-            token_is_approve: t_token_is_approve
-          });
-          that.state.token_d_contract[that.state.cur_index_mint].methods.mint(that.state.my_account, that.state.value_mint_bn).send(
-            {
-              from: that.state.my_account,
-              gas: constance.gas
-            }, (reject, res_hash) => {
-              if (reject) {
-                that.setState({
-                  is_btn_disabled_mint: false
-                })
-              }
-              if (res_hash) {
-                console.log(res_hash);
-                i_got_hash(
-                  that,
-                  'Deposit',
-                  cur_mint_token,
-                  that.state.value_mint_bn.toLocaleString(),
-                  'd' + cur_mint_token,
-                  that.state.mint_to_receive_bn.toLocaleString(),
-                  res_hash,
-                  'pendding'
-                );
-                that.setState({
-                  is_btn_disabled_mint: false,
-                  value_mint: '',
-                  mint_to_receive_bn: ''
-                })
-              }
-            }
-          )
-        }
-      }
-    )
-  }
 }
 export const redeem_click = (that) => {
   if (!that.state.value_redeem_bn) {
@@ -474,6 +455,7 @@ export const redeem_click = (that) => {
             value_redeem: '',
             redeem_to_receive_bn: ''
           })
+          updateDataToServer(that, 'redeem', that.state.my_account);
         }
       }
     )
