@@ -38,11 +38,7 @@ import arrow_down from '../../images/arrow_down.svg';
 import no_history from '../../images/no-history.svg';
 import no_support from '../../images/no_support.svg';
 
-import {
-    get_nettype,
-    get_tokens_status,
-    get_tokens_status_apy,
-} from '../../utils.js';
+import { get_nettype } from '../../utils.js';
 
 
 export default class Home extends React.Component {
@@ -87,15 +83,9 @@ export default class Home extends React.Component {
             return console.log('no web3 provider');
         }
 
-
         let nettype = await get_nettype(this.new_web3);
         this.setState({
             net_type: nettype,
-        }, () => {
-            // get_tokens_status(this);
-            // get_tokens_status_apy(this);
-
-
         })
 
         if (window.ethereum) {

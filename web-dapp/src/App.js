@@ -96,6 +96,7 @@ export default class App extends React.Component {
       meun1: true,
       meun2: true,
       meun3: true,
+      source: this.handleUrl(props),
     }
 
     this.new_web3 = window.new_web3 = new Web3(Web3.givenProvider || null);
@@ -103,6 +104,30 @@ export default class App extends React.Component {
 
     // console.log(props.location.state)
     // console.log(window.location.href)
+  }
+
+  handleUrl = (props) => {
+    if (props && props.location.state && props.location.state.source) {
+      console.log(props.location.state.source);
+      return props.location.state.source;
+    }
+
+    const wallet_list = ['imtoken', 'bitpie', 'mykey', 'dapppocket', 'blocto', 'huobiwallet', 'abcwallet', 'tokenpocket', 'dappbirds', 'mathwallet', 'meetone'];
+    let t_url = window.location.href;
+    let arr_url = t_url.split('/');
+    let source;
+
+    for (let i = 0; i < arr_url.length; i++) {
+      if (arr_url[i].toLowerCase().includes('?utm_source=')) {
+        for (let j = 0; j < wallet_list.length; j++) {
+          if (arr_url[i].toLowerCase().includes(wallet_list[j])) {
+            return source = wallet_list[j];
+          }
+        }
+      }
+    }
+
+    return source = 'web';
   }
 
   getUrl = (props) => {

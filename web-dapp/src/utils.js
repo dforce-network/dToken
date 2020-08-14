@@ -310,26 +310,7 @@ export const redeem_max = (that) => {
   })
 }
 
-const updateDataToServer = (that, action, address) => {
-  const wallet_list = ['imtoken', 'bitpie', 'mykey', 'dapppocket', 'blocto', 'huobiwallet', 'abcwallet', 'tokenpocket', 'dappbirds', 'mathwallet', 'meetone'];
-  // console.log(window.location.href)  // http://localhost:3000/dapp/usdc/?utm_source=imToken123
-
-  let t_url = window.location.href;
-  let arr_url = t_url.split('/');
-  // console.log(arr_url) // ?utm_source=imToken123
-
-  let source = 'web';
-
-  for (let i = 0; i < arr_url.length; i++) {
-    if (arr_url[i].toLowerCase().includes('?utm_source=')) {
-      for (let j = 0; j < wallet_list.length; j++) {
-        if (arr_url[i].toLowerCase().includes(wallet_list[j])) {
-          source = wallet_list[j]
-        }
-      }
-    }
-  }
-
+const updateDataToServer = (source, action, address) => {
   let obj = {
     "sources": source,
     "operation": action,
@@ -395,7 +376,7 @@ export const mint_click = (that) => {
             value_mint: '',
             mint_to_receive_bn: ''
           })
-          updateDataToServer(that, 'mint', that.state.my_account);
+          updateDataToServer(that.state.source, 'mint', that.state.my_account);
         }
       }
     )
@@ -455,7 +436,7 @@ export const redeem_click = (that) => {
             value_redeem: '',
             redeem_to_receive_bn: ''
           })
-          updateDataToServer(that, 'redeem', that.state.my_account);
+          updateDataToServer(that.state.source, 'redeem', that.state.my_account);
         }
       }
     )
