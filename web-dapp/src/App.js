@@ -118,7 +118,7 @@ export default class App extends React.Component {
     let source;
 
     for (let i = 0; i < arr_url.length; i++) {
-      if (arr_url[i].toLowerCase().includes('?utm_source=')) {
+      if (arr_url[i].toLowerCase().includes('utm_source=')) {
         for (let j = 0; j < wallet_list.length; j++) {
           if (arr_url[i].toLowerCase().includes(wallet_list[j])) {
             return source = wallet_list[j];
