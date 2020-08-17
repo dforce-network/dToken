@@ -64,7 +64,7 @@ export default class Home extends React.Component {
             cur_show_data_index: 0,
             options: {},
 
-            cur_language: navigator.language === 'zh-CN' ? '中文' : 'English',
+            cur_language: navigator.language.toLowerCase() === 'zh-cn' ? '中文' : 'English',
             showonly: false,
             meun1: true,
             meun2: true,
