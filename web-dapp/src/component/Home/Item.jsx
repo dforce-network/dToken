@@ -126,30 +126,13 @@ export default class Item extends Component {
 
 
   format_num_to_K = (str_num) => {
-    // console.log(str_num, str_num.length)
+    var part_a = str_num.split('.')[0];
+    var part_b = str_num.split('.')[1];
 
-    if (str_num.length > 10) {
-      str_num = str_num.slice(0, 10);
-      // console.log(str_num, str_num.length)
-    }
+    var reg = /\d{1,3}(?=(\d{3})+$)/g;
+    part_a = (part_a + '').replace(reg, '$&,');
 
-
-    if (str_num.indexOf('.') > 0) {
-      if (str_num.indexOf('.') === str_num.length - 1) {
-        var reg = /\d{1,3}(?=(\d{3})+$)/g;
-        return (str_num + '').replace(reg, '$&,');
-      }
-
-      var part_a = str_num.split('.')[0];
-      var part_b = str_num.split('.')[1];
-
-      var reg = /\d{1,3}(?=(\d{3})+$)/g;
-      part_a = (part_a + '').replace(reg, '$&,');
-
-      return part_a + '.' + part_b;
-    } else {
-      return str_num;
-    }
+    return part_a + '.' + part_b;
   }
 
 
