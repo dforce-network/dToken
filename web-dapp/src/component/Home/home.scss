@@ -279,14 +279,20 @@
           }
 
           .leftColumn {
-            width: 90px;
+            width: 85px;
             text-align: left;
             flex: none;
+            // background-color: red;
           }
 
           span {
             flex: 1;
             text-align: right;
+          }
+
+          span:nth-child(2) {
+            // background-color: goldenrod;
+            flex: 1.5;
           }
         }
 
@@ -304,9 +310,10 @@
 
           .leftColumn {
             display: flex;
-            width: 90px;
+            width: 85px;
             text-align: left;
             flex: none;
+            // background-color: red;
 
             img {
               width: 23px;
@@ -333,9 +340,15 @@
           }
 
           span {
-            flex: 33%;
+            // flex: 33%;
+            flex: 1;
             text-align: right;
             color: #434976;
+          }
+
+          span:nth-child(2) {
+            // background-color: goldenrod;
+            flex: 1.5;
           }
         }
 

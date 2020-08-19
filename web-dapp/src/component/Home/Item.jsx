@@ -10,8 +10,6 @@ import { IntlProvider, FormattedMessage } from 'react-intl';
 import en_US from '../../language/en_US.js';
 import zh_CN from '../../language/zh_CN';
 
-import { format_num_to_K } from '../../utils';
-
 import './home.scss';
 
 let constance = require('../../abi/constance.json');
@@ -127,6 +125,34 @@ export default class Item extends Component {
   }
 
 
+  format_num_to_K = (str_num) => {
+    // console.log(str_num, str_num.length)
+
+    if (str_num.length > 10) {
+      str_num = str_num.slice(0, 10);
+      // console.log(str_num, str_num.length)
+    }
+
+
+    if (str_num.indexOf('.') > 0) {
+      if (str_num.indexOf('.') === str_num.length - 1) {
+        var reg = /\d{1,3}(?=(\d{3})+$)/g;
+        return (str_num + '').replace(reg, '$&,');
+      }
+
+      var part_a = str_num.split('.')[0];
+      var part_b = str_num.split('.')[1];
+
+      var reg = /\d{1,3}(?=(\d{3})+$)/g;
+      part_a = (part_a + '').replace(reg, '$&,');
+
+      return part_a + '.' + part_b;
+    } else {
+      return str_num;
+    }
+  }
+
+
   componentDidMount = () => {
     this.get_token_status();
     this.handleURL();
@@ -172,7 +198,7 @@ export default class Item extends Component {
                         </div>
                       </div>
                       <span>
-                        {format_num_to_K(this.state.token_data_arr[index].net_value)}
+                        {this.format_num_to_K(this.state.token_data_arr[index].net_value)}
                       </span>
                       <span>
                         {this.state.token_data_arr[index].now_apy}%
