@@ -124,7 +124,8 @@ export default class Item extends Component {
   }
 
   get_usdx_status = () => {
-    let url_apy = "https://testapi.dforce.network/api/v1/baseInfo/";
+    // let url_apy = "https://testapi.dforce.network/api/v1/baseInfo/"; // test
+    let url_apy = 'https://usr.dforce.network/api/v1/baseInfo/';
 
     fetch(url_apy).then(res => res.text())
       .then((data) => {
