@@ -203,13 +203,13 @@ export default class Item extends Component {
                 </span>
                 <span className={"btn-wrap"}>
 
-                  <a href='https://testusr.dforce.network' target='_blank'>
+                  <a href='https://usr.dforce.network' target='_blank'>
                     <Button>
                       <FormattedMessage id='DEPOSIT' />
                     </Button>
                   </a>
 
-                  <a href='https://testusr.dforce.network/?is_withdraw=true' target='_blank'>
+                  <a href='https://usr.dforce.network/?is_withdraw=true' target='_blank'>
                     <Button>
                       <FormattedMessage id='WITHDRAW' />
                     </Button>
