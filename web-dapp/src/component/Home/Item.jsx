@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import DAI_logo from '../../images/DAI.svg';
 import USDT_logo from '../../images/USDT.svg';
 import USDC_logo from '../../images/USDC.svg';
+import USDx_logo from '../../images/USDx.svg';
 import no_history from '../../images/no-history.svg';
 import { Button, } from 'antd';
 // add i18n.
@@ -52,8 +53,6 @@ export default class Item extends Component {
       source: source
     })
   }
-
-
 
   get_token_status = () => {
     let url_apy = constance.url_apy + 'main';
@@ -126,13 +125,37 @@ export default class Item extends Component {
 
   }
 
+  get_usdx_status = () => {
+    let url_apy = "https://testapi.dforce.network/api/v1/baseInfo/";
+
+    fetch(url_apy).then(res => res.text())
+      .then((data) => {
+        if (!(data && Object.keys(data).length > 0)) {
+          return console.log('no data return...');
+        }
+
+        data = JSON.parse(data);
+        // return console.log(data)
+
+        this.setState({
+          usdx_apy: data.apy,
+          total_underlying: data.total_underlying,
+        })
+      })
+      .catch(err => {
+        console.log(err)
+      })
+  }
+
 
   componentDidMount = () => {
     this.get_token_status();
+    this.get_usdx_status();
     this.handleURL();
 
     setInterval(() => {
       this.get_token_status();
+      this.get_usdx_status();
     }, 1000 * 5);
   }
 
@@ -159,6 +182,41 @@ export default class Item extends Component {
                 </span>
                 <span className={"btn-wrap"}></span>
               </dt>
+
+              <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                <div className={"leftColumn"}>
+                  <img src={USDx_logo} />
+                  <div className={"rightText"}>
+                    <h3>{'USDx'}</h3>
+                  </div>
+                </div>
+                <span>
+                  {
+                    this.state.total_underlying ?
+                      this.state.total_underlying.toFixed(2) : '...'
+                  }
+                </span>
+                <span>
+                  {
+                    this.state.usdx_apy ?
+                      this.state.usdx_apy.toFixed(2) + '%' : '...'
+                  }
+                </span>
+                <span className={"btn-wrap"}>
+
+                  <a href='https://testusr.dforce.network' target='_blank'>
+                    <Button>
+                      <FormattedMessage id='DEPOSIT' />
+                    </Button>
+                  </a>
+
+                  <a href='https://testusr.dforce.network/?is_withdraw=true' target='_blank'>
+                    <Button>
+                      <FormattedMessage id='WITHDRAW' />
+                    </Button>
+                  </a>
+                </span>
+              </dd>
 
               {
                 this.state.token_data_arr && this.state.token_data_arr.length > 0 &&
