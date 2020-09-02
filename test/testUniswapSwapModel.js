@@ -228,7 +228,7 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     await setupDToken();
   });
 
-  it("Should claim some COMP", async function () {
+  it("Should claim some COMP (Skipped in coverage)", async function () {
     dUSDC.mint(account1, 1000e6, {from: account1});
 
     let comp_airdrop = expandTo18Decimals(10);
@@ -243,18 +243,18 @@ describe("RewardSwapModel Contract (Skipped in coverage)", function () {
     assert.equal(comp_airdrop.toString(), comp_claimed.toString());
   });
 
-  it("Should deploy UniswapSwapModel", async function () {
+  it("Should deploy UniswapSwapModel (Skipped in coverage)", async function () {
     await setupUniswapAndSwapModel();
   });
 
-  it("Should failed when no swap model was set", async function () {
+  it("Should failed when no swap model was set (Skipped in coverage)", async function () {
     await truffleAssert.reverts(
       dUSDC.swap(COMP.address, expandTo18Decimals(1)),
       "swap: no swap model available!"
     );
   });
 
-  it("Should set the Swap Model", async function () {
+  it("Should set the Swap Model (Skipped in coverage)", async function () {
     await dUSDC.setSwapModel(swap_model.address);
     assert.equal((await dUSDC.swapModel()).toString(), swap_model.address);
   });

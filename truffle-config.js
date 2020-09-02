@@ -26,7 +26,8 @@ require('dotenv').config();
 
 const HDWalletProvider = require("truffle-hdwallet-provider");
 var infuraKey = process.env.INFURA_APIKEY;
-var privateKey = process.env.PRIVATE_KEY;
+var privateKeys = JSON.parse(process.env.PRIVATE_KEYS);
+const keyLength = privateKeys.length;
 
 
 module.exports = {
@@ -56,7 +57,7 @@ module.exports = {
         },
 
         mainnet: {
-            provider: () => new HDWalletProvider(privateKey, `https://mainnet.infura.io/v3/${infuraKey}`),
+            provider: () => new HDWalletProvider(privateKeys, `https://mainnet.infura.io/v3/${infuraKey}`, 0 , keyLength),
             network_id: 1, // Mainnet's id
             gas: 6721975, // Gas limit used for deploys
             gasPrice: 7000000000, // Gas price used for deploys: 7gwei
@@ -66,7 +67,7 @@ module.exports = {
         },
 
         kovan: {
-            provider: () => new HDWalletProvider(privateKey, `https://kovan.infura.io/v3/${infuraKey}`),
+            provider: () => new HDWalletProvider(privateKeys, `https://kovan.infura.io/v3/${infuraKey}`, 0 , keyLength),
             network_id: 42, // Kovan's id
             gas: 6721975,
             gasPrice: 10000000000, // Gas price used for deploys: 10gwei
@@ -77,7 +78,7 @@ module.exports = {
         },
 
         ropsten: {
-            provider: () => new HDWalletProvider(privateKey, `https://ropsten.infura.io/v3/${infuraKey}`),
+            provider: () => new HDWalletProvider(privateKeys, `https://ropsten.infura.io/v3/${infuraKey}`, 0 , keyLength),
             network_id: 3, // ropsten's id
             gas: 6721975,
             gasPrice: 10000000000, // Gas price used for deploys: 10gwei
@@ -87,7 +88,7 @@ module.exports = {
         },
 
         rinkeby: {
-            provider: () => new HDWalletProvider(privateKey, `https://rinkeby.infura.io/v3/${infuraKey}`),
+            provider: () => new HDWalletProvider(privateKeys, `https://rinkeby.infura.io/v3/${infuraKey}`, 0 , keyLength),
             network_id: 4, // ropsten's id
             gas: 6721975,
             gasPrice: 10000000000, // Gas price used for deploys: 10gwei

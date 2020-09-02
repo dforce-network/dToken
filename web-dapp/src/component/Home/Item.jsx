@@ -6,11 +6,9 @@ import USDC_logo from '../../images/USDC.svg';
 import USDx_logo from '../../images/USDx.svg';
 import no_history from '../../images/no-history.svg';
 import { Button, } from 'antd';
-// add i18n.
 import { IntlProvider, FormattedMessage } from 'react-intl';
 import en_US from '../../language/en_US.js';
 import zh_CN from '../../language/zh_CN';
-
 import { format_num_to_K } from '../../utils';
 
 import './home.scss';
@@ -156,7 +154,7 @@ export default class Item extends Component {
     setInterval(() => {
       this.get_token_status();
       this.get_usdx_status();
-    }, 1000 * 5);
+    }, 1000 * 10);
   }
 
 
@@ -193,7 +191,7 @@ export default class Item extends Component {
                 <span>
                   {
                     this.state.total_underlying ?
-                      this.state.total_underlying.toFixed(2) : '...'
+                      format_num_to_K(this.state.total_underlying.toFixed(2)) : '...'
                   }
                 </span>
                 <span>

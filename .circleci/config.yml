@@ -21,4 +21,4 @@ jobs:
       - run:
           name: Run coverage
           command: |
-            npx buidler coverage
+            npx buidler coverage --temp build
