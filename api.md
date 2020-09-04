@@ -52,10 +52,6 @@
 
   - returns: total dtoken anmount.
 
-- getTotalBalance () returns (uint)
-
-  - returns: total underlying token amount.
-
 - balanceOf(address \_account) returns (uint)
 
   - \_account: account address.
@@ -67,28 +63,24 @@
   - \_spender: spender address.
   - returns: the amount which \_spender is still allowed to withdraw from \_owner.
 
-- getTokenBalance(address \_account) returns (uint)
+- getBaseData() returns (uint, uint, uint, uint, uint)
 
-  - \_account: account address.
-  - returns: balance of underlying token of given account.
-
-- getBaseData() returns (uint, uint, uint, uint)
-
-  - returns (decimals, exchangeRate, mintFeeRate, redeemFeeRate)
+  - returns (decimals, exchangeRate, mintFeeRate, redeemFeeRate, totalUnderlying)
     - decimals: token decimals.
     - exchangeRate: the most recent exchange rate, scaled by 1e18.
     - mintFeeRate: the fee rate of mint(), scaled by 1e18.
     - redeemFeeRate: the fee rate of redeem()/redeemUnderlying(), scaled by 1e18.
+    - totalUnderlying: the total underlying token amount.
 
 - originationFee(bytes4 \_sig) returns (uint)
 
   - \_sig: function signature to query.
   - returns: fee, scaled by 1e18.
 
-* paused() returns (bool)
+- paused() returns (bool)
 
   - returns: true if paused, false if not paused.
 
-* feeRecipient() returns (address)
+- feeRecipient() returns (address)
 
   - returns: fee receiving address.
