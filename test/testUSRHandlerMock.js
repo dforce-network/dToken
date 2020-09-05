@@ -51,7 +51,7 @@ describe("USRHandler contract", function () {
     // Mock TestERC20 and Mock USR, can return error when calling USR
     ERC20E = await TestERC20.new("ERC20E", "ERC20E", 18);
 
-    await handler.enableTokens([USDx.address, ERC20.address, ERC20E.address]);
+    // await handler.enableTokens([USDx.address, ERC20.address, ERC20E.address]);
 
     await dtoken_controller.setdTokensRelation(
       [USDx.address, ERC20.address, ERC20E.address],
@@ -59,8 +59,8 @@ describe("USRHandler contract", function () {
     );
 
     await handler.approve(USDx.address, UINT256_MAX);
-    await handler.approve(ERC20.address, UINT256_MAX);
-    await handler.approve(ERC20E.address, UINT256_MAX);
+    // await handler.approve(ERC20.address, UINT256_MAX);
+    // await handler.approve(ERC20E.address, UINT256_MAX);
   }
 
   describe("Deployment", function () {
@@ -103,6 +103,7 @@ describe("USRHandler contract", function () {
     });
 
     it("Should only allow auth to disable token", async function () {
+      await handler.enableTokens([USDx.address]);
       await handler.disableTokens([USDx.address]);
       assert.equal(await handler.tokenIsEnabled(USDx.address), false);
 
@@ -170,7 +171,7 @@ describe("USRHandler contract", function () {
       // ERC20 does not allow approve again
       await truffleAssert.reverts(
         handler.approve(ERC20.address, UINT256_MAX),
-        "approve: Approve USR failed!"
+        "approve: Do not support token!"
       );
     });
   });
@@ -198,7 +199,7 @@ describe("USRHandler contract", function () {
     it("Should not deposit with disabled token", async function () {
       await truffleAssert.reverts(
         handler.deposit(dUSDC_address, new BN('1000').mul(BASE)),
-        "deposit: Token is disabled!"
+        "Do not support token!"
       );
     });
 

@@ -36,6 +36,11 @@ contract USRHandler is Handler, ReentrancyGuard {
      */
     function approve(address _underlyingToken, uint256 amount) public auth {
         require(
+            IUSR(USR).underlyingToken() == _underlyingToken,
+            "approve: Do not support token!"
+        );
+
+        require(
             doApprove(_underlyingToken, USR, amount),
             "approve: Approve USR failed!"
         );
@@ -55,10 +60,6 @@ contract USRHandler is Handler, ReentrancyGuard {
         nonReentrant
         returns (uint256)
     {
-        require(
-            tokenIsEnabled(_underlyingToken),
-            "deposit: Token is disabled!"
-        );
         require(
             _amount > 0,
             "deposit: Deposit amount should be greater than 0!"
@@ -86,10 +87,7 @@ contract USRHandler is Handler, ReentrancyGuard {
             address(this)
         );
 
-        require(
-            IUSR(_USR).mint(address(this), _handlerBalance),
-            "deposit: Fail to supply to USR!"
-        );
+        IUSR(_USR).mint(address(this), _handlerBalance);
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = getRealBalance(_underlyingToken);
@@ -141,18 +139,12 @@ contract USRHandler is Handler, ReentrancyGuard {
 
         // Redeem all or just the amount of underlying token
         if (_amount == uint256(-1)) {
-            require(
-                IUSR(_USR).redeem(
-                    address(this),
-                    IERC20(_USR).balanceOf(address(this))
-                ),
-                "withdraw: Fail to withdraw from USR!"
+            IUSR(_USR).redeem(
+                address(this),
+                IERC20(_USR).balanceOf(address(this))
             );
         } else {
-            require(
-                IUSR(_USR).redeemUnderlying(address(this), _amount),
-                "withdraw: Fail to withdraw from USR!"
-            );
+            IUSR(_USR).redeemUnderlying(address(this), _amount);
         }
 
         uint256 _handlerBalanceAfter = IERC20(_underlyingToken).balanceOf(
