@@ -753,6 +753,10 @@ export const set_show_data = (that) => {
   for (let i = 0; i < temp_data.date.length; i++) {
     date_arr[i] = moment(temp_data.date[i] * 1000).format('YYYY/M/DD');
   }
+  let apy_arr = [];
+  for (let i = 0; i < temp_data.apy.length; i++) {
+    apy_arr[i] = Number(temp_data.apy[i]).toFixed(2);
+  }
   // console.log(date_arr);
 
   // let date_arr = temp_data.date;
@@ -800,7 +804,7 @@ export const set_show_data = (that) => {
       series: [{
         name: 'APY',
         type: 'line',
-        data: temp_data.rate,
+        data: apy_arr,
         color: '#D4A454',
         smooth: true
       }],
@@ -816,13 +820,14 @@ export const get_tokens_status_apy = (that) => {
   if (!(that.state.net_type === 'main' || that.state.net_type === 'kovan')) {
     return console.log('wrong net work');
   }
-  let url_apy = constance.url_apy;
+  // let url_apy = constance.url_apy;
   // if (that.state.net_type && that.state.net_type !== 'main') {
   //   url_apy = url_apy + that.state.net_type;
   // } else {
   //   url_apy = url_apy + that.state.net_type;
   // }
-  url_apy = url_apy + 'main';
+  // url_apy = url_apy + 'main';
+  let url_apy = 'https://markets.dforce.network/api/v2/getApy/';
 
   fetch(url_apy).then(res => res.text())
     .then((data) => {
@@ -834,6 +839,7 @@ export const get_tokens_status_apy = (that) => {
       for (let i = 0; i < that.state.token_name.length; i++) {
         t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
       }
+      // console.log(t_data_arr)
       that.setState({
         token_status_apy: t_data_arr,
       })
@@ -891,7 +897,7 @@ export const get_tokens_status = (that) => {
 
   fetch(url).then(res => res.text())
     .then((data) => {
-      // console.log(data)
+      // return console.log(data)
       if (!(data && Object.keys(data).length > 0)) {
         return console.log('no data return...');
       }
@@ -900,8 +906,8 @@ export const get_tokens_status = (that) => {
       for (let i = 0; i < that.state.token_name.length; i++) {
         t_data_arr[i] = JSON.parse(data)['d' + that.state.token_name[i]]
       }
+      // return console.log(t_data_arr);
 
-      // console.log(t_data_arr);
       if (!t_data_arr[0]) { return console.log('no. data.') }
 
       // return;

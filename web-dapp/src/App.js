@@ -959,7 +959,7 @@ export default class App extends React.Component {
                           <span style={{ fontWeight: 500 }}>
                             {
                               this.state.token_status_apy[this.state.cur_index_mint] ?
-                                this.state.token_status_apy[this.state.cur_index_mint].now_apy
+                                Number(this.state.token_status_apy[this.state.cur_index_mint].now_apy).toFixed(2)
                                 : '...'
                             }
                           </span>

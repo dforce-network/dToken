@@ -25,7 +25,7 @@ export default class Item extends Component {
         USDC: USDC_logo,
         DAI: DAI_logo
       },
-      token_d_name: ['dUSDT', 'dUSDC', 'dDAI'],
+      token_d_name: ['dUSDx', 'dUSDT', 'dUSDC', 'dDAI'],
       source: 'web',
     };
   }
@@ -53,7 +53,8 @@ export default class Item extends Component {
   }
 
   get_token_status = () => {
-    let url_apy = constance.url_apy + 'main';
+    // let url_apy = constance.url_apy + 'main';
+    let url_apy = 'https://markets.dforce.network/api/v2/getApy/';
     // console.log(url_apy);
 
     fetch(url_apy).then(res => res.text()).then((data) => {
@@ -62,14 +63,13 @@ export default class Item extends Component {
       }
 
       let obj_data = JSON.parse(data);
-
-      // console.log(obj_data);
+      // return console.log(obj_data);
 
       let token_data_arr = [];
       for (let i = 0; i < this.state.token_d_name.length; i++) {
         token_data_arr[i] = obj_data[this.state.token_d_name[i]]
       }
-      // console.log(token_data_arr);
+      // return console.log(token_data_arr[0].total_underlying);
 
       this.setState({ token_data_arr })
     })
@@ -126,6 +126,7 @@ export default class Item extends Component {
   get_usdx_status = () => {
     // let url_apy = "https://testapi.dforce.network/api/v1/baseInfo/"; // test
     let url_apy = 'https://usr.dforce.network/api/v1/baseInfo/';
+    // let url_apy = 'https://markets.dforce.network/api/v2/getApy/';
 
     fetch(url_apy).then(res => res.text())
       .then((data) => {
@@ -194,6 +195,12 @@ export default class Item extends Component {
                     this.state.total_underlying ?
                       format_num_to_K(this.state.total_underlying.toFixed(2)) : '...'
                   }
+
+                  {
+                    // this.state.token_data_arr && this.state.token_data_arr.length > 0 ?
+                    //   format_num_to_K(Number(this.state.token_data_arr[0].total_underlying).toFixed(2)) : '...'
+                  }
+
                 </span>
                 <span>
                   {
@@ -220,6 +227,9 @@ export default class Item extends Component {
               {
                 this.state.token_data_arr && this.state.token_data_arr.length > 0 &&
                 this.state.token_data_arr.map((item, index) => {
+                  if (index === 0) {
+                    return console.log('display: none');
+                  }
                   return (
                     <dd key={index} style={{ fontWeight: 'bold', fontSize: '18px' }}>
                       <div className={"leftColumn"}>
@@ -229,20 +239,20 @@ export default class Item extends Component {
                         </div>
                       </div>
                       <span>
-                        {format_num_to_K(this.state.token_data_arr[index].net_value)}
+                        {format_num_to_K(Number(this.state.token_data_arr[index].total_underlying).toFixed(2))}
                       </span>
                       <span>
-                        {this.state.token_data_arr[index].now_apy}%
+                        {Number(this.state.token_data_arr[index].now_apy).toFixed(2)}%
                     </span>
                       <span className={"btn-wrap"}>
 
-                        <Link to={{ pathname: '/dapp', state: { cur_index: index, cur_language: this.props.language, source: this.state.source } }}>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: index - 1, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
                             <FormattedMessage id='DEPOSIT' />
                           </Button>
                         </Link>
 
-                        <Link to={{ pathname: '/dapp', state: { cur_index: index, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: index - 1, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
                             <FormattedMessage id='WITHDRAW' />
                           </Button>
