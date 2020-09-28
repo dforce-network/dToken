@@ -170,7 +170,7 @@ export default class Home extends React.Component {
                                 <Menu className={'header__overlay'}>
                                     <Menu.Item>
                                         <a rel="noopener noreferrer" href="https://trade.dforce.network/" className={'header__overlay_item'}>
-                                            <span>dForce Trade</span>
+                                            <span>dForce Swap</span>
                                             <label>
                                                 <FormattedMessage id='Instant_Swap_of_Stable_Assets' />
                                             </label>
@@ -283,7 +283,7 @@ export default class Home extends React.Component {
                     <div className={this.state.meun3 ? 'meun1' : 'only1px'}>
                         <div className='m-item'>
                             <a href='https://trade.dforce.network/' rel="noopener noreferrer">
-                                <span className='title'>dForce Trade</span>
+                                <span className='title'>dForce Swap</span>
                             </a>
                             <span className='details'>
                                 <FormattedMessage id='Instant_Swap_of_Stable_Assets' />
