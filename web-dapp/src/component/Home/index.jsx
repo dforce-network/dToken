@@ -126,6 +126,15 @@ export default class Home extends React.Component {
                                     </Menu.Item>
 
                                     <Menu.Item>
+                                        <a target="_blank" rel="noopener noreferrer" href="https://usr.dforce.network/" className={'header__overlay_item'}>
+                                            <span>USR</span>
+                                            <label>
+                                                <FormattedMessage id='USR_subTitle' />
+                                            </label>
+                                        </a>
+                                    </Menu.Item>
+
+                                    <Menu.Item>
                                         <a target="_blank" rel="noopener noreferrer" href="https://markets.dforce.network/" className={'header__overlay_item'}>
                                             <span>
                                                 <FormattedMessage id='Yield_Markets' />
@@ -232,6 +241,14 @@ export default class Home extends React.Component {
                             </a>
                             <span className='details'>
                                 <FormattedMessage id='Portal' />
+                            </span>
+                        </div>
+                        <div className='m-item'>
+                            <a href='https://usr.dforce.network/' target='_blank' rel="noopener noreferrer">
+                                <span className='title'>USR</span>
+                            </a>
+                            <span className='details'>
+                                <FormattedMessage id='USR_subTitle' />
                             </span>
                         </div>
                         <div className='m-item'>
