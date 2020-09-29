@@ -16,7 +16,7 @@ import 'antd/dist/antd.css';
 import tips from './style/tips.scss';
 
 import DAI_logo from './images/DAI.svg';
-import TUSD_logo from './images/TUSD.svg';
+import USDx_logo from './images/USDx.svg';
 import USDT_logo from './images/USDT.svg';
 import USDC_logo from './images/USDC.svg';
 import logo_xswap from './images/logo-dforce.svg';
@@ -66,10 +66,10 @@ export default class App extends React.Component {
     this.state = {
       // token_name: ['USDT', 'USDC', 'DAI', 'TUSD'],
       // token_d_name: ['dUSDT', 'dUSDC', 'dDAI', 'dTUSD'],
-      token_name: ['USDT', 'USDC', 'DAI'],
-      token_d_name: ['dUSDT', 'dUSDC', 'dDAI'],
-      token_d_balance__prev: [0, 0, 0],
-      token_logo: [USDT_logo, USDC_logo, DAI_logo, TUSD_logo],
+      token_name: ['USDT', 'USDC', 'DAI', 'USDx'],
+      token_d_name: ['dUSDT', 'dUSDC', 'dDAI', 'dUSDx'],
+      token_d_balance__prev: [0, 0, 0, 0],
+      token_logo: [USDT_logo, USDC_logo, DAI_logo, USDx_logo],
       token_decimals: [],
       token_contract: [],
       token_d_contract: [],
@@ -654,7 +654,7 @@ export default class App extends React.Component {
                             <Menu.Item key={3}>
                               <div onClick={() => { this.set_mint_token(3) }}>
                                 <img src={this.state.token_logo[3]} alt='' />
-                                <span className="span-name">TUSD</span>
+                                <span className="span-name">USDx</span>
                                 {/* <span style={{ opacity: '0.7' }}> (USDC)</span> */}
                                 <span className="span-number">
                                   {
@@ -800,7 +800,7 @@ export default class App extends React.Component {
                             <Menu.Item key={3}>
                               <div onClick={() => { this.set_redeem_token(3) }}>
                                 <img src={this.state.token_logo[3]} alt='' />
-                                <span className="span-name">TUSD</span>
+                                <span className="span-name">USDx</span>
                                 <span className="span-number">
                                   {
                                     this.state.token_d_balance[3] ?
