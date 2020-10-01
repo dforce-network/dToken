@@ -1,0 +1,138 @@
+$theme-color: #D4A454;
+
+.ant-btn,
+.ant-btn:hover,
+.ant-btn:focus {
+    color: #fff;
+    background: $theme-color;
+    border-color: $theme-color;
+}
+
+.ant-modal {
+    width: 660px !important;
+}
+
+
+.modal-title {
+    font-size: 18px;
+    font-weight: bold;
+    color: rgba(67, 73, 118, 1);
+    text-align: center;
+}
+
+.item-addr {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+
+    textarea {
+        width: 456px;
+        height: 100px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(224, 225, 236, 1);
+        border-radius: 6px;
+        padding-left: 10px;
+        padding-right: 6px;
+
+        &:hover,
+        &:focus {
+            outline: none !important;
+            border: 1px solid $theme-color !important;
+            box-shadow: none;
+        }
+    }
+
+    .item-num-span {
+        flex: 1;
+        text-align: right;
+        padding-right: 16px;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(67, 73, 118, 1);
+    }
+
+    .item-right-value {
+        width: 440px;
+
+        .item-right-value-span {
+            display: block;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(67, 73, 118, 1);
+        }
+    }
+}
+
+.item-msg {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+
+    .item-num-span {
+        flex: 1;
+        text-align: right;
+        padding-right: 16px;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(67, 73, 118, 1);
+    }
+
+    .item-right-value {
+        width: 440px;
+        display: block;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(67, 73, 118, 1);
+
+        .item-right-value1 {
+            display: inline-block;
+            width: 180px;
+            // background-color: red;
+        }
+    }
+}
+
+.item-num {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 16px;
+
+    input {
+        width: 456px;
+        height: 46px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(224, 225, 236, 1);
+        border-radius: 6px;
+        padding-left: 10px;
+        padding-right: 6px;
+
+        &:hover,
+        &:focus {
+            border: 1px solid $theme-color !important;
+            box-shadow: none;
+        }
+    }
+
+    span {
+        flex: 1;
+        text-align: right;
+        padding-right: 16px;
+        font-size: 16px;
+        font-weight: 500;
+        color: rgba(67, 73, 118, 1);
+        padding-top: 10px;
+    }
+}
+
+.item-btn-wrap {
+    text-align: center;
+    margin-top: 30px;
+
+    button {
+        width: 110px;
+        height: 44px;
+        background: rgba(186, 89, 255, 1);
+        border-radius: 6px;
+        color: #fff;
+    }
+}

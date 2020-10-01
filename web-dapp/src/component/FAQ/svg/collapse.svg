@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="28px" height="28px" viewBox="0 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 61.2 (89653) - https://sketch.com -->
+    <title>btn_collapse_dl</title>
+    <desc>Created with Sketch.</desc>
+    <g id="页面-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <g id="GLODx---EN" transform="translate(-1513.000000, -3003.000000)">
+            <g id="FQA" transform="translate(361.000000, 2899.000000)">
+                <g id="编组-14" transform="translate(0.000000, 83.000000)">
+                    <g id="btn_collapse_dl" transform="translate(1152.000000, 21.000000)">
+                        <circle id="椭圆形" fill="#454B65" cx="14" cy="14" r="14"></circle>
+                        <line x1="9" y1="14" x2="19" y2="14" id="直线" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"></line>
+                        <line x1="14" y1="9" x2="14" y2="19" id="直线备份" stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"></line>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

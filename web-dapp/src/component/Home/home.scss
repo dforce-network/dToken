@@ -1,0 +1,482 @@
+@media screen and (min-width: 768px) {
+  .dtoken-slogan {
+    text-align: center;
+    font-size: 44px;
+    font-weight: bold;
+    color: rgba(67, 73, 118, 1);
+    line-height: 70px;
+  }
+
+  .dtoken-slogan-plus {
+    text-align: center;
+    font-size: 18px;
+    font-weight: 500;
+    color: rgba(67, 73, 118, 1);
+    line-height: 40px;
+  }
+
+  .warp {
+    position: relative;
+    width: 922px;
+    margin: 40px auto 50px;
+
+    .content {
+      background: #fff;
+      box-shadow: 0px 0px 35px 0px rgba(67, 73, 118, 0.15);
+      border-radius: 0px 6px 6px;
+
+      .tabHead {
+        font-size: 18px;
+        color: #434976;
+        border-bottom: 1px solid #eaeaf3;
+        line-height: 60px;
+        padding: 0 28px;
+        text-align: center;
+      }
+
+      .tabTitle {
+        font-size: 18px;
+        font-weight: 500;
+        color: #434976;
+        border-bottom: 1px solid #eaeaf3;
+        line-height: 60px;
+        padding: 0 28px;
+      }
+
+      dl {
+        dt {
+          display: flex;
+          justify-content: flex-start;
+          align-items: center;
+          border-bottom: 1px solid #eaeaf3;
+          line-height: 60px;
+          padding: 0 28px;
+          color: #a4a7be;
+          font-weight: 500;
+
+          .leftColumn {
+            width: 90px;
+            text-align: left;
+            flex: none;
+          }
+
+          span {
+            flex: 1;
+            text-align: right;
+          }
+        }
+
+        dd {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-bottom: 1px solid #eaeaf3;
+          line-height: 60px;
+          padding: 16px 28px;
+
+          .leftColumn {
+            display: flex;
+            width: 90px;
+            text-align: left;
+            flex: none;
+
+            img {
+              width: 38px;
+              height: 38px;
+              margin-right: 10px;
+            }
+
+            .rightText {
+              height: 38px;
+              line-height: 38px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+
+              b {
+                color: #434976;
+              }
+
+              h3 {
+                color: #a4a7be;
+              }
+            }
+          }
+
+          span {
+            flex: 1;
+            text-align: right;
+            color: #434976;
+          }
+        }
+
+        dd.collectClaim {
+          padding: 12px 28px;
+
+          .AvailClaim {
+            color: #07b762;
+          }
+
+          .claim {
+            display: inline-block;
+            width: 100px;
+            line-height: 36px;
+            font-weight: normal;
+            text-align: center;
+            background: rgba(103, 92, 255, 1);
+            border-radius: 6px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: #fff;
+          }
+        }
+      }
+    }
+  }
+
+  .claimMesBox {
+    width: 200px;
+    height: 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: #fff;
+    box-shadow: 0px 0px 20px 0px rgba(94, 85, 126, 0.15);
+    border-radius: 6px;
+
+    div {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .leftSvg {
+      .claiming {
+        animation: rotating 0.8s ease-in-out infinite;
+      }
+
+      @keyframes rotating {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        80% {
+          transform: rotate(330deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      svg {
+        width: 24px;
+        height: 24px;
+        margin-right: 6px;
+      }
+    }
+
+    .rightSvg {
+      span {
+        color: #675cff;
+      }
+
+      svg {
+        width: 10px;
+        height: 10px;
+        margin-left: 6px;
+        margin-top: 2px;
+      }
+    }
+  }
+
+  .btn-wrap {
+    button {
+      width: 120px;
+      border-radius: 19px;
+
+      span {
+        color: #fff !important;
+        font-weight: bold;
+      }
+    }
+
+    button:nth-child(1) {
+      margin-right: 20px;
+    }
+
+    // background-color: red;
+    flex: 1.8 !important;
+  }
+}
+
+@media screen and (max-width: 767px) {
+  .dtoken-slogan {
+    text-align: center;
+    font-size: 28px;
+    font-weight: bold;
+    color: rgba(67, 73, 118, 1);
+    line-height: 40px;
+    margin-top: 10px;
+  }
+
+  .dtoken-slogan-plus {
+    text-align: center;
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(67, 73, 118, 1);
+    line-height: 24px;
+  }
+
+  .warp {
+    position: relative;
+    width: 94%;
+    margin: 30px auto 30px;
+
+    .content {
+      background: #fff;
+      box-shadow: 0px 0px 35px 0px rgba(67, 73, 118, 0.15);
+      border-radius: 0px 6px 6px;
+
+      .tabHead {
+        font-size: 18px;
+        color: #434976;
+        border-bottom: 1px solid #eaeaf3;
+        line-height: 60px;
+        padding: 0 28px;
+        text-align: center;
+      }
+
+      .tabTitle {
+        font-size: 18px;
+        font-weight: 500;
+        color: #434976;
+        border-bottom: 1px solid #eaeaf3;
+        line-height: 60px;
+        padding: 0 28px;
+      }
+
+      dl {
+        dt {
+          display: flex;
+          justify-content: space-between !important;
+          align-items: center;
+          border-bottom: 1px solid #eaeaf3;
+          line-height: 60px;
+          padding: 0 28px;
+          color: #a4a7be;
+          font-weight: 500;
+          font-size: 14px !important;
+
+          .btn-wrap {
+            flex: 0
+          }
+
+          .leftColumn {
+            width: 85px;
+            text-align: left;
+            flex: none;
+            // background-color: red;
+          }
+
+          span {
+            flex: 1;
+            text-align: right;
+          }
+
+          span:nth-child(2) {
+            // background-color: goldenrod;
+            flex: 1.5;
+          }
+        }
+
+        dd {
+          display: flex;
+          // justify-content: space-between;
+          justify-content: center !important;
+          align-items: center;
+          border-bottom: 1px solid #eaeaf3;
+          line-height: 40px;
+          padding: 10px 28px;
+          flex-wrap: wrap;
+          font-size: 14px !important;
+          padding-bottom: 14px;
+
+          .leftColumn {
+            display: flex;
+            width: 85px;
+            text-align: left;
+            flex: none;
+            // background-color: red;
+
+            img {
+              width: 23px;
+              height: 23px;
+              margin-right: 6px;
+              margin-top: 7px;
+            }
+
+            .rightText {
+              height: 38px;
+              line-height: 38px;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
+
+              b {
+                color: #434976;
+              }
+
+              h3 {
+                color: #a4a7be;
+              }
+            }
+          }
+
+          span {
+            // flex: 33%;
+            flex: 1;
+            text-align: right;
+            color: #434976;
+          }
+
+          span:nth-child(2) {
+            // background-color: goldenrod;
+            flex: 1.5;
+          }
+        }
+
+        dd.collectClaim {
+          padding: 12px 28px;
+
+          .AvailClaim {
+            color: #07b762;
+          }
+
+          .claim {
+            display: inline-block;
+            width: 100px;
+            line-height: 36px;
+            font-weight: normal;
+            text-align: center;
+            background: rgba(103, 92, 255, 1);
+            border-radius: 6px;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+            color: #fff;
+          }
+        }
+      }
+    }
+  }
+
+  .claimMesBox {
+    width: 200px;
+    height: 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    position: absolute;
+    right: 0;
+    top: 0;
+    background: #fff;
+    box-shadow: 0px 0px 20px 0px rgba(94, 85, 126, 0.15);
+    border-radius: 6px;
+
+    div {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    .leftSvg {
+      .claiming {
+        animation: rotating 0.8s ease-in-out infinite;
+      }
+
+      @keyframes rotating {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        80% {
+          transform: rotate(330deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+
+      svg {
+        width: 24px;
+        height: 24px;
+        margin-right: 6px;
+      }
+    }
+
+    .rightSvg {
+      span {
+        color: #675cff;
+      }
+
+      svg {
+        width: 10px;
+        height: 10px;
+        margin-left: 6px;
+        margin-top: 2px;
+      }
+    }
+  }
+
+  .btn-wrap {
+    // background-color: red;
+    display: flex;
+    justify-content: space-between;
+    // justify-content: center;
+    // justify-content: space-around;
+    padding-top: 10px;
+
+    a {
+      width: 47%;
+      // flex: 1;
+      // padding: 0 10px;
+    }
+
+    button {
+      width: 100%;
+      border-radius: 19px;
+
+      span {
+        color: #fff !important;
+        font-weight: bold;
+      }
+    }
+
+    // button:nth-child(1) {
+    //   margin-right: 10px;
+    // }
+
+    // button:nth-child(2) {
+    //   margin-left: 10px;
+    // }
+
+    // background-color: red;
+    // flex: 1.8 !important;
+  }
+}
+
+.nodata-wrap {
+  padding-top: 40px;
+  width: 80px;
+  margin: 0 auto;
+}
