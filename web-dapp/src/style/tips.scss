@@ -1,0 +1,49 @@
+// @media screen and (min-width: 768px) {
+
+.title {
+    // font-size: 18px;
+    font-weight: bold;
+    color: rgba(67, 73, 118, 1);
+    // line-height: 60px;
+    text-align: center;
+}
+
+.wallets {
+    width: 280px;
+    margin: 0 auto;
+
+    &__item {
+        width: 280px;
+        height: 58px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(219, 221, 236, 1);
+        border-radius: 8px;
+        margin-bottom: 12px;
+        display: flex;
+        justify-content: space-between;
+
+        &:hover {
+            border: 1px solid #748ffc;
+            cursor: pointer;
+        }
+
+        &_name {
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(67, 73, 118, 1);
+            line-height: 58px;
+            padding-left: 20px;
+        }
+
+        &_icon {
+            padding-right: 20px;
+            padding-top: 15px;
+
+            img {
+                width: 25px;
+            }
+        }
+    }
+}
+
+// }

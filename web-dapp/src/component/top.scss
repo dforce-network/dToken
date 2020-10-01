@@ -1,0 +1,151 @@
+$theme-color: #D4A454;
+
+// >768
+@media screen and (min-width: 768px) {
+    .top {
+        width: 1120px;
+        // background-color: red;
+        height: 70px;
+        margin: 0 auto;
+
+        .top-left {
+            float: left;
+            padding-top: 25px;
+
+            img {
+                width: 124px;
+            }
+        }
+
+        .top-right-connect {
+            float: right;
+            cursor: pointer;
+            width: 124px;
+            text-align: center;
+            height: 30px;
+            line-height: 30px;
+            background: rgba(41, 187, 146, 1);
+            border-radius: 3px;
+            font-size: 16px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 1);
+            margin-top: 20px;
+            position: relative;
+            padding-left: 5px;
+
+            .top-dot {
+                position: absolute;
+                width: 7px;
+                height: 7px;
+                // background-color: red;
+                border-radius: 50%;
+                left: 5px;
+                top: 12px;
+            }
+        }
+
+        .top-meun {
+            float: right;
+
+            .top-meun-item {
+                // background-color: green;
+                float: right;
+                position: relative;
+                margin-top: 28px;
+                padding-bottom: 20px;
+                width: 150px;
+                margin-right: 36px;
+                cursor: pointer;
+
+                .item-fixed {
+                    font-size: 16px;
+                    font-weight: 500;
+                    color: rgba(37, 33, 82, 1);
+                    position: relative;
+
+                    .arrow-down {
+                        transition: 0.3s;
+                        position: absolute;
+                        right: 0px;
+                        width: 8px;
+                        top: 6px;
+                    }
+
+                    .img-right45 {
+                        right: 40px;
+                    }
+                }
+
+                .item-more {
+                    transition: 0.3s;
+                    display: none;
+                    position: absolute;
+                    // background-color: red;
+                    top: 30px;
+                    width: 150px;
+                    background: rgba(255, 255, 255, 1);
+                    border: 1px solid rgba(229, 230, 242, 1);
+                    box-shadow: 0px 6px 19px 0px rgba(7, 2, 55, 0.1);
+                    border-radius: 4px;
+                    padding-left: 10px;
+                    padding-bottom: 10px;
+                    padding-top: 10px;
+                    z-index: 9999;
+
+                    ul {
+                        li {
+                            // height: 50px;
+                            margin-bottom: 15px;
+
+                            a {
+                                text-decoration: none;
+                                font-size: 16px;
+                                font-weight: 500;
+                                color: rgba(37, 33, 82, 1);
+                                transition: 0.3s;
+                            }
+
+                            a:hover {
+                                color: $theme-color;
+                            }
+
+                            .title {
+                                display: block;
+                                padding-top: 10px;
+                                padding-bottom: 10px;
+                            }
+
+                            .details {
+                                display: block;
+                                font-size: 14px;
+                                font-weight: 400;
+                                color: rgba(139, 142, 165, 1);
+                                line-height: 22px;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .top-meun-item:hover {
+                .item-more {
+                    display: block;
+                }
+
+                .item-fixed {
+                    .arrow-down {
+                        transform: rotate(180deg);
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+// 
+@media screen and (max-width: 767px) {
+    .top {
+        display: none;
+    }
+}

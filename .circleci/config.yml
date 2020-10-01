@@ -16,8 +16,9 @@ jobs:
       - run:
           name: Run tests
           command: |
+            npm run copy-uniswap-artifacts
             npx buidler test
       - run:
           name: Run coverage
           command: |
-            npx buidler coverage
+            npx buidler coverage --temp build

@@ -1,0 +1,243 @@
+[
+	{
+		"constant": false,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newDTokenLibrary",
+				"type": "address"
+			}
+		],
+		"name": "setDToken",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "dTokenMappingContract",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "internalHandlerAddr",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "compoundHandlerAddr",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "aaveHandlerAddr",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "aaveHandler",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "compoundHandler",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "dTokenLibrary",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "underlyingToken",
+				"type": "address"
+			}
+		],
+		"name": "getAaveData",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "aavePool",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "aaveCash",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "aavePoolRatio",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "aaveSupplyAPR",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "aaveBorrowAPR",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "underlyingToken",
+				"type": "address"
+			}
+		],
+		"name": "getBaseData",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "totalUnderlyingToken",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "totalDToken",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "internalPool",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "internalPoolRatio",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "underlyingToken",
+				"type": "address"
+			}
+		],
+		"name": "getCompoundData",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "compoundPool",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "compoundCash",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "compoundPoolRatio",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "compoundSupplyAPR",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "compoundBorrowAPR",
+				"type": "uint256"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "internalHandler",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"constant": true,
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"payable": false,
+		"stateMutability": "view",
+		"type": "function"
+	}
+]

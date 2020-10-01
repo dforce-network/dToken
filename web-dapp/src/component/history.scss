@@ -1,0 +1,269 @@
+// >768
+@media screen and (min-width: 768px) {
+    .history-title {
+        height: 50px;
+        background: rgba(238, 239, 248, 1);
+        font-size: 14px;
+        font-weight: 500;
+        color: rgba(67, 73, 118, 1);
+        line-height: 50px;
+        padding-left: 22px;
+    }
+
+    .history {
+        width: 100%;
+        background: rgba(255, 255, 255, 1);
+        max-height: 285px;
+        overflow: auto;
+        padding-top: 10px;
+
+        .history-item {
+            height: 54px;
+            // background-color: red;
+            margin-bottom: 14px;
+            display: flex;
+            width: 100%;
+
+            .history-item-left {
+                padding-left: 15px;
+                padding-top: 16px;
+                position: relative;
+                width: 42px;
+
+                img {
+                    width: 26px;
+                }
+
+                img.rotate {
+                    animation: icon-loading 0.8s linear infinite;
+                }
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    left: 28px;
+                    bottom: -30px;
+                    display: block;
+                    width: 0px;
+                    height: 42px;
+                    border-left: 1px dashed #b8bbcd;
+                }
+            }
+
+            .history-item-right {
+                flex: 1;
+                font-weight: 500;
+                overflow: hidden;
+
+                .history-item-right-top {
+                    width: 100%;
+                    // background-color: green;
+                    font-size: 12px;
+                    color: rgba(116, 121, 168, 1);
+                    padding-left: 10px;
+                    padding-top: 12px;
+
+                    .tx_date {
+                        position: relative;
+
+                        &::after {
+                            content: '';
+                            position: absolute;
+                            right: -15px;
+                            bottom: 1px;
+                            display: block;
+                            width: 1px;
+                            height: 14px;
+                            background-color: #7479A8;
+                        }
+                    }
+
+                    .tx_hash {
+                        margin-left: 30px;
+                        color: #675CFF;
+                        cursor: pointer;
+                        font-style: italic;
+                    }
+                }
+
+                .history-item-right-bottom {
+                    padding-left: 10px;
+                    width: 96%;
+                    padding-top: 6px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    color: rgba(37, 33, 82, 1);
+
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    // background-color: green;
+                }
+            }
+        }
+
+        .history-item:last-child {
+            .history-item-left {
+                &::after {
+                    display: none;
+                }
+            }
+        }
+
+        .no-history {
+            text-align: center;
+            padding-top: 10px;
+
+            img {
+                width: 41px;
+            }
+
+            .no-history-span {
+                display: block;
+                font-size: 12px;
+                font-weight: 400;
+                color: rgba(109, 107, 133, 1);
+                line-height: 42px;
+            }
+        }
+    }
+}
+
+@keyframes icon-loading {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+// 
+@media screen and (max-width: 767px) {
+    .history-title {
+        padding-bottom: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        color: rgba(37, 33, 82, 1);
+        // background-color: red;
+        width: 94%;
+        margin: 0 auto;
+        padding-top: 10px;
+    }
+
+    .history {
+        max-height: 255px;
+        overflow: auto;
+        margin-bottom: 32px;
+        // border: 1px solid rgba(229, 230, 242, 1);
+        padding-top: 10px;
+
+        .history-item {
+            height: 54px;
+            // background-color: red;
+            margin-bottom: 5px;
+
+            .history-item-left {
+                float: left;
+                padding-left: 10px;
+                padding-top: 20px;
+                position: relative;
+
+                img {
+                    width: 20px;
+                }
+
+                img.rotate {
+                    animation: icon-loading 0.8s linear infinite;
+                }
+
+                &::after {
+                    content: '';
+                    position: absolute;
+                    left: 20px;
+                    bottom: -39px;
+                    display: block;
+                    width: 0px;
+                    height: 39px;
+                    border-left: 1px dashed #6A6F94;
+                }
+            }
+
+            .history-item-right {
+                float: left;
+                padding-left: 10px;
+                padding-top: 12px;
+                font-weight: 500;
+                // background-color: red;
+                max-width: 85%;
+
+                .history-item-right-top {
+                    font-size: 12px;
+                    color: rgba(116, 121, 168, 1);
+
+                    .tx_date {
+                        position: relative;
+
+                        &::after {
+                            content: '';
+                            position: absolute;
+                            right: -10px;
+                            bottom: 1px;
+                            display: block;
+                            width: 1px;
+                            height: 14px;
+                            background-color: #7479A8;
+                        }
+                    }
+
+                    .tx_hash {
+                        margin-left: 20px;
+                        color: #5F85FF;
+                        cursor: pointer;
+                        font-style: italic;
+                    }
+                }
+
+                .history-item-right-bottom {
+                    padding-top: 6px;
+                    font-size: 14px;
+                    color: rgba(222, 224, 247, 1);
+                    font-weight: 500;
+                    color: rgba(37, 33, 82, 1);
+
+                    overflow: hidden;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    // width: 70%;
+                    // background-color: red;
+                }
+            }
+        }
+
+        .history-item:last-child {
+            .history-item-left {
+                &::after {
+                    display: none;
+                }
+            }
+        }
+
+        .no-history {
+            text-align: center;
+            padding-top: 10px;
+
+            img {
+                width: 41px;
+            }
+
+            .no-history-span {
+                display: block;
+                font-size: 12px;
+                font-weight: 400;
+                color: rgba(109, 107, 133, 1);
+                line-height: 42px;
+            }
+        }
+    }
+}

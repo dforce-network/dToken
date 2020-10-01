@@ -30,7 +30,7 @@ contract AaveLendingPoolCoreMock {
         aTokens[_token] = _aToken;
         Token(_token).allocateTo(
             address(this),
-            1000000000 * 10**IERC20(_token).decimals()
+            1000000000 * 10**uint256(IERC20(_token).decimals())
         );
     }
 
