@@ -23,7 +23,8 @@ export default class Item extends Component {
       logo: {
         USDT: USDT_logo,
         USDC: USDC_logo,
-        DAI: DAI_logo
+        DAI: DAI_logo,
+        USDx: USDx_logo
       },
       token_d_name: ['dUSDx', 'dUSDT', 'dUSDC', 'dDAI'],
       source: 'web',
@@ -123,39 +124,13 @@ export default class Item extends Component {
 
   }
 
-  get_usdx_status = () => {
-    // let url_apy = "https://testapi.dforce.network/api/v1/baseInfo/"; // test
-    let url_apy = 'https://usr.dforce.network/api/v1/baseInfo/';
-    // let url_apy = 'https://markets.dforce.network/api/v2/getApy/';
-
-    fetch(url_apy).then(res => res.text())
-      .then((data) => {
-        if (!(data && Object.keys(data).length > 0)) {
-          return console.log('no data return...');
-        }
-
-        data = JSON.parse(data);
-        // return console.log(data)
-
-        this.setState({
-          usdx_apy: data.apy,
-          total_underlying: data.total_underlying,
-        })
-      })
-      .catch(err => {
-        console.log(err)
-      })
-  }
-
 
   componentDidMount = () => {
     this.get_token_status();
-    this.get_usdx_status();
     this.handleURL();
 
     setInterval(() => {
       this.get_token_status();
-      this.get_usdx_status();
     }, 1000 * 10);
   }
 
@@ -183,53 +158,10 @@ export default class Item extends Component {
                 <span className={"btn-wrap"}></span>
               </dt>
 
-              <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
-                <div className={"leftColumn"}>
-                  <img src={USDx_logo} />
-                  <div className={"rightText"}>
-                    <h3>{'USDx'}</h3>
-                  </div>
-                </div>
-                <span>
-                  {
-                    this.state.total_underlying ?
-                      format_num_to_K(this.state.total_underlying.toFixed(2)) : '...'
-                  }
-
-                  {
-                    // this.state.token_data_arr && this.state.token_data_arr.length > 0 ?
-                    //   format_num_to_K(Number(this.state.token_data_arr[0].total_underlying).toFixed(2)) : '...'
-                  }
-
-                </span>
-                <span>
-                  {
-                    this.state.usdx_apy ?
-                      this.state.usdx_apy.toFixed(2) + '%' : '...'
-                  }
-                </span>
-                <span className={"btn-wrap"}>
-
-                  <a href='https://usr.dforce.network' target='_blank'>
-                    <Button>
-                      <FormattedMessage id='DEPOSIT' />
-                    </Button>
-                  </a>
-
-                  <a href='https://usr.dforce.network/?is_withdraw=true' target='_blank'>
-                    <Button>
-                      <FormattedMessage id='WITHDRAW' />
-                    </Button>
-                  </a>
-                </span>
-              </dd>
 
               {
                 this.state.token_data_arr && this.state.token_data_arr.length > 0 &&
                 this.state.token_data_arr.map((item, index) => {
-                  if (index === 0) {
-                    return console.log('display: none');
-                  }
                   return (
                     <dd key={index} style={{ fontWeight: 'bold', fontSize: '18px' }}>
                       <div className={"leftColumn"}>
@@ -246,13 +178,13 @@ export default class Item extends Component {
                     </span>
                       <span className={"btn-wrap"}>
 
-                        <Link to={{ pathname: '/dapp', state: { cur_index: index - 1, cur_language: this.props.language, source: this.state.source } }}>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: index === 0 ? 3 : index - 1, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
                             <FormattedMessage id='DEPOSIT' />
                           </Button>
                         </Link>
 
-                        <Link to={{ pathname: '/dapp', state: { cur_index: index - 1, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                        <Link to={{ pathname: '/dapp', state: { cur_index: index === 0 ? 3 : index - 1, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
                             <FormattedMessage id='WITHDRAW' />
                           </Button>
@@ -268,9 +200,9 @@ export default class Item extends Component {
                 <>
                   <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
                     <div className={"leftColumn"}>
-                      <img src={this.state.logo.USDT} />
+                      <img src={this.state.logo.USDx} />
                       <div className={"rightText"}>
-                        <h3>{'USDT'}</h3>
+                        <h3>{'USDx'}</h3>
                       </div>
                     </div>
                     <span>{'...'}</span>
@@ -287,9 +219,9 @@ export default class Item extends Component {
 
                   <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
                     <div className={"leftColumn"}>
-                      <img src={this.state.logo.USDC} />
+                      <img src={this.state.logo.USDT} />
                       <div className={"rightText"}>
-                        <h3>{'USDC'}</h3>
+                        <h3>{'USDT'}</h3>
                       </div>
                     </div>
                     <span>{'...'}</span>
@@ -306,9 +238,9 @@ export default class Item extends Component {
 
                   <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
                     <div className={"leftColumn"}>
-                      <img src={this.state.logo.DAI} />
+                      <img src={this.state.logo.USDC} />
                       <div className={"rightText"}>
-                        <h3>{'DAI'}</h3>
+                        <h3>{'USDC'}</h3>
                       </div>
                     </div>
                     <span>{'...'}</span>
@@ -318,6 +250,25 @@ export default class Item extends Component {
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
                       </Link>
                       <Link to={{ pathname: '/dapp', state: { cur_index: 2, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                        <Button><FormattedMessage id='WITHDRAW' /></Button>
+                      </Link>
+                    </span>
+                  </dd>
+
+                  <dd style={{ fontWeight: 'bold', fontSize: '18px' }}>
+                    <div className={"leftColumn"}>
+                      <img src={this.state.logo.DAI} />
+                      <div className={"rightText"}>
+                        <h3>{'DAI'}</h3>
+                      </div>
+                    </div>
+                    <span>{'...'}</span>
+                    <span>{'...'}</span>
+                    <span className={"btn-wrap"}>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 3, cur_language: this.props.language, source: this.state.source } }}>
+                        <Button><FormattedMessage id='DEPOSIT' /></Button>
+                      </Link>
+                      <Link to={{ pathname: '/dapp', state: { cur_index: 3, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='WITHDRAW' /></Button>
                       </Link>
                     </span>
