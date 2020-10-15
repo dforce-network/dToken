@@ -175,20 +175,29 @@ export default class Item extends Component {
                       </span>
                       <span>
                         {Number(this.state.token_data_arr[index].now_apy).toFixed(2)}%
-                    </span>
-                      <span className={"btn-wrap"}>
+                      </span>
+                      <span className={index === 0 ? "btn-wrap first" : "btn-wrap"}>
 
                         <Link to={{ pathname: '/dapp', state: { cur_index: index === 0 ? 3 : index - 1, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
-                            <FormattedMessage id='DEPOSIT' />
+                            <FormattedMessage id='Deposit' />
                           </Button>
                         </Link>
 
                         <Link to={{ pathname: '/dapp', state: { cur_index: index === 0 ? 3 : index - 1, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
-                            <FormattedMessage id='WITHDRAW' />
+                            <FormattedMessage id='Withdraw' />
                           </Button>
                         </Link>
+
+                        {
+                          index === 0 &&
+                          <a href='https://usr.dforce.network/?is_withdraw=true'>
+                            <div className={'Legacy_Withdraw'}>
+                              <FormattedMessage id='Legacy_Withdraw' />
+                            </div>
+                          </a>
+                        }
                       </span>
                     </dd>
                   )

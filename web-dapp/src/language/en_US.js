@@ -1,4 +1,5 @@
 const en_US = {
+    Legacy_Withdraw: 'Legacy Withdraw',
     USR_subTitle: 'USDx saving rate',
     goldx: 'GOLDx',
     goldx_detail: 'Token backed by physical gold',

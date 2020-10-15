@@ -197,8 +197,24 @@
   }
 
   .btn-wrap {
+    // background-color: red;
+    display: flex;
+    padding-left: 70px;
+
+    a {
+      flex: 1;
+    }
+
+    a:nth-child(1) {
+      margin-right: 10px;
+    }
+
+    a:nth-child(3) {
+      margin-left: 10px;
+    }
+
     button {
-      width: 120px;
+      width: 100%;
       border-radius: 19px;
 
       span {
@@ -207,12 +223,8 @@
       }
     }
 
-    button:nth-child(1) {
-      margin-right: 20px;
-    }
-
     // background-color: red;
-    flex: 1.8 !important;
+    flex: 2.0 !important;
   }
 }
 
@@ -461,17 +473,19 @@
         font-weight: bold;
       }
     }
+  }
 
-    // button:nth-child(1) {
-    //   margin-right: 10px;
-    // }
+  .first {
+    a {
+      flex: 1;
+      // background-color: red;
 
-    // button:nth-child(2) {
-    //   margin-left: 10px;
-    // }
-
-    // background-color: red;
-    // flex: 1.8 !important;
+      &:nth-child(2) {
+        // background-color: green;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+    }
   }
 }
 
