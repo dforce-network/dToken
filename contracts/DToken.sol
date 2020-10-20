@@ -985,6 +985,41 @@ contract DToken is ReentrancyGuard, Pausable, ERC20SafeTransfer {
         return totalSupply == 0 ? BASE : rdiv(_totalToken, totalSupply);
     }
 
+    function currentExchangeRate() external returns (uint256) {
+        return getCurrentExchangeRate();
+    }
+
+    function totalUnderlying() external returns (uint256) {
+        address[] memory _handlers = getHandlers();
+        uint256 _tokenTotalBalance = 0;
+        for (uint256 i = 0; i < _handlers.length; i++)
+            _tokenTotalBalance = _tokenTotalBalance.add(
+                IHandler(_handlers[i]).getRealBalance(token)
+            );
+        return _tokenTotalBalance;
+    }
+
+    function getRealLiquidity() external returns (uint256) {
+        address[] memory _handlers = getHandlers();
+        uint256 _liquidity = 0;
+        for (uint256 i = 0; i < _handlers.length; i++)
+            _liquidity = _liquidity.add(
+                IHandler(_handlers[i]).getRealLiquidity(token)
+            );
+        return _liquidity;
+    }
+
+    function balanceOfUnderlying(address _account) external returns (uint256) {
+        uint256 _underlying = rmul(
+            balances[_account].value,
+            getCurrentExchangeRate()
+        );
+        return
+            _underlying.sub(
+                rmul(_underlying, originationFee[this.redeem.selector])
+            );
+    }
+
     function getBaseData()
         external
         returns (
