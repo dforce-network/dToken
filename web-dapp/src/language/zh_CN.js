@@ -1,5 +1,5 @@
 const zh_CN = {
-    Legacy_Withdraw: '旧版取回',
+    Legacy_Withdraw: '旧 版 取 回',
     USR_subTitle: 'USDx系统利息',
     goldx: '黄金代币',
     goldx_detail: '锚定实物黄金的代币',
