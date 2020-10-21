@@ -67,7 +67,7 @@ const en_US = {
     Exchange_Market: 'Trade',
     dForce_Stablecoin: 'Assets',
     Portal: 'An indexed stablecoin',
-    Instant_Swap_of_Stable_Assets: 'Stable assets swap',
+    Instant_Swap_of_Stable_Assets: 'DEX aggregator',
     DF_token_distribute_system: 'DF token distribution',
     Governance: 'Governance'
 }

@@ -67,7 +67,7 @@ const zh_CN = {
     Exchange_Market: '交易协议',
     dForce_Stablecoin: '资产协议',
     Portal: '合成型稳定币',
-    Instant_Swap_of_Stable_Assets: '稳定资产闪兑',
+    Instant_Swap_of_Stable_Assets: '去中心化交易聚合器',
     DF_token_distribute_system: 'DF代币分发',
     Governance: '治理'
 }
