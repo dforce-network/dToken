@@ -1,4 +1,8 @@
 const en_US = {
+    on_ETH: 'The data on this page comes from the Ethereum Mainnet.',
+    on_BSC: 'The data on this page comes from the Binance Smart Chain.',
+    to_ETH: 'Switch to Ethereum',
+    to_BSC: 'Switch to BSC',
     Legacy_Withdraw: 'Legacy Withdraw',
     USR_subTitle: 'USDx saving rate',
     goldx: 'GOLDx',

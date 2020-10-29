@@ -1,4 +1,8 @@
 const zh_CN = {
+    on_ETH: '页面中的数据来源于以太坊主网',
+    on_BSC: '页面中的数据来源于币安智能链',
+    to_ETH: '切换到Ethereum',
+    to_BSC: '切换到BSC',
     Legacy_Withdraw: '旧 版 取 回',
     USR_subTitle: 'USDx系统利息',
     goldx: '黄金代币',

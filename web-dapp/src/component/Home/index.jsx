@@ -7,6 +7,7 @@ import en_US from '../../language/en_US.js';
 import zh_CN from '../../language/zh_CN';
 
 import Item from './Item';
+import Item_BSC from './Item-bsc';
 import FAQ from '../FAQ';
 
 import '../../App.scss';
@@ -36,7 +37,7 @@ import arrow_u from '../../images/up.svg';
 import arrow_d from '../../images/arrow_d.svg';
 import arrow_down from '../../images/arrow_down.svg';
 import no_history from '../../images/no-history.svg';
-import no_support from '../../images/no_support.svg';
+import switch_img from '../../images/witch.svg';
 
 import { get_nettype } from '../../utils.js';
 
@@ -63,6 +64,7 @@ export default class Home extends React.Component {
             token_status_apy: [],
             cur_show_data_index: 0,
             options: {},
+            is_onETHChain: window.location.href.includes('/bsc') ? false : true,
 
             cur_language: navigator.language.toLowerCase() === 'zh-cn' ? '中文' : 'English',
             showonly: false,
@@ -332,7 +334,35 @@ export default class Home extends React.Component {
                         <FormattedMessage id='slogan_title_plus' />
                     </div>
 
-                    <Item language={this.state.cur_language} />
+
+                    {
+                        this.state.is_onETHChain &&
+                        <div className='switch-tips'>
+                            <div className='switch-tips-left'>
+                                <FormattedMessage id='on_ETH' />
+                            </div>
+                            <div className='switch-tips-right' onClick={() => { this.setState({ is_onETHChain: !this.state.is_onETHChain }) }}>
+                                <FormattedMessage id='to_BSC' />
+                                <img alt='' src={switch_img} />
+                            </div>
+                        </div>
+                    }
+                    {this.state.is_onETHChain && <Item language={this.state.cur_language} />}
+
+
+                    {
+                        !this.state.is_onETHChain &&
+                        <div className='switch-tips'>
+                            <div className='switch-tips-left'>
+                                <FormattedMessage id='on_BSC' />
+                            </div>
+                            <div className='switch-tips-right' onClick={() => { this.setState({ is_onETHChain: !this.state.is_onETHChain }) }}>
+                                <FormattedMessage id='to_ETH' />
+                                <img alt='' src={switch_img} />
+                            </div>
+                        </div>
+                    }
+                    {!this.state.is_onETHChain && <Item_BSC language={this.state.cur_language} />}
 
                     <FAQ language={this.state.cur_language} />
 

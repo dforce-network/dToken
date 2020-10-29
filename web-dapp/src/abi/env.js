@@ -56,6 +56,17 @@ function env() {
             "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317": "USR Handler"
           }
         },
+        bsc: {
+          BUSD: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+          dBUSD: "0xce14792a280b20c4f8E1ae76805a6dfBe95729f5",
+          USDT: "0x55d398326f99059fF775485246999027B3197955",
+          dUSDT: "0x6199cC917C12E4735B4e9cEfbe29E9F0F75Af9E5",
+          USDC: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+          dUSDC: "0x6c0F322442D10269Dd557C6e3A56dCC3a1198524",
+          DAI: "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
+          dDAI: "0x4E0B5BaFC52D09A8F18eA0b7a6A7dc23A1096f99",
+          DTokenCommonData: "0xb8e898a9c3AfdAEbc8e74581273eEFc006fdE0c5",
+        },
       },
       DECIMALS: {
         main: {
@@ -73,6 +84,12 @@ function env() {
           TUSD: 18,
           PAX: 18,
           USDx: 18
+        },
+        bsc: {
+          BUSD: 18,
+          USDT: 18,
+          USDC: 18,
+          DAI: 18,
         }
       }
     };
@@ -131,6 +148,17 @@ function env() {
             "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317": "USR Handler"
           }
         },
+        bsc: {
+          BUSD: "0xe9e7CEA3DedcA5984780Bafc599bD69ADd087D56",
+          dBUSD: "0xce14792a280b20c4f8E1ae76805a6dfBe95729f5",
+          USDT: "0x55d398326f99059fF775485246999027B3197955",
+          dUSDT: "0x6199cC917C12E4735B4e9cEfbe29E9F0F75Af9E5",
+          USDC: "0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d",
+          dUSDC: "0x6c0F322442D10269Dd557C6e3A56dCC3a1198524",
+          DAI: "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
+          dDAI: "0x4E0B5BaFC52D09A8F18eA0b7a6A7dc23A1096f99",
+          DTokenCommonData: "0xb8e898a9c3AfdAEbc8e74581273eEFc006fdE0c5",
+        },
       },
       DECIMALS: {
         main: {
@@ -148,6 +176,12 @@ function env() {
           TUSD: 18,
           PAX: 18,
           USDx: 18
+        },
+        bsc: {
+          BUSD: 18,
+          USDT: 18,
+          USDC: 18,
+          DAI: 18,
         }
       }
     };

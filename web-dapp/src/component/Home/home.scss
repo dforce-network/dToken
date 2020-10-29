@@ -18,7 +18,7 @@
   .warp {
     position: relative;
     width: 922px;
-    margin: 40px auto 50px;
+    margin: 0px auto 50px;
 
     .content {
       background: #fff;
@@ -249,7 +249,7 @@
   .warp {
     position: relative;
     width: 94%;
-    margin: 30px auto 30px;
+    margin: 0px auto 30px;
 
     .content {
       background: #fff;
@@ -493,4 +493,59 @@
   padding-top: 40px;
   width: 80px;
   margin: 0 auto;
+}
+
+.switch-tips {
+  @media screen and (min-width: 768px) {
+    width: 922px;
+    margin: 0 auto;
+    margin-top: 40px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 20px;
+    line-height: 28px;
+    // background: red;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: #434976;
+
+    .switch-tips-right {
+      cursor: pointer;
+      color: #D4A454;
+
+      img {
+        width: 22px;
+        margin-top: -3px;
+        margin-left: 6px;
+      }
+    }
+  }
+
+
+  @media screen and (max-width: 767px) {
+    width: 94%;
+    margin: 0 auto;
+    margin-top: 30px;
+    font-size: 16px;
+    line-height: 22px;
+    margin-bottom: 10px;
+    font-weight: 500;
+    color: #434976;
+
+    .switch-tips-right {
+      margin-top: 10px;
+      cursor: pointer;
+      color: #D4A454;
+      border: 1px solid #D4A454;
+      display: inline-block;
+      padding: 5px 18px;
+      border-radius: 20px;
+
+      img {
+        width: 18px;
+        margin-top: -3px;
+        margin-left: 16px;
+      }
+    }
+  }
 }
