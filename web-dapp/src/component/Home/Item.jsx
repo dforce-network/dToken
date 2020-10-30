@@ -175,10 +175,10 @@ export default class Item extends Component {
                           <h3>{this.state.token_d_name[index].slice(1)}</h3>
                         </div>
                       </div>
-                      <span>
+                      <span className={"spanflex"}>
                         {format_num_to_K(Number(this.state.token_data_arr[index].total_underlying).toFixed(2))}
                       </span>
-                      <span>
+                      <span className={"spanflex"}>
                         {Number(this.state.token_data_arr[index].now_apy).toFixed(2)}%
                       </span>
                       <span className={index === 0 ? "btn-wrap first" : "btn-wrap"}>
@@ -219,8 +219,8 @@ export default class Item extends Component {
                         <h3>{'USDx'}</h3>
                       </div>
                     </div>
-                    <span>{'...'}</span>
-                    <span>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
                       <Link to={{ pathname: '/dapp', state: { cur_index: 0, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
@@ -238,8 +238,8 @@ export default class Item extends Component {
                         <h3>{'USDT'}</h3>
                       </div>
                     </div>
-                    <span>{'...'}</span>
-                    <span>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
                       <Link to={{ pathname: '/dapp', state: { cur_index: 1, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
@@ -257,8 +257,8 @@ export default class Item extends Component {
                         <h3>{'USDC'}</h3>
                       </div>
                     </div>
-                    <span>{'...'}</span>
-                    <span>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
                       <Link to={{ pathname: '/dapp', state: { cur_index: 2, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
@@ -276,8 +276,8 @@ export default class Item extends Component {
                         <h3>{'DAI'}</h3>
                       </div>
                     </div>
-                    <span>{'...'}</span>
-                    <span>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
+                    <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
                       <Link to={{ pathname: '/dapp', state: { cur_index: 3, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>

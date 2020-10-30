@@ -167,6 +167,10 @@ export default class App extends React.Component {
         get_tokens_status(this);
         get_tokens_status_apy(this);
       })
+    } else {
+      this.setState({
+        net_type: 'other'
+      })
     }
 
     // let nettype = await get_nettype(this.new_web3);

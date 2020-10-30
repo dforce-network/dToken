@@ -341,7 +341,7 @@ export default class Home extends React.Component {
                             <div className='switch-tips-left'>
                                 <FormattedMessage id='on_ETH' />
                             </div>
-                            <div className='switch-tips-right' onClick={() => { this.setState({ is_onETHChain: !this.state.is_onETHChain }) }}>
+                            <div className='switch-tips-right' onClick={() => { window.location.href = '/bsc' }}>
                                 <FormattedMessage id='to_BSC' />
                                 <img alt='' src={switch_img} />
                             </div>
@@ -356,7 +356,7 @@ export default class Home extends React.Component {
                             <div className='switch-tips-left'>
                                 <FormattedMessage id='on_BSC' />
                             </div>
-                            <div className='switch-tips-right' onClick={() => { this.setState({ is_onETHChain: !this.state.is_onETHChain }) }}>
+                            <div className='switch-tips-right' onClick={() => { window.location.href = '/' }}>
                                 <FormattedMessage id='to_ETH' />
                                 <img alt='' src={switch_img} />
                             </div>

@@ -351,16 +351,26 @@
             }
           }
 
-          span {
+          .spanflex {
             // flex: 33%;
             flex: 1;
             text-align: right;
             color: #434976;
           }
 
+          // .bsc-spewrap {
+          //   width: 100% !important;
+          // }
+
           span:nth-child(2) {
             // background-color: goldenrod;
             flex: 1.5;
+          }
+
+          span:nth-child(4) {
+            // background-color: goldenrod;
+            // flex: 2;
+            width: 100%;
           }
         }
 
