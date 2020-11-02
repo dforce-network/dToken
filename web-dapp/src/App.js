@@ -410,9 +410,21 @@ export default class App extends React.Component {
                 <Menu className={'header__overlay'}>
                   <Menu.Item>
                     <a rel="noopener noreferrer" href="https://airdrop.dforce.network/" className={'header__overlay_item'}>
-                      <span>Airdrop</span>
+                      <span>
+                        <FormattedMessage id='Airdrop' />
+                      </span>
                       <label>
                         <FormattedMessage id='DF_token_distribute_system' />
+                      </label>
+                    </a>
+                  </Menu.Item>
+                  <Menu.Item>
+                    <a rel="noopener noreferrer" href="https://snapshot.page/#/dforce/all" className={'header__overlay_item'}>
+                      <span>
+                        <FormattedMessage id='Governance' />
+                      </span>
+                      <label>
+                        <FormattedMessage id='Governance__content' />
                       </label>
                     </a>
                   </Menu.Item>
@@ -570,10 +582,22 @@ export default class App extends React.Component {
           <div className={this.state.meun2 ? 'meun1' : 'only1px'}>
             <div className='m-item'>
               <a href='https://airdrop.dforce.network/' rel="noopener noreferrer">
-                <span className='title'>Airdrop</span>
+                <span className='title'>
+                  <FormattedMessage id='Airdrop' />
+                </span>
               </a>
               <span className='details'>
                 <FormattedMessage id='DF_token_distribute_system' />
+              </span>
+            </div>
+            <div className='m-item'>
+              <a href="https://snapshot.page/#/dforce/all" rel="noopener noreferrer">
+                <span className='title'>
+                  <FormattedMessage id='Governance' />
+                </span>
+              </a>
+              <span className='details'>
+                <FormattedMessage id='Governance__content' />
               </span>
             </div>
           </div>
@@ -1057,7 +1081,7 @@ export default class App extends React.Component {
                 <a href='https://www.reddit.com/r/dForceNetwork' target='_blank' rel="noopener noreferrer">
                   <img alt='' src={Reddit} />
                 </a>
-                <a href='https://discord.gg/Gbtd3MR' target='_blank' rel="noopener noreferrer">
+                <a href='https://discord.gg/c2PC8SM' target='_blank' rel="noopener noreferrer">
                   <img alt='' src={Discord} />
                 </a>
                 <a href='https://www.linkedin.com/company/dforce-network' target='_blank' rel="noopener noreferrer">

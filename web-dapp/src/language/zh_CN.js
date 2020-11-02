@@ -1,4 +1,6 @@
 const zh_CN = {
+    Governance__content: '提议和投票',
+    Airdrop: '空投',
     on_ETH: '页面中的数据来源于以太坊主网',
     on_BSC: '页面中的数据来源于币安智能链',
     to_ETH: '切换到Ethereum',
@@ -72,7 +74,7 @@ const zh_CN = {
     dForce_Stablecoin: '资产协议',
     Portal: '合成型稳定币',
     Instant_Swap_of_Stable_Assets: '去中心化交易聚合器',
-    DF_token_distribute_system: 'DF代币分发',
+    DF_token_distribute_system: 'DF激励分发',
     Governance: '治理'
 }
 export default zh_CN;

@@ -1,4 +1,6 @@
 const en_US = {
+    Governance__content: 'Propose & vote',
+    Airdrop: 'Airdrop',
     on_ETH: 'The data on this page comes from the Ethereum Mainnet.',
     on_BSC: 'The data on this page comes from the Binance Smart Chain.',
     to_ETH: 'Switch to Ethereum',
@@ -72,7 +74,7 @@ const en_US = {
     dForce_Stablecoin: 'Assets',
     Portal: 'An indexed stablecoin',
     Instant_Swap_of_Stable_Assets: 'DEX aggregator',
-    DF_token_distribute_system: 'DF token distribution',
+    DF_token_distribute_system: 'Incentivized DF distribution',
     Governance: 'Governance'
 }
 export default en_US;
