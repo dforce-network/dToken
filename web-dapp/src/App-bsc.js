@@ -1,7 +1,7 @@
 import React from 'react';
 import Web3 from 'web3';
 import { Menu, Dropdown, Tabs, Input, Button, Modal } from 'antd';
-import History from './component/history';
+import History from './component/history-bsc';
 import ReactEcharts from 'echarts-for-react';
 import CountUp from 'react-countup';
 // add i18n.
