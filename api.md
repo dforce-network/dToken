@@ -63,6 +63,23 @@
   - \_spender: spender address.
   - returns: the amount which \_spender is still allowed to withdraw from \_owner.
 
+- currentExchangeRate() returns (uint)
+
+  - returns: the most recent exchange rate, scaled by 1e18.
+
+- totalUnderlying() returns (uint)
+
+  - returns: the total underlying token amount.
+
+- getRealLiquidity() returns (uint)
+
+  - returns: current liquidity of the underlying token.
+
+  balanceOfUnderlying(address \_account) returns (uint)
+
+  - \_account: account address.
+  - returns: underlying token balance of given account.
+
 - getBaseData() returns (uint, uint, uint, uint, uint)
 
   - returns (decimals, exchangeRate, mintFeeRate, redeemFeeRate, totalUnderlying)
