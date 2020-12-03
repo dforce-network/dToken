@@ -75,7 +75,7 @@
 
   - returns: current liquidity of the underlying token.
 
-  balanceOfUnderlying(address \_account) returns (uint)
+- balanceOfUnderlying(address \_account) returns (uint)
 
   - \_account: account address.
   - returns: underlying token balance of given account.
