@@ -29,6 +29,7 @@ export default class Item extends Component {
       },
       token_d_name: ['dBUSD', 'dUSDT', 'dUSDC', 'dDAI'],
       source: 'web',
+      add_url: '',
     };
   }
 
@@ -133,6 +134,16 @@ export default class Item extends Component {
     window.timer = setInterval(() => {
       this.get_token_status();
     }, 1000 * 10);
+
+    console.log(window.location.href) // http://localhost:3000/bsc/?utm_source=TokenPocket
+    let href_arr = window.location.href.split('?')
+    if (href_arr && href_arr[1]) {
+      this.setState({
+        add_url: href_arr[1]
+      }, () => {
+        console.log(this.state.add_url)
+      })
+    }
   }
 
   componentWillUnmount = () => {
@@ -184,13 +195,13 @@ export default class Item extends Component {
                       </span>
                       <span className={"btn-wrap bsc-spewrap"}>
 
-                        <Link to={{ pathname: '/dapp-bsc', state: { cur_index: index, cur_language: this.props.language, source: this.state.source } }}>
+                        <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: index, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
                             <FormattedMessage id='Deposit' />
                           </Button>
                         </Link>
 
-                        <Link to={{ pathname: '/dapp-bsc', state: { cur_index: index, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                        <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: index, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                           <Button>
                             <FormattedMessage id='Withdraw' />
                           </Button>
@@ -214,10 +225,10 @@ export default class Item extends Component {
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 0, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 0, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
                       </Link>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 0, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 0, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='WITHDRAW' /></Button>
                       </Link>
                     </span>
@@ -233,10 +244,10 @@ export default class Item extends Component {
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 1, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 1, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
                       </Link>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 1, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 1, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='WITHDRAW' /></Button>
                       </Link>
                     </span>
@@ -252,10 +263,10 @@ export default class Item extends Component {
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 2, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 2, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
                       </Link>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 2, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 2, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='WITHDRAW' /></Button>
                       </Link>
                     </span>
@@ -271,10 +282,10 @@ export default class Item extends Component {
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"spanflex"}>{'...'}</span>
                     <span className={"btn-wrap"}>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 3, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 3, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='DEPOSIT' /></Button>
                       </Link>
-                      <Link to={{ pathname: '/dapp-bsc', state: { cur_index: 3, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
+                      <Link to={{ pathname: `/dapp-bsc/?${this.state.add_url}`, state: { cur_index: 3, is_withdraw: true, cur_language: this.props.language, source: this.state.source } }}>
                         <Button><FormattedMessage id='WITHDRAW' /></Button>
                       </Link>
                     </span>
