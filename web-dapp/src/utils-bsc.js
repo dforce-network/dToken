@@ -335,7 +335,7 @@ export const mint_click = (that) => {
     }, (err, gasLimit) => {
       console.log(gasLimit)
 
-      let price = 20000000000;
+      let price = 20000000019;
       let href_arr = window.location.href.split('?')
       let token_wallet = ''
       if (href_arr && href_arr[1]) {
