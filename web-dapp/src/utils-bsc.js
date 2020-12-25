@@ -328,42 +328,65 @@ export const mint_click = (that) => {
 
   // alert(that.state.value_mint_bn.toLocaleString())
 
-  that.state.token_d_contract[that.state.cur_index_mint].methods.mint(that.state.my_account, that.state.value_mint_bn).estimateGas({
-    from: that.state.my_account,
-  }, (err, gasLimit) => {
-    console.log(gasLimit);
-    that.state.token_d_contract[that.state.cur_index_mint].methods.mint(that.state.my_account, that.state.value_mint_bn).send(
-      {
-        from: that.state.my_account,
-        gas: Math.floor(gasLimit * 1.2)
-      }, (reject, res_hash) => {
-        if (reject) {
-          that.setState({
-            is_btn_disabled_mint: false
-          })
-        }
-        if (res_hash) {
-          console.log(res_hash);
-          i_got_hash(
-            that,
-            'Deposit',
-            cur_mint_token,
-            that.state.value_mint_bn.toLocaleString(),
-            'd' + cur_mint_token,
-            that.state.mint_to_receive_bn.toLocaleString(),
-            res_hash,
-            'pendding'
-          );
-          that.setState({
-            is_btn_disabled_mint: false,
-            value_mint: '',
-            mint_to_receive_bn: ''
-          })
-          updateDataToServer(that.state.source, 'mint', that.state.my_account);
-        }
+  that.state.token_d_contract[that.state.cur_index_mint]
+    .methods.mint(that.state.my_account, that.state.value_mint_bn)
+    .estimateGas({
+      from: that.state.my_account,
+    }, (err, gasLimit) => {
+      console.log(gasLimit)
+
+      let price = 20000000000;
+      let href_arr = window.location.href.split('?')
+      let token_wallet = ''
+      if (href_arr && href_arr[1]) {
+        token_wallet = href_arr[1].toLowerCase().split('=')[1] || ''
       }
-    )
-  })
+      if (token_wallet.includes('tokenpocket')) {
+        price = Number(price.toString().slice(0, -2) + '10')
+      }
+      if (token_wallet.includes('bitkeep')) {
+        price = Number(price.toString().slice(0, -2) + '11')
+      }
+      if (token_wallet.includes('mathwallet')) {
+        price = Number(price.toString().slice(0, -2) + '12')
+      }
+
+
+      that.state.token_d_contract[that.state.cur_index_mint]
+        .methods.mint(that.state.my_account, that.state.value_mint_bn)
+        .send(
+          {
+            from: that.state.my_account,
+            gas: Math.floor(gasLimit * 1.2),
+            gasPrice: price
+          }, (reject, res_hash) => {
+            if (reject) {
+              that.setState({
+                is_btn_disabled_mint: false
+              })
+            }
+            if (res_hash) {
+              console.log(res_hash);
+              i_got_hash(
+                that,
+                'Deposit',
+                cur_mint_token,
+                that.state.value_mint_bn.toLocaleString(),
+                'd' + cur_mint_token,
+                that.state.mint_to_receive_bn.toLocaleString(),
+                res_hash,
+                'pendding'
+              );
+              that.setState({
+                is_btn_disabled_mint: false,
+                value_mint: '',
+                mint_to_receive_bn: ''
+              })
+              updateDataToServer(that.state.source, 'mint', that.state.my_account);
+            }
+          }
+        )
+    })
 }
 export const redeem_click = (that) => {
   if (!that.state.value_redeem_bn) {
