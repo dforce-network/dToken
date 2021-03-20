@@ -39,8 +39,8 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
         controller = _iToken.controller();
         underlying = _iToken.underlying();
         initReentrancyStatus();
-        approve(underlying, uint256(-1));
-        // _enableToken(underlying);
+        approve(uint256(-1));
+        _enableToken(underlying);
     }
 
     /**
