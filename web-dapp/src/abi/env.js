@@ -47,13 +47,14 @@ function env() {
           Compound_Handler: "0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1",
           Internal_Handler: "0xe5683ccab068627d9EA9a35f988c371Fc1727aF5",
           USR_Handler: "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317",
-          DTokenCommonData: "0x1a5e2ebf46c48c617841e8942b2ee9a32b87d7e9",
+          DTokenCommonData: "0xA6cC46e29E38210B085759bB3de66365D232B4c1",
           Handler: {
             '0xe5683ccab068627d9EA9a35f988c371Fc1727aF5': "Internal",
             '0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1': "Compound",
             '0x0d4c0A915c933FA197B965C294c933514CCCf4B1': "Compound1",
             '0xAfA9171828d3B2345638021647598F15F77c0e3A': "Aave",
-            "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317": "USR Handler"
+            "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317": "USR Handler",
+            "0xe90c3de561f37caf08e4201c0f9ae9d5d5182d1e": "dForce Lending"
           }
         },
         bsc: {
@@ -139,13 +140,14 @@ function env() {
           Compound_Handler: "0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1",
           Internal_Handler: "0xe5683ccab068627d9EA9a35f988c371Fc1727aF5",
           USR_Handler: "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317",
-          DTokenCommonData: "0x1a5e2ebf46c48c617841e8942b2ee9a32b87d7e9",
+          DTokenCommonData: "0xA6cC46e29E38210B085759bB3de66365D232B4c1",
           Handler: {
             '0xe5683ccab068627d9EA9a35f988c371Fc1727aF5': "Internal",
             '0xfc2F818A8b9761fC0852D2702B82a5392dbbcfe1': "Compound",
             '0x0d4c0A915c933FA197B965C294c933514CCCf4B1': "Compound1",
             '0xAfA9171828d3B2345638021647598F15F77c0e3A': "Aave",
-            "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317": "USR Handler"
+            "0xaD44F145C888116A74EA4d89eB9394c1A7a3E317": "USR Handler",
+            "0xe90c3de561f37caf08e4201c0f9ae9d5d5182d1e": "dForce Lending"
           }
         },
         bsc: {

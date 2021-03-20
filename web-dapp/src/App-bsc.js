@@ -316,43 +316,30 @@ export default class App extends React.Component {
           </a>
 
           <div className={'header__menu'}>
+            <div className={'header__menu__singleLink'}>
+              <a href="https://app.dforce.network/#/lending" target="_blank">
+                <FormattedMessage id='LEND' />
+              </a>
+            </div>
+
             <Dropdown
               overlay={
                 <Menu className={'header__overlay'}>
-                  <Menu.Item>
-                    <a target="_blank" rel="noopener noreferrer" href="https://usdx.dforce.network/" className={'header__overlay_item'}>
-                      <span>USDx</span>
-                      <label>
-                        <FormattedMessage id='Portal' />
-                      </label>
-                    </a>
-                  </Menu.Item>
-                  <Menu.Item>
-                    <a target="_blank" rel="noopener noreferrer" href="https://usr.dforce.network/" className={'header__overlay_item'}>
-                      <span>USR</span>
-                      <label>
-                        <FormattedMessage id='USR_subTitle' />
-                      </label>
-                    </a>
-                  </Menu.Item>
                   <Menu.Item>
                     <a target="_blank" rel="noopener noreferrer" href="https://markets.dforce.network/" className={'header__overlay_item'}>
                       <span>
                         <FormattedMessage id='Yield_Markets' />
                       </span>
-                      <label>
-                        <FormattedMessage id='Yield_Markets_detail' />
-                      </label>
+                    </a>
+                  </Menu.Item>
+                  <Menu.Item>
+                    <a target="_blank" rel="noopener noreferrer" href="https://usdx.dforce.network/" className={'header__overlay_item'}>
+                      <span>USDx</span>
                     </a>
                   </Menu.Item>
                   <Menu.Item>
                     <a target="_blank" rel="noopener noreferrer" href="https://goldx.dforce.network/" className={'header__overlay_item'}>
-                      <span>
-                        <FormattedMessage id='goldx' />
-                      </span>
-                      <label>
-                        <FormattedMessage id='goldx_detail' />
-                      </label>
+                      <span>GOLDx</span>
                     </a>
                   </Menu.Item>
                 </Menu>
@@ -364,51 +351,40 @@ export default class App extends React.Component {
               </span>
             </Dropdown>
 
+            <div className={'header__menu__singleLink'}>
+              <a href="https://trade.dforce.network/" target="_blank">
+                <FormattedMessage id='Exchange_Market' />
+              </a>
+            </div>
+
+            <div className={'header__menu__singleLink'}>
+              <a href="https://staking.dforce.network/" target="_blank">
+                <FormattedMessage id='FARM' />
+              </a>
+            </div>
 
             <Dropdown
               overlay={
                 <Menu className={'header__overlay'}>
                   <Menu.Item>
-                    <a rel="noopener noreferrer" href="https://trade.dforce.network/" className={'header__overlay_item'}>
-                      <span>dForce Trade</span>
-                      <label>
-                        <FormattedMessage id='Instant_Swap_of_Stable_Assets' />
-                      </label>
+                    <a rel="noopener noreferrer" href="https://snapshot.page/#/dforce" className={'header__overlay_item'}>
+                      <span>
+                        <FormattedMessage id='VOTE' />
+                      </span>
                     </a>
                   </Menu.Item>
-                </Menu>
-              }
-            >
-              <span className={'header__menu_item'}>
-                <label>
-                  <FormattedMessage id='Exchange_Market' />
-                </label>
-                <img src={arrow_d} alt="down" />
-              </span>
-            </Dropdown>
-
-
-            <Dropdown
-              overlay={
-                <Menu className={'header__overlay'}>
                   <Menu.Item>
                     <a rel="noopener noreferrer" href="https://airdrop.dforce.network/" className={'header__overlay_item'}>
                       <span>
                         <FormattedMessage id='Airdrop' />
                       </span>
-                      <label>
-                        <FormattedMessage id='DF_token_distribute_system' />
-                      </label>
                     </a>
                   </Menu.Item>
                   <Menu.Item>
-                    <a rel="noopener noreferrer" href="https://snapshot.page/#/dforce/all" className={'header__overlay_item'}>
+                    <a rel="noopener noreferrer" href="https://forum.dforce.network" className={'header__overlay_item'}>
                       <span>
-                        <FormattedMessage id='Governance' />
+                        <FormattedMessage id='FORUM' />
                       </span>
-                      <label>
-                        <FormattedMessage id='Governance__content' />
-                      </label>
                     </a>
                   </Menu.Item>
                 </Menu>
@@ -421,7 +397,6 @@ export default class App extends React.Component {
                 <img src={arrow_d} alt="down" />
               </span>
             </Dropdown>
-
 
             {
               this.state.net_type && !(this.state.net_type === 'bsc') &&
@@ -462,7 +437,6 @@ export default class App extends React.Component {
                 <FormattedMessage id='connect' />
               </a>
             }
-
           </div>
         </div>
 
@@ -481,6 +455,12 @@ export default class App extends React.Component {
           </div>
           <div className='only-kong'></div>
 
+          <h1>
+            <a style={{ color: '#070237', display: 'block', width: '100%', height: '100%' }} href="https://app.dforce.network/#/lending" target='_blank'>
+              <FormattedMessage id='LEND' />
+            </a>
+          </h1>
+
           <h1 onClick={() => { this.setState({ meun1: !this.state.meun1 }) }}>
             <FormattedMessage id='dForce_Stablecoin' />
             <span>
@@ -489,61 +469,39 @@ export default class App extends React.Component {
           </h1>
           <div className={this.state.meun1 ? 'meun1' : 'only1px'}>
             <div className='m-item'>
-              <a href='https://usdx.dforce.network/' target='_blank' rel="noopener noreferrer">
-                <span className='title'>USDx</span>
-              </a>
-              <span className='details'>
-                <FormattedMessage id='Portal' />
-              </span>
-            </div>
-            <div className='m-item'>
-              <a href='https://usr.dforce.network/' target='_blank' rel="noopener noreferrer">
-                <span className='title'>USR</span>
-              </a>
-              <span className='details'>
-                <FormattedMessage id='USR_subTitle' />
-              </span>
-            </div>
-            <div className='m-item'>
               <a href='https://markets.dforce.network/' rel="noopener noreferrer">
                 <span className='title'>
                   <FormattedMessage id='Yield_Markets' />
                 </span>
               </a>
-              <span className='details'>
-                <FormattedMessage id='Yield_Markets_detail' />
-              </span>
+            </div>
+            <div className='m-item'>
+              <a href='https://usdx.dforce.network/' target='_blank' rel="noopener noreferrer">
+                <span className='title'>USDx</span>
+              </a>
             </div>
             <div className='m-item'>
               <a href='https://goldx.dforce.network/' rel="noopener noreferrer">
-                <span className='title'>
-                  <FormattedMessage id='goldx' />
-                </span>
+                <span className='title'>GOLDx</span>
               </a>
-              <span className='details'>
-                <FormattedMessage id='goldx_detail' />
-              </span>
             </div>
           </div>
 
-
-          <h1 onClick={() => { this.setState({ meun3: !this.state.meun3 }) }}>
-            <FormattedMessage id='Exchange_Market' />
-            <span>
-              <img src={this.state.meun3 ? arrow_u : arrow_d} alt='' />
-            </span>
+          <h1>
+            <a
+              style={{ color: '#070237', display: 'block', width: '100%', height: '100%' }}
+              href="https://trade.dforce.network/" target='_blank'>
+              <FormattedMessage id='Exchange_Market' />
+            </a>
           </h1>
-          <div className={this.state.meun3 ? 'meun1' : 'only1px'}>
-            <div className='m-item'>
-              <a href='https://trade.dforce.network/' rel="noopener noreferrer">
-                <span className='title'>dForce Trade</span>
-              </a>
-              <span className='details'>
-                <FormattedMessage id='Instant_Swap_of_Stable_Assets' />
-              </span>
-            </div>
-          </div>
 
+          <h1>
+            <a
+              style={{ color: '#070237', display: 'block', width: '100%', height: '100%' }}
+              href="https://staking.dforce.network/" target='_blank'>
+              <FormattedMessage id='FARM' />
+            </a>
+          </h1>
 
           <h1 onClick={() => { this.setState({ meun2: !this.state.meun2 }) }}>
             <FormattedMessage id='Governance' />
@@ -553,24 +511,25 @@ export default class App extends React.Component {
           </h1>
           <div className={this.state.meun2 ? 'meun1' : 'only1px'}>
             <div className='m-item'>
-              <a href='https://airdrop.dforce.network/' rel="noopener noreferrer">
+              <a href='https://snapshot.page/#/dforce' rel="noopener noreferrer" target='_blank'>
+                <span className='title'>
+                  <FormattedMessage id='VOTE' />
+                </span>
+              </a>
+            </div>
+            <div className='m-item'>
+              <a href='https://airdrop.dforce.network/' rel="noopener noreferrer" target='_blank'>
                 <span className='title'>
                   <FormattedMessage id='Airdrop' />
                 </span>
               </a>
-              <span className='details'>
-                <FormattedMessage id='DF_token_distribute_system' />
-              </span>
             </div>
             <div className='m-item'>
-              <a href="https://snapshot.page/#/dforce/all" rel="noopener noreferrer">
+              <a href="https://forum.dforce.network/" rel="noopener noreferrer" target='_blank'>
                 <span className='title'>
-                  <FormattedMessage id='Governance' />
+                  <FormattedMessage id='FORUM' />
                 </span>
               </a>
-              <span className='details'>
-                <FormattedMessage id='Governance__content' />
-              </span>
             </div>
           </div>
 

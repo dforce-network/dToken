@@ -261,7 +261,7 @@ body .ant-collapse-icon-position-right>.ant-collapse-item>.ant-collapse-header .
     }
 
     &__overlay {
-        width: 230px;
+        width: 180px;
         border: 1px solid rgba(229, 230, 242, 1);
         box-shadow: 0px 8px 25px 0px rgba(7, 2, 55, 0.1);
         border-radius: 6px;
@@ -295,6 +295,20 @@ body .ant-collapse-icon-position-right>.ant-collapse-item>.ant-collapse-header .
     &__menu {
         display: inline-flex;
         align-items: center;
+
+        &__singleLink {
+            margin-right: 20px;
+
+            a {
+                font-size: 16px;
+                color: #252152;
+                font-weight: 500;
+
+                &:hover {
+                    color: #D4A454 !important;
+                }
+            }
+        }
 
         label {
             cursor: pointer;

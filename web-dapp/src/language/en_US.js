@@ -1,6 +1,10 @@
 const en_US = {
+    FORUM:'FORUM',
+    VOTE:'VOTE',
+    FARM:'FARM',
+    LEND:'LEND',
     Governance__content: 'Propose & vote',
-    Airdrop: 'Airdrop',
+    Airdrop: 'AIRDROP',
     on_ETH: 'The data on this page comes from the Ethereum Mainnet.',
     on_BSC: 'The data on this page comes from the Binance Smart Chain.',
     to_ETH: 'Switch to Ethereum',
@@ -9,7 +13,7 @@ const en_US = {
     USR_subTitle: 'USDx saving rate',
     goldx: 'GOLDx',
     goldx_detail: 'Token backed by physical gold',
-    Yield_Markets: 'Yield Markets',
+    Yield_Markets: 'YIELD MARKETS',
     Yield_Markets_detail: 'A yield aggregator',
     slogan_title_plus: 'The Most Accessible High Yield Aggregator',
     slogan_title: 'dForce Yield Markets',
@@ -70,11 +74,11 @@ const en_US = {
     Insufficient_Liquidity: 'Insufficient Liquidity',
     balance: 'Balance',
     Not_SUPPORTED: 'NOT SUPPORTED',
-    Exchange_Market: 'Trade',
-    dForce_Stablecoin: 'Assets',
+    Exchange_Market: 'TRADE',
+    dForce_Stablecoin: 'ASSETS',
     Portal: 'An indexed stablecoin',
     Instant_Swap_of_Stable_Assets: 'DEX aggregator',
     DF_token_distribute_system: 'Incentivized DF distribution',
-    Governance: 'Governance'
+    Governance: 'GOVERNANCE'
 }
 export default en_US;
