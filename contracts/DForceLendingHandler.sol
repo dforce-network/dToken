@@ -13,59 +13,111 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
     }
     // Based on underlying token, get current interest details
     mapping(address => InterestDetails) public interestDetails;
-    
-    IController public controller;
-    IiToken public iToken;
-    address public underlying;
 
-    event RewardClaimed(
-        address indexed _underlying,
-        uint256 indexed compBalance
+    mapping(address => address) public iTokens; //iTokens;
+
+    address public rewardToken;
+
+    event NewMappingcToken(
+        address indexed token,
+        address indexed mappingiToken
     );
 
-    constructor(address _dTokenController, IiToken _iToken) public {
-        initialize(_dTokenController, _iToken);
+    event RewardClaimed(
+        address indexed underlying,
+        uint256 indexed rewardBalance
+    );
+
+    constructor(address _dTokenController, address _rewardToken) public {
+        initialize(_dTokenController, _rewardToken);
     }
 
     // --- Init ---
     // This function is used with contract proxy, do not modify this function.
-    function initialize(address _dTokenController, IiToken _iToken)
+    function initialize(address _dTokenController, address _rewardToken)
         public
     {
         super.initialize(_dTokenController);
-        require(_iToken.isiToken(), "Token is not a iToken");
-        iToken = _iToken;
-        
-        controller = _iToken.controller();
-        require(controller.hasiToken(address(_iToken)), "iToken is not added to the market");
-
-        underlying = _iToken.underlying();
+        rewardToken = _rewardToken;
         initReentrancyStatus();
-        approve(uint256(-1));
-        
-        // 
-        _enableToken(underlying);
+    }
+
+    /**
+     * @dev Authorized function to set iToken address base on underlying token.
+     * @param _underlyingTokens Supports underlying tokens in DForce lending.
+     * @param _mappingTokens  Corresponding iToken addresses.
+     */
+    function setcTokensRelation(
+        address[] calldata _underlyingTokens,
+        address[] calldata _mappingTokens
+    ) external auth {
+        require(
+            _underlyingTokens.length == _mappingTokens.length,
+            "setTokensRelation: Array length do not match!"
+        );
+        for (uint256 i = 0; i < _underlyingTokens.length; i++) {
+            _setcTokenRelation(_underlyingTokens[i], _mappingTokens[i]);
+        }
+    }
+
+    function _setcTokenRelation(
+        address _underlyingToken,
+        address _mappingiToken
+    ) internal {
+        iTokens[_underlyingToken] = _mappingiToken;
+        emit NewMappingcToken(_underlyingToken, _mappingiToken);
     }
 
     /**
      * @dev Authorized function to approves market and dToken to transfer handler's underlying token.
+     * @param _underlyingToken Token address to approve.
      */
-    function approve(uint256 _amount) public auth {
+    function approve(address _underlyingToken, uint256 amount) public auth {
+        address _iToken = iTokens[_underlyingToken];
 
         require(
-            doApprove(underlying, address(iToken), _amount),
+            doApprove(_underlyingToken, _iToken, amount),
             "approve: Approve cToken failed!"
         );
 
-        approve(underlying, _amount);
+        super.approve(_underlyingToken, amount);
+    }
+
+    /**
+     * @dev Internal function to transfer rewardToken airdrops to corresponding dToken to distribute.
+     */
+    function claimReward(address _underlyingToken) external {
+        require(
+            tokenIsEnabled(_underlyingToken),
+            "claimReward: Token is disabled!"
+        );
+        address _iToken = iTokens[_underlyingToken];
+        require(_iToken != address(0x0), "claimReward: Do not support token!");
+
+        address[] memory _holders = new address[](1);
+        address[] memory _iTokens = new address[](1);
+        _holders[0] = address(this);
+        _iTokens[0] = _iToken;
+        IiToken(_iToken).controller().rewardDistributor().claimReward(_holders, _iTokens);
+
+        address _rewardToken = rewardToken;
+        uint256 _rewardBalance = IERC20(_rewardToken).balanceOf(_holders[0]);
+        if (_rewardBalance > 0) {
+            address _dToken = IDTokenController(dTokenController).getDToken(_underlyingToken);
+            require(
+                doTransferOut(_rewardToken, _dToken, _rewardBalance),
+                "deposit: Comp transfer out of contract failed."
+            );
+            emit RewardClaimed(_dToken, _rewardBalance);
+        }
     }
 
     /**
      * @dev Deposit token to market, only called by dToken contract.
-     * @param _underlying Token to deposit.
+     * @param _underlyingToken Token to deposit.
      * @return The actual deposited token amount.
      */
-    function deposit(address _underlying, uint256 _amount)
+    function deposit(address _underlyingToken, uint256 _amount)
         external
         whenNotPaused
         auth
@@ -81,13 +133,15 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
             "deposit: Deposit amount should be greater than 0!"
         );
 
-        IiToken _iToken = iToken;
-        require(address(_iToken) != address(0), "deposit: Do not support token!");
+        address _iToken = iTokens[_underlyingToken];
+        require(_iToken != address(0x0), "deposit: Do not support token!");
 
-        uint256 _MarketBalanceBefore = _iToken.balanceOfUnderlying(address(this));
+        uint256 _MarketBalanceBefore = IiToken(_iToken).balanceOfUnderlying(
+            address(this)
+        );
 
         // Update the stored interest with the market balance before the mint
-        InterestDetails storage _details = interestDetails[_underlying];
+        InterestDetails storage _details = interestDetails[_underlyingToken];
         uint256 _interest = _MarketBalanceBefore.sub(
             _details.totalUnderlyingBalance
         );
@@ -96,7 +150,12 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
         // Mint all the token balance of the handler,
         // which should be the exact deposit amount normally,
         // but there could be some unexpected transfers before.
-        _iToken.mint(address(this), IERC20(_underlying).balanceOf(address(this)));
+        uint256 _handlerBalance = IERC20(_underlyingToken).balanceOf(
+            address(this)
+        );
+        IiToken(_iToken).mint(address(this), _handlerBalance);
+
+        // claimComp(_underlyingToken);
 
         // including unexpected transfers.
         uint256 _MarketBalanceAfter = IiToken(_iToken).balanceOfUnderlying(
@@ -114,11 +173,11 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
 
     /**
      * @dev Withdraw token from market, but only for dToken contract.
-     * @param _underlying Token to withdraw.
+     * @param _underlyingToken Token to withdraw.
      * @param _amount Token amount to withdraw.
      * @return The actual withdrown token amount.
      */
-    function withdraw(address _underlying, uint256 _amount)
+    function withdraw(address _underlyingToken, uint256 _amount)
         external
         whenNotPaused
         auth
@@ -126,43 +185,46 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
         returns (uint256)
     {
         require(
-            underlying == _underlying,
-            "withdraw: Token is disabled!"
-        );
-
-        require(
             _amount > 0,
             "withdraw: Withdraw amount should be greater than 0!"
         );
 
-        IiToken _iToken = iToken;
-        // address _cToken = cTokens[_underlying];
-        require(address(_iToken) != address(0), "withdraw: Do not support token!");
+        address _iToken = iTokens[_underlyingToken];
+        require(_iToken != address(0x0), "withdraw: Do not support token!");
 
-        uint256 _MarketBalanceBefore = _iToken.balanceOfUnderlying(address(this));
+        uint256 _MarketBalanceBefore = IiToken(_iToken).balanceOfUnderlying(
+            address(this)
+        );
 
         // Update the stored interest with the market balance before the redeem
-        InterestDetails storage _details = interestDetails[_underlying];
+        InterestDetails storage _details = interestDetails[_underlyingToken];
         uint256 _interest = _MarketBalanceBefore.sub(
             _details.totalUnderlyingBalance
         );
         _details.interest = _details.interest.add(_interest);
 
-        uint256 _handlerBalanceBefore = IERC20(_underlying).balanceOf(
+        uint256 _handlerBalanceBefore = IERC20(_underlyingToken).balanceOf(
             address(this)
         );
 
         // Redeem all or just the amount of underlying token
         if (_amount == uint256(-1)) {
-            _iToken.redeem(address(this),  IERC20(address(_iToken)).balanceOf(address(this)));
+            IiToken(_iToken).redeem(address(this), IERC20(_iToken).balanceOf(address(this)));
         } else {
-            _iToken.redeemUnderlying(address(this), _amount);
+            IiToken(_iToken).redeemUnderlying(address(this), _amount);
         }
 
-        // Store the latest real balance.
-        _details.totalUnderlyingBalance = _iToken.balanceOfUnderlying(address(this));
+        // claimComp(_underlyingToken);
 
-        uint256 _changedAmount = IERC20(_underlying).balanceOf(address(this)).sub(
+        uint256 _handlerBalanceAfter = IERC20(_underlyingToken).balanceOf(
+            address(this)
+        );
+
+        // Store the latest real balance.
+        _details.totalUnderlyingBalance = IiToken(_iToken)
+            .balanceOfUnderlying(address(this));
+
+        uint256 _changedAmount = _handlerBalanceAfter.sub(
             _handlerBalanceBefore
         );
 
@@ -171,52 +233,33 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
     }
 
     /**
-     * @dev external function to transfer reward token airdrops to corresponding dToken to distribute.
-     */
-    function claimReward() external {
-        address[] memory _holders = new address[](1);
-        address[] memory _iTokens = new address[](1);
-        _holders[0] = address(this);
-        _iTokens[0] = address(iToken);
-        controller.rewardDistributor().claimReward(_holders, _iTokens);
-
-        address _rewardToken = controller.rewardDistributor().rewardToken();
-        uint256 _rewardBalance = IERC20(_rewardToken).balanceOf(_holders[0]);
-        if (_rewardBalance > 0) {
-            address _dToken = IDTokenController(dTokenController).getDToken(underlying);
-            require(
-                doTransferOut(_rewardToken, _dToken, _rewardBalance),
-                "deposit: Comp transfer out of contract failed."
-            );
-            emit RewardClaimed(_dToken, _rewardBalance);
-        }
-    }
-
-    /**
      * @dev Update exchange rate in cToken and get the latest total balance for
-     *      handler's _underlying, with all accumulated interest included.
-     * @param _underlying Token to get actual balance.
+     *      handler's _underlyingToken, with all accumulated interest included.
+     * @param _underlyingToken Token to get actual balance.
      */
-    function getRealBalance(address _underlying)
+    function getRealBalance(address _underlyingToken)
         external
         returns (uint256)
     {
-        _underlying;
-        return iToken.balanceOfUnderlying(address(this));
+        return
+            IiToken(iTokens[_underlyingToken]).balanceOfUnderlying(
+                address(this)
+            );
     }
 
     /**
-     * @dev The latest maximum withdrawable _underlying in the market.
-     * @param _underlying Token to get liquidity.
+     * @dev The latest maximum withdrawable _underlyingToken in the market.
+     * @param _underlyingToken Token to get liquidity.
      */
-    function getRealLiquidity(address _underlying)
+    function getRealLiquidity(address _underlyingToken)
         external
         returns (uint256)
     {
-        _underlying;
-        IiToken _iToken = iToken;
-        uint256 _underlyingBalance = _iToken.balanceOfUnderlying(address(this));
-        uint256 _cash = _iToken.getCash();
+        address _iToken = iTokens[_underlyingToken];
+        uint256 _underlyingBalance = IiToken(_iToken).balanceOfUnderlying(
+            address(this)
+        );
+        uint256 _cash = IiToken(_iToken).getCash();
 
         return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }
@@ -226,30 +269,33 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
     /***************************************************/
 
     /**
-     * @dev Total balance of handler's _underlying, accumulated interest included
-     * @param _underlying Token to get balance.
+     * @dev Total balance of handler's _underlyingToken, accumulated interest included
+     * @param _underlyingToken Token to get balance.
      */
-    function getBalance(address _underlying)
+    function getBalance(address _underlyingToken)
         public
         view
         returns (uint256)
     {
-        _underlying;
-        IiToken _iToken = iToken;
-        return IERC20(address(_iToken)).balanceOf(address(this)).mul(_iToken.exchangeRateStored()) / BASE;
+        address _iToken = iTokens[_underlyingToken];
+        uint256 _iTokenBalance = IERC20(_iToken).balanceOf(address(this));
+        uint256 _exchangeRate = IiToken(_iToken).exchangeRateStored();
+
+        return _iTokenBalance.mul(_exchangeRate) / BASE;
     }
 
     /**
-     * @dev The maximum withdrawable amount of _underlying in the market.
-     * @param _underlying Token to get liquidity.
+     * @dev The maximum withdrawable amount of _underlyingToken in the market.
+     * @param _underlyingToken Token to get liquidity.
      */
-    function getLiquidity(address _underlying)
+    function getLiquidity(address _underlyingToken)
         external
         view
         returns (uint256)
     {
-        uint256 _underlyingBalance = getBalance(_underlying);
-        uint256 _cash = iToken.getCash();
+        address _iToken = iTokens[_underlyingToken];
+        uint256 _underlyingBalance = getBalance(_underlyingToken);
+        uint256 _cash = IiToken(_iToken).getCash();
 
         return _underlyingBalance > _cash ? _cash : _underlyingBalance;
     }

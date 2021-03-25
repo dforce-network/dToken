@@ -137,6 +137,8 @@ interface IHandler {
 
     function cTokens(address _token) external view returns (address);
 
+    function iTokens(address _token) external view returns (address);
+
     function aaveLendingPoolCore() external view returns (address);
 
     function USR() external view returns (address);
@@ -405,6 +407,33 @@ contract DTokenCommonData {
     }
 
     function DForceLendingData(address _handler, address _token)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        IiToken _iToken = IiToken(IHandler(_handler).iTokens(_token));
+        return (
+            _iToken.getCash(),
+            rpow(
+                (_iToken.supplyRatePerBlock() * BlocksPerDay + ONE),
+                DaysPerYear,
+                ONE
+            ) - ONE,
+            rpow(
+                (_iToken.borrowRatePerBlock() * BlocksPerDay + ONE),
+                DaysPerYear,
+                ONE
+            ) - ONE,
+            0
+        );
+    }
+
+    function DForceLendingSingleData(address _handler, address _token)
         public
         view
         returns (
