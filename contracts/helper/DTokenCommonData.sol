@@ -56,6 +56,25 @@ interface ICToken {
     function exchangeRateCurrent() external returns (uint256);
 }
 
+interface IiToken {
+
+    // function balanceOfUnderlying(address _account) external returns (uint256);
+
+    // function exchangeRateStored() external view returns (uint256);
+
+    function getCash() external view returns (uint256);
+
+    // function controller() external view returns (IController);
+
+    // function underlying() external view returns (address);
+
+    // function isiToken() external view returns (bool);
+
+    function supplyRatePerBlock() external view returns (uint256);
+
+    function borrowRatePerBlock() external view returns (uint256);
+}
+
 interface IUSR {
     function totalUnderlying() external returns (uint256);
 
@@ -121,6 +140,8 @@ interface IHandler {
     function aaveLendingPoolCore() external view returns (address);
 
     function USR() external view returns (address);
+
+    function iToken() external view returns (address);
 }
 
 contract DTokenCommonData {
@@ -379,6 +400,34 @@ contract DTokenCommonData {
             IUSR(IHandler(_handler).USR()).totalUnderlying(),
             getUSRInterestRate(_handler),
             0,
+            0
+        );
+    }
+
+    function DForceLendingData(address _handler, address _token)
+        public
+        view
+        returns (
+            uint256,
+            uint256,
+            uint256,
+            uint256
+        )
+    {
+        _token;
+        IiToken _iToken = IiToken(IHandler(_handler).iToken());
+        return (
+            _iToken.getCash(),
+            rpow(
+                (_iToken.supplyRatePerBlock() * BlocksPerDay + ONE),
+                DaysPerYear,
+                ONE
+            ) - ONE,
+            rpow(
+                (_iToken.borrowRatePerBlock() * BlocksPerDay + ONE),
+                DaysPerYear,
+                ONE
+            ) - ONE,
             0
         );
     }
