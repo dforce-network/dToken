@@ -37,9 +37,13 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
         iToken = _iToken;
         
         controller = _iToken.controller();
+        require(controller.hasiToken(address(_iToken)), "iToken is not added to the market");
+
         underlying = _iToken.underlying();
         initReentrancyStatus();
         approve(uint256(-1));
+        
+        // 
         _enableToken(underlying);
     }
 
@@ -69,7 +73,7 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
         returns (uint256)
     {
         require(
-            underlying == _underlying,
+            tokenIsEnabled(_underlyingToken),
             "deposit: Token is disabled!"
         );
         require(
