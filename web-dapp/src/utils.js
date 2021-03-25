@@ -77,6 +77,14 @@ export const get_nettype = (instance_web3) => {
     })
   })
 }
+export const get_nettypeID = (instance_web3) => {
+  return new Promise((resolve, reject) => {
+    instance_web3.eth.getChainId().then(net_typeID => {
+      // console.log(net_type);
+      resolve(net_typeID);
+    })
+  })
+}
 export const get_decimals = (contract) => {
   return new Promise((resolve, reject) => {
     contract.methods.decimals().call((err, res_decimals) => {

@@ -67,6 +67,10 @@ function env() {
           DAI: "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
           dDAI: "0x4E0B5BaFC52D09A8F18eA0b7a6A7dc23A1096f99",
           DTokenCommonData: "0xb8e898a9c3AfdAEbc8e74581273eEFc006fdE0c5",
+          Handler: {
+            '0xC46751E2494897eB34E2297bEB649672dBabF975': "Internal",
+            '0xdE399d88eA8331fE2F18306793893a46D142cc5f': "CreamHandler"
+          }
         },
       },
       DECIMALS: {
@@ -160,6 +164,10 @@ function env() {
           DAI: "0x1AF3F329e8BE154074D8769D1FFa4eE058B1DBc3",
           dDAI: "0x4E0B5BaFC52D09A8F18eA0b7a6A7dc23A1096f99",
           DTokenCommonData: "0xb8e898a9c3AfdAEbc8e74581273eEFc006fdE0c5",
+          Handler: {
+            '0xC46751E2494897eB34E2297bEB649672dBabF975': "Internal",
+            '0xdE399d88eA8331fE2F18306793893a46D142cc5f': "CreamHandler"
+          }
         },
       },
       DECIMALS: {

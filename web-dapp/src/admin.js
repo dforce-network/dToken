@@ -5,6 +5,7 @@ import './style/model.scss';
 import Web3 from 'web3';
 import {
     get_nettype,
+    get_nettypeID,
     init_baseData_contract,
     format_bn,
     format_num_to_K,
@@ -17,6 +18,9 @@ import env from './abi/env';
 let token_abi_d = require('./abi/tokensABI_d.json');
 let address_map = env.ADDRESS;
 
+let token_list__main = Object.keys(env.DECIMALS.main);
+let token_list__bsc = Object.keys(env.DECIMALS.bsc);
+
 
 class Admin extends Component {
     constructor(props) {
@@ -24,7 +28,8 @@ class Admin extends Component {
 
         this.state = {
             active_index: 0,
-            token_name: ['USDT', 'USDC', 'DAI', 'TUSD', 'PAX', 'USDx'],
+            // token_name: ['USDT', 'USDC', 'DAI', 'TUSD', 'PAX', 'USDx'],
+            token_name: [],
             show_rebalance: false,
             token_status: {}
         }
@@ -36,6 +41,20 @@ class Admin extends Component {
 
     init_status = async () => {
         let nettype = await get_nettype(this.new_web3);
+        let nettypeID = await get_nettypeID(this.new_web3);
+
+        if (nettypeID === 56) {
+            nettype = 'bsc'
+            this.setState({
+                token_name: token_list__bsc
+            })
+        } else {
+            this.setState({
+                token_name: token_list__main
+            })
+        }
+
+        // console.log('nettype*****', nettypeID);
         for (let i = 0; i < this.state.token_name.length; i++) {
             // console.log(address_map[nettype][this.state.token_name[i]]);
             if (!address_map[nettype][this.state.token_name[i]]) {
