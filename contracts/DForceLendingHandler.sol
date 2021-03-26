@@ -18,7 +18,7 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
 
     address public rewardToken;
 
-    event NewMappingcToken(
+    event NewMappingiToken(
         address indexed token,
         address indexed mappingiToken
     );
@@ -47,7 +47,7 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
      * @param _underlyingTokens Supports underlying tokens in DForce lending.
      * @param _mappingTokens  Corresponding iToken addresses.
      */
-    function setcTokensRelation(
+    function setiTokensRelation(
         address[] calldata _underlyingTokens,
         address[] calldata _mappingTokens
     ) external auth {
@@ -56,16 +56,16 @@ contract DForceLendingHandler is Handler, ReentrancyGuard {
             "setTokensRelation: Array length do not match!"
         );
         for (uint256 i = 0; i < _underlyingTokens.length; i++) {
-            _setcTokenRelation(_underlyingTokens[i], _mappingTokens[i]);
+            _setiTokenRelation(_underlyingTokens[i], _mappingTokens[i]);
         }
     }
 
-    function _setcTokenRelation(
+    function _setiTokenRelation(
         address _underlyingToken,
         address _mappingiToken
     ) internal {
         iTokens[_underlyingToken] = _mappingiToken;
-        emit NewMappingcToken(_underlyingToken, _mappingiToken);
+        emit NewMappingiToken(_underlyingToken, _mappingiToken);
     }
 
     /**
