@@ -57,18 +57,7 @@ interface ICToken {
 }
 
 interface IiToken {
-
-    // function balanceOfUnderlying(address _account) external returns (uint256);
-
-    // function exchangeRateStored() external view returns (uint256);
-
     function getCash() external view returns (uint256);
-
-    // function controller() external view returns (IController);
-
-    // function underlying() external view returns (address);
-
-    // function isiToken() external view returns (bool);
 
     function supplyRatePerBlock() external view returns (uint256);
 
@@ -156,6 +145,15 @@ contract DTokenCommonData {
     uint256 constant DaysPerYear = 365;
 
     mapping(address => bytes4) public handlers;
+    mapping(address => bool) public farmings;
+
+    /**
+     * @dev Throws if called by any account other than the owner.
+     */
+    modifier onlyOwner() {
+        require(owner == msg.sender, "onlyOwner: caller is not the owner");
+        _;
+    }
 
     constructor() public {
         initialize();
@@ -173,7 +171,7 @@ contract DTokenCommonData {
             default {
                 switch mod(n, 2) case 0 { z := base } default { z := x }
                 let half := div(base, 2)  // for rounding.
-                
+
                 for { n := div(n, 2) } n { n := div(n,2) } {
                     let xx := mul(x, x)
                     if iszero(eq(div(xx, x), x)) { revert(0,0) }
@@ -192,21 +190,33 @@ contract DTokenCommonData {
         }
     }
 
-    function setHandler(address _handler, bytes4 _sig) external {
-        require(msg.sender == owner, "setHandler: Permission denied!");
+    function setHandler(address _handler, bytes4 _sig) external onlyOwner {
         handlers[_handler] = _sig;
     }
 
     function setHandlers(address[] calldata _handlers, bytes4[] calldata _sigs)
         external
+        onlyOwner
     {
-        require(msg.sender == owner, "setHandlers: Permission denied!");
         require(
             _handlers.length == _sigs.length && _handlers.length > 0,
             "setHandlers: handlers & indexs should not have 0 or different lengths"
         );
         for (uint256 i = 0; i < _handlers.length; i++)
             handlers[_handlers[i]] = _sigs[i];
+    }
+
+    function setFarming(address _handler, bool _farming) external onlyOwner {
+        farmings[_handler] = _farming;
+    }
+
+    function setFarmings(address[] calldata _handlers, bool[] calldata _farmings) external onlyOwner {
+        require(
+            _handlers.length == _farmings.length && _handlers.length > 0,
+            "setFarmings: handlers & indexs should not have 0 or different lengths"
+        );
+        for (uint256 i = 0; i < _handlers.length; i++)
+            farmings[_handlers[i]] = _farmings[i];
     }
 
     function getDTokenApys(address[] calldata _dTokens)
@@ -320,7 +330,7 @@ contract DTokenCommonData {
         );
         (
             uint256 _cash,
-            
+
             uint256 _supplyApy,
             uint256 _borrowApy,
             uint256 _otherSupplyApy
@@ -465,6 +475,7 @@ contract DTokenCommonData {
         public
         returns (uint256)
     {
+        if (!farmings[_handler]) return 0;
         address _cToken = IHandler(_handler).cTokens(_token);
         IComptroller _comptroller = IComptroller(
             ICToken(_cToken).comptroller()
