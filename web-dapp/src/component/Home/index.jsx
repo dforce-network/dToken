@@ -318,7 +318,14 @@ export default class Home extends React.Component {
                         <FormattedMessage id='slogan_title_plus' />
                     </div>
 
-
+                    {/* <div className='switch-tips'>
+                        <div className='switch-tips-right'
+                            onClick={() => { window.history.pushState(null, null, '/dashboard'); }}
+                        >
+                            <>dashboard</>
+                            <img alt='' src={switch_img} />
+                        </div>
+                    </div> */}
                     {
                         this.state.is_onETHChain &&
                         <div className='switch-tips'>

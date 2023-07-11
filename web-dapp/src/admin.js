@@ -55,6 +55,7 @@ class Admin extends Component {
         }
 
         // console.log('nettype*****', nettypeID);
+        // console.log('this.state.token_name*****', this.state.token_name);
         for (let i = 0; i < this.state.token_name.length; i++) {
             // console.log(address_map[nettype][this.state.token_name[i]]);
             if (!address_map[nettype][this.state.token_name[i]]) {
@@ -697,7 +698,7 @@ function InternalItem(props) {
                         {
                             Number(props.rebalance_data.action_arr__number__tobe[0] / props.rebalance_data.total * 100).toFixed(2)
                         }%
-                </span>
+                    </span>
                 </div>
             }
         </div>
@@ -719,7 +720,7 @@ function HandlerItem(props) {
                     {
                         Number(props.rebalance_data.percent_arr[props.index] / props.rebalance_data.total * 100).toFixed(2)
                     }%
-                    </span>
+                </span>
             </div>
             {
                 props.rebalance_data.checked &&
