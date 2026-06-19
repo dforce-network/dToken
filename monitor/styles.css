@@ -92,16 +92,13 @@ input {
 }
 
 .brand-mark {
-    display: grid;
-    place-items: center;
     width: 38px;
     height: 38px;
     border: 1px solid var(--line-strong);
     border-radius: 8px;
-    color: var(--blue);
     background: var(--surface);
-    font-size: 20px;
-    font-weight: 500;
+    object-fit: cover;
+    object-position: center;
 }
 
 .brand-block h1 {
